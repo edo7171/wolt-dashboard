@@ -55,8 +55,6 @@ header{position:sticky;top:0;z-index:200;background:rgba(13,17,23,0.97);backdrop
   border:1px solid var(--border);background:var(--card2);color:var(--text2);transition:all .2s;white-space:nowrap}
 .preset-btn:hover{border-color:var(--blue);color:var(--blue)}
 .preset-btn.active{background:var(--blue-dim);border-color:var(--blue);color:var(--blue)}
-.preset-btn.today-btn{border-color:var(--green);color:var(--green)}
-.preset-btn.today-btn.active{background:var(--green-dim)}
 
 /* Date picker inputs */
 .date-picker-wrap{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -114,6 +112,46 @@ header{position:sticky;top:0;z-index:200;background:rgba(13,17,23,0.97);backdrop
 .wow-charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .wow-chart-wrap{position:relative;height:260px}
 .wow-chart-wrap.tall{height:300px}
+
+/* ── Week-Failure Summary Panels ── */
+.wf-panels{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+@media(max-width:800px){.wf-panels{grid-template-columns:1fr}}
+
+.wf-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+.wf-panel.highlight{border-color:rgba(0,157,224,.35)}
+
+.wf-title{font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:4px}
+.wf-sub{font-size:11px;color:var(--text2);margin-bottom:14px}
+.wf-range-badge{font-size:10px;background:var(--blue-dim);color:var(--blue);
+  border:1px solid rgba(0,157,224,.25);border-radius:10px;padding:1px 8px;font-weight:600}
+
+/* KPI row inside panel */
+.wf-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:0}
+.wf-kpi{background:var(--card2);border:1px solid var(--border);border-radius:10px;
+  padding:10px 12px;text-align:center}
+.wf-kpi .v{display:block;font-size:22px;font-weight:900;line-height:1.1}
+.wf-kpi .l{display:block;font-size:10px;color:var(--text2);margin-top:4px;line-height:1.3}
+.wf-kpi.blue .v{color:var(--blue)}
+.wf-kpi.red  .v{color:var(--red)}
+.wf-kpi.orange .v{color:var(--orange)}
+.wf-kpi.purple .v{color:var(--purple)}
+
+/* Panel B – overlap customers */
+.wf-overlap-num{font-size:48px;font-weight:900;color:var(--green);line-height:1;margin:8px 0 4px}
+.wf-overlap-label{font-size:12px;color:var(--text2);margin-bottom:12px}
+.wf-overlap-pct{font-size:11px;background:var(--green-dim);color:var(--green);
+  border:1px solid rgba(46,160,67,.25);border-radius:10px;padding:2px 10px;display:inline-block}
+.wf-expand-btn{background:transparent;border:1px solid var(--border);color:var(--text2);
+  border-radius:8px;padding:4px 12px;font-size:11px;font-family:'Heebo',sans-serif;
+  cursor:pointer;margin-top:10px;transition:all .2s}
+.wf-expand-btn:hover{border-color:var(--blue);color:var(--blue)}
+.wf-overlap-table{margin-top:10px;display:none}
+.wf-overlap-table.open{display:block}
+.wf-overlap-table table{width:100%;border-collapse:collapse;font-size:12px}
+.wf-overlap-table th{background:var(--card2);padding:6px 10px;text-align:right;
+  font-weight:600;color:var(--text2);border-bottom:1px solid var(--border)}
+.wf-overlap-table td{padding:5px 10px;border-bottom:1px solid rgba(48,54,61,.5);color:var(--text)}
+.wf-overlap-table tr:hover td{background:rgba(0,157,224,.05)}
 @media(max-width:900px){.wow-charts-grid{grid-template-columns:1fr}.wow-summary-row{grid-template-columns:1fr 1fr}}
 @media(max-width:600px){.wow-summary-row{grid-template-columns:1fr}}
 
@@ -366,7 +404,6 @@ tr.refunded-row td{background:rgba(137,87,229,.04)}
 
     <!-- Quick presets -->
     <div class="preset-btns" id="presetBtns">
-      <button class="preset-btn today-btn" id="preToday"     onclick="applyPreset('today')">🟢 היום</button>
       <button class="preset-btn"           id="preYesterday" onclick="applyPreset('yesterday')">📆 אתמול</button>
       <button class="preset-btn"           id="preCurWeek"   onclick="applyPreset('curweek')">📅 שבוע נוכחי</button>
       <button class="preset-btn"           id="prePrevWeek"  onclick="applyPreset('prevweek')">⏪ שבוע קודם</button>
@@ -438,6 +475,64 @@ tr.refunded-row td{background:rgba(137,87,229,.04)}
       <div class="wow-item"><span class="wlabel">כשל לקוחות</span><span class="wcurr" id="wc5">—</span><span class="wprev" id="wp5">—</span><span class="wchg" id="wch5">—</span></div>
     </div>
   </div>
+
+  <!-- ══ Week Failure Panels ══ -->
+  <div class="wf-panels" id="wfPanels">
+
+    <!-- Panel A: שבוע נוכחי כשלות -->
+    <div class="wf-panel highlight">
+      <div class="wf-title">
+        📅 כשלות שבוע נוכחי
+        <span class="wf-range-badge" id="wfWeekRange">—</span>
+      </div>
+      <div class="wf-sub">נתוני השבוע הנוכחי — ראשון עד שבת — ללא תלות בפילטר הנוכחי</div>
+      <div class="wf-kpi-row">
+        <div class="wf-kpi blue">
+          <span class="v" id="wfKpiTotal">—</span>
+          <span class="l">סה"כ הזמנות</span>
+        </div>
+        <div class="wf-kpi red">
+          <span class="v" id="wfKpiFails">—</span>
+          <span class="l">סה"כ כשלים<br>(שורות דחויות)</span>
+        </div>
+        <div class="wf-kpi orange">
+          <span class="v" id="wfKpiUniqCust">—</span>
+          <span class="l">לקוחות<br>שנכשלו</span>
+        </div>
+        <div class="wf-kpi purple">
+          <span class="v" id="wfKpiUniqOrders">—</span>
+          <span class="l">הזמנות ייחודיות<br>שנכשלו</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel B: overlap customers -->
+    <div class="wf-panel">
+      <div class="wf-title">🔄 נכשלו — אך גם הצליחו באותו יום</div>
+      <div class="wf-sub">לקוחות שיש להם דחייה AND הזמנה שהצליחה באותו יום קלנדרי (שבוע נוכחי)</div>
+      <div class="wf-overlap-num" id="wfOverlapNum">—</div>
+      <div class="wf-overlap-label">לקוחות ייחודיים</div>
+      <span class="wf-overlap-pct" id="wfOverlapPct">—</span>
+      <br>
+      <button class="wf-expand-btn" id="wfExpandBtn" onclick="toggleOverlapTable()">
+        📋 הצג רשימה
+      </button>
+      <div class="wf-overlap-table" id="wfOverlapTable">
+        <table>
+          <thead><tr>
+            <th>טלפון</th>
+            <th>ימים עם חפיפה</th>
+            <th>דחיות</th>
+            <th>הצלחות</th>
+            <th>סניפים</th>
+          </tr></thead>
+          <tbody id="wfOverlapTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+  <!-- ══ END Week Failure Panels ══ -->
 
   <div class="kpi-grid mb16">
     <div class="kpi-card blue">
@@ -793,7 +888,7 @@ let compareMode = false;   // legacy
 // viewFrom / viewTo : DD/MM/YYYY strings (inclusive), '' = no bound
 let viewFrom  = '';
 let viewTo    = '';
-let viewPreset = 'today';  // 'today'|'yesterday'|'curweek'|'prevweek'|'all'|'custom'
+let viewPreset = 'yesterday';  // 'yesterday'|'curweek'|'prevweek'|'all'|'custom'
 
 let cmpPreset  = '';       // ''|'yesterday'|'prevweek'|'custom'
 let cmpFrom   = '';
@@ -842,10 +937,10 @@ async function loadFromGoogleSheets() {
             allData = [...allData, ...newRows];
             saveToLS();
             selectedDate = newDates[0]; // legacy
-            viewPreset = 'today';
-            const [gsf,gst] = presetRange('today');
-            const todayRows2 = allData.filter(r=>r.dateStr===gsf);
-            if(todayRows2.length){ viewFrom=gsf; viewTo=gst; }
+            viewPreset = 'yesterday';
+            const [gsf,gst] = presetRange('yesterday');
+            const yesterdayRows = allData.filter(r=>r.dateStr===gsf);
+            if(yesterdayRows.length){ viewFrom=gsf; viewTo=gst; }
             else { viewFrom=newDates[0]; viewTo=newDates[0]; viewPreset='custom'; }
             cmpFrom=''; cmpTo=''; cmpPreset='';
             refreshAll();
@@ -1039,10 +1134,10 @@ function loadFile(input) {
       newDates.sort((a,b)=>dateToSortKey(b)-dateToSortKey(a));
       selectedDate = newDates[0]; // legacy
       compareDate = '';
-      viewPreset = 'today';
-      const [f,t] = presetRange('today');
-      const todayRows = allData.filter(r=>r.dateStr===f);
-      if(todayRows.length){
+      viewPreset = 'yesterday';
+      const [f,t] = presetRange('yesterday');
+      const yesterdayRows = allData.filter(r=>r.dateStr===f);
+      if(yesterdayRows.length){
         viewFrom=f; viewTo=t;
       } else {
         viewFrom=newDates[0]; viewTo=newDates[0]; viewPreset='custom';
@@ -1069,7 +1164,7 @@ function date2iso(d){ if(!d||isNaN(d))return ''; return d.getFullYear()+'-'+(d.g
 function iso2date(s){ if(!s)return null; const d=new Date(s+'T00:00:00'); return isNaN(d)?null:d; }
 function addDays(d,n){ const r=new Date(d); r.setDate(r.getDate()+n); return r; }
 // Monday of the week containing d (ISO week: Mon=start)
-function weekStart(d){ const r=new Date(d); const day=r.getDay(); const diff=(day===0?-6:1-day); r.setDate(r.getDate()+diff); return r; }
+function weekStart(d){ const r=new Date(d); const day=r.getDay(); r.setDate(r.getDate()-day); return r; } // Sun=0 start
 
 // Compute [fromDMY, toDMY] for a preset
 function presetRange(preset){
@@ -1165,10 +1260,11 @@ function buildDateNav() {
   const dates = getAvailableDates(allData);
   document.getElementById('dmDaysCount').textContent = dates.length;
   document.getElementById('hdrSub').textContent = `${dates.length} ימים | ${allData.length.toLocaleString('he-IL')} הזמנות`;
-  // If no explicit range yet, try to set 'today'
-  if(!viewFrom && !viewTo && viewPreset==='today' && dates.length){
-    const [f,t] = presetRange('today');
+  // If no explicit range yet, default to 'yesterday'
+  if(!viewFrom && !viewTo && dates.length){
+    const [f,t] = presetRange('yesterday');
     viewFrom=f; viewTo=t;
+    viewPreset='yesterday';
   }
   updatePresetUI();
   updateCompareUI();
@@ -1349,6 +1445,9 @@ function updateAll() {
   // rebuild week-comp if tab is visible
   const wcPane=document.getElementById('tab-weekcomp');
   if(wcPane&&wcPane.classList.contains('active')) buildWcCharts();
+
+  // always rebuild the week-failure panels (they are always visible)
+  buildWeekFailurePanels();
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1634,6 +1733,106 @@ function aggregateByDay(data, fromDMY, toDMY){
   });
 }
 
+// ══════════════════════════════════════════════════════════
+//  WEEK FAILURE PANELS (Panel A + Panel B)
+// ══════════════════════════════════════════════════════════
+
+function buildWeekFailurePanels(){
+  const [cwFrom, cwTo] = presetRange('curweek');
+
+  // All curweek data — NO filters applied (panels are independent)
+  const cwData = allData.filter(r => inRange(r.dateStr, cwFrom, cwTo));
+
+  // ── Panel A: numbers ───────────────────────────────────
+  const totalOrders   = cwData.length;
+  const failRows      = cwData.filter(r => r.status === 'rejected');
+  const failRowsCount = failRows.length;
+
+  // unique phones that had at least one rejection
+  const uniqFailPhones = new Set(failRows.filter(r=>r.phone).map(r=>r.phone));
+  const uniqCustFailed = uniqFailPhones.size;
+
+  // unique purchaseId that are rejected  (already unique by definition but guard)
+  const uniqFailOrders = new Set(failRows.map(r=>r.purchaseId)).size;
+
+  const g = id => document.getElementById(id);
+  const set = (id, v) => { if(g(id)) g(id).textContent = v; };
+
+  set('wfWeekRange',    cwFrom + ' — ' + cwTo);
+  set('wfKpiTotal',     fmtNum(totalOrders));
+  set('wfKpiFails',     fmtNum(failRowsCount));
+  set('wfKpiUniqCust',  fmtNum(uniqCustFailed));
+  set('wfKpiUniqOrders',fmtNum(uniqFailOrders));
+
+  // ── Panel B: overlap customers ─────────────────────────
+  // For each phone that had at least one rejection,
+  // check if on ANY of those days the same phone also had a delivered order.
+  const overlapCustomers = []; // { phone, overlapDays, rejCount, delCount, branches }
+
+  uniqFailPhones.forEach(phone => {
+    const phoneRows = cwData.filter(r => r.phone === phone);
+    const rejDays   = new Set(phoneRows.filter(r=>r.status==='rejected').map(r=>r.dateStr));
+    const delDays   = new Set(phoneRows.filter(r=>r.status==='delivered').map(r=>r.dateStr));
+
+    // days where BOTH a rejection and a delivery occurred for this phone
+    const sharedDays = [...rejDays].filter(d => delDays.has(d));
+
+    if(sharedDays.length > 0){
+      const branches = [...new Set(phoneRows.map(r=>r.branch))].join(', ');
+      overlapCustomers.push({
+        phone,
+        overlapDays: sharedDays.length,
+        rejCount:  phoneRows.filter(r=>r.status==='rejected').length,
+        delCount:  phoneRows.filter(r=>r.status==='delivered').length,
+        branches
+      });
+    }
+  });
+
+  overlapCustomers.sort((a,b)=>b.overlapDays - a.overlapDays || b.rejCount - a.rejCount);
+
+  const overlapCount = overlapCustomers.length;
+  const overlapPct   = uniqCustFailed > 0
+    ? ((overlapCount / uniqCustFailed) * 100).toFixed(1) + '% מהלקוחות שנכשלו'
+    : '—';
+
+  set('wfOverlapNum', fmtNum(overlapCount));
+  set('wfOverlapPct', overlapCount > 0 ? overlapPct : 'אין חפיפות');
+
+  // colour the overlap number
+  const overlapEl = g('wfOverlapNum');
+  if(overlapEl){
+    overlapEl.style.color = overlapCount > 0 ? 'var(--green)' : 'var(--text3)';
+  }
+
+  // Build table rows (hidden until expanded)
+  let tHtml = '';
+  overlapCustomers.forEach(c => {
+    tHtml += `<tr>
+      <td>${maskPhone(c.phone)}</td>
+      <td style="text-align:center">${c.overlapDays}</td>
+      <td style="text-align:center;color:var(--red)">${c.rejCount}</td>
+      <td style="text-align:center;color:var(--green)">${c.delCount}</td>
+      <td style="font-size:11px;color:var(--text2)">${c.branches}</td>
+    </tr>`;
+  });
+  const tbody = g('wfOverlapTbody');
+  if(tbody) tbody.innerHTML = tHtml || '<tr><td colspan="5" style="text-align:center;color:var(--text3)">אין לקוחות עם חפיפה</td></tr>';
+
+  // update expand button text
+  const btn = g('wfExpandBtn');
+  if(btn && !tHtml) btn.style.display = 'none';
+  else if(btn) btn.style.display = 'inline-block';
+}
+
+function toggleOverlapTable(){
+  const tbl = document.getElementById('wfOverlapTable');
+  const btn = document.getElementById('wfExpandBtn');
+  if(!tbl) return;
+  const isOpen = tbl.classList.toggle('open');
+  if(btn) btn.textContent = isOpen ? '🔼 הסתר רשימה' : '📋 הצג רשימה (' + document.querySelectorAll('#wfOverlapTbody tr').length + ')';
+}
+
 function buildWcCharts(){
   const tab = document.getElementById('tab-weekcomp');
   if(!tab || !tab.classList.contains('active')) return; // only build if visible
@@ -1809,11 +2008,11 @@ function init(){
   allData = loadFromLS();
   if(allData.length){
     selectedDate = getLatestDate(allData); // legacy compat
-    viewPreset = 'today';
-    const [f,t] = presetRange('today');
-    // If today's data exists use it, else fall back to latest date
-    const todayRows = allData.filter(r=>r.dateStr===f);
-    if(todayRows.length){
+    viewPreset = 'yesterday';
+    const [f,t] = presetRange('yesterday');
+    // Default to yesterday; fall back to latest available date
+    const yesterdayRows = allData.filter(r=>r.dateStr===f);
+    if(yesterdayRows.length){
       viewFrom=f; viewTo=t;
     } else {
       const latest = getLatestDate(allData);
