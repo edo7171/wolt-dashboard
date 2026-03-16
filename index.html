@@ -46,18 +46,80 @@ header{position:sticky;top:0;z-index:200;background:rgba(13,17,23,0.97);backdrop
 
 /* DATE NAV BAR */
 .date-nav{background:var(--card);border:1px solid var(--border);border-radius:12px;
-  padding:12px 18px;margin-bottom:14px;display:flex;align-items:center;flex-wrap:wrap;gap:12px}
+  padding:12px 18px;margin-bottom:14px;display:flex;align-items:center;flex-wrap:wrap;gap:10px}
 .date-nav-title{font-size:12px;font-weight:700;color:var(--text2);white-space:nowrap}
-.date-chips{display:flex;gap:6px;flex-wrap:wrap;flex:1}
-.date-chip{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;
+
+/* Quick preset buttons */
+.preset-btns{display:flex;gap:6px;flex-wrap:wrap}
+.preset-btn{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;
   border:1px solid var(--border);background:var(--card2);color:var(--text2);transition:all .2s;white-space:nowrap}
-.date-chip:hover{border-color:var(--blue);color:var(--blue)}
-.date-chip.active{background:var(--blue-dim);border-color:var(--blue);color:var(--blue)}
-.date-chip.today{border-color:var(--green);color:var(--green)}
-.date-chip.today.active{background:var(--green-dim)}
-.date-chip.compare-active{background:var(--orange-dim);border-color:var(--orange);color:var(--orange)}
-.date-nav-sep{width:1px;background:var(--border);height:28px}
+.preset-btn:hover{border-color:var(--blue);color:var(--blue)}
+.preset-btn.active{background:var(--blue-dim);border-color:var(--blue);color:var(--blue)}
+.preset-btn.today-btn{border-color:var(--green);color:var(--green)}
+.preset-btn.today-btn.active{background:var(--green-dim)}
+
+/* Date picker inputs */
+.date-picker-wrap{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.date-picker-sep{color:var(--text3);font-size:12px}
+.dp-input{background:var(--card2);border:1px solid var(--border);color:var(--text);
+  border-radius:8px;padding:5px 10px;font-size:12px;font-family:'Heebo',sans-serif;
+  outline:none;transition:border .2s;cursor:pointer}
+.dp-input:focus,.dp-input:hover{border-color:var(--blue)}
+.dp-input::-webkit-calendar-picker-indicator{filter:invert(0.6) sepia(1) saturate(3) hue-rotate(190deg)}
+
+/* Range display badge */
+.range-badge{background:var(--blue-dim);border:1px solid rgba(0,157,224,.3);color:var(--blue);
+  font-size:11px;padding:3px 10px;border-radius:20px;white-space:nowrap}
+
+/* Compare section */
+.date-nav-sep{width:1px;background:var(--border);height:28px;align-self:stretch}
+.compare-section{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .compare-label{font-size:11px;color:var(--text2);white-space:nowrap}
+.compare-preset{padding:4px 10px;border-radius:16px;font-size:11px;font-weight:600;cursor:pointer;
+  border:1px solid var(--border);background:var(--card2);color:var(--text2);transition:all .2s;white-space:nowrap}
+.compare-preset:hover{border-color:var(--orange);color:var(--orange)}
+.compare-preset.active{background:var(--orange-dim);border-color:var(--orange);color:var(--orange)}
+
+/* ── Week Comparison Section ── */
+.wow-chart-section{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:18px;margin-bottom:14px}
+.wow-chart-header{display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.wow-chart-title{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.wow-chart-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.wow-metric-tabs{display:flex;gap:6px}
+.wm-tab{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;
+  border:1px solid var(--border);background:var(--card2);color:var(--text2);transition:all .2s}
+.wm-tab:hover{border-color:var(--blue);color:var(--blue)}
+.wm-tab.active{background:var(--blue-dim);border-color:var(--blue);color:var(--blue)}
+.wow-legend{display:flex;gap:14px;align-items:center}
+.wl-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-left:5px}
+.wl-label{font-size:11px;color:var(--text2)}
+
+/* Summary KPI row inside chart section */
+.wow-summary-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.wow-sum-card{background:var(--card2);border:1px solid var(--border);border-radius:10px;
+  padding:10px 14px;display:flex;align-items:center;gap:10px}
+.wow-sum-icon{font-size:22px}
+.wow-sum-label{font-size:11px;color:var(--text2);margin-bottom:2px}
+.wow-sum-values{display:flex;align-items:baseline;gap:6px}
+.wow-sum-curr{font-size:18px;font-weight:900}
+.wow-sum-prev{font-size:12px;color:var(--text3)}
+.wow-sum-chg{font-size:11px;font-weight:700;padding:2px 7px;border-radius:12px}
+.wow-sum-chg.up{background:var(--green-dim);color:var(--green)}
+.wow-sum-chg.down{background:var(--red-dim);color:var(--red)}
+.wow-sum-chg.flat{background:var(--card);color:var(--text3)}
+.wow-sum-chg.good-down{background:var(--green-dim);color:var(--green)}
+
+.wow-charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.wow-chart-wrap{position:relative;height:260px}
+.wow-chart-wrap.tall{height:300px}
+@media(max-width:900px){.wow-charts-grid{grid-template-columns:1fr}.wow-summary-row{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.wow-summary-row{grid-template-columns:1fr}}
+
+/* Chips – keep for legacy compat but hidden */
+.date-chips{display:none}
+.date-chip{display:none}
 
 /* GLOBAL FILTER BAR */
 .filter-bar{background:var(--card);border:1px solid var(--border);border-radius:12px;
@@ -300,14 +362,46 @@ tr.refunded-row td{background:rgba(137,87,229,.04)}
 <div class="main">
 
   <div class="date-nav" id="dateNav">
-    <span class="date-nav-title">📅 תאריך מוצג:</span>
-    <div class="date-chips" id="dateChips">
-      <span style="color:var(--text3);font-size:12px">סנכרן מהענן או טען קובץ</span>
+    <span class="date-nav-title">📅 הצג:</span>
+
+    <!-- Quick presets -->
+    <div class="preset-btns" id="presetBtns">
+      <button class="preset-btn today-btn" id="preToday"     onclick="applyPreset('today')">🟢 היום</button>
+      <button class="preset-btn"           id="preYesterday" onclick="applyPreset('yesterday')">📆 אתמול</button>
+      <button class="preset-btn"           id="preCurWeek"   onclick="applyPreset('curweek')">📅 שבוע נוכחי</button>
+      <button class="preset-btn"           id="prePrevWeek"  onclick="applyPreset('prevweek')">⏪ שבוע קודם</button>
+      <button class="preset-btn"           id="preAll"       onclick="applyPreset('all')">🗂️ כל הנתונים</button>
+      <button class="preset-btn"           id="preCustom"    onclick="applyPreset('custom')">🗓️ בחירה ידנית</button>
     </div>
-    <div class="date-nav-sep" id="compareNavSep" style="display:none"></div>
-    <span class="compare-label" id="compareNavLabel" style="display:none">📊 השווה ל:</span>
+
+    <!-- Custom range pickers (shown only when custom selected) -->
+    <div class="date-picker-wrap" id="customPickers" style="display:none">
+      <span style="font-size:11px;color:var(--text2)">מ-</span>
+      <input type="date" class="dp-input" id="dpFrom" onchange="onCustomRange()">
+      <span class="date-picker-sep">—</span>
+      <span style="font-size:11px;color:var(--text2)">עד</span>
+      <input type="date" class="dp-input" id="dpTo"   onchange="onCustomRange()">
+    </div>
+
+    <!-- Active range badge -->
+    <span class="range-badge" id="rangeBadge" style="display:none"></span>
+
+    <div style="flex:1"></div>
+
+    <!-- Compare toggle -->
+    <div class="date-nav-sep" id="compareNavSep"></div>
+    <div class="compare-section">
+      <span class="compare-label">📊 השווה:</span>
+      <button class="compare-preset" id="cmpNone"     onclick="applyComparePreset('')">ללא</button>
+      <button class="compare-preset" id="cmpYest"     onclick="applyComparePreset('yesterday')">אתמול</button>
+      <button class="compare-preset" id="cmpPrevWeek" onclick="applyComparePreset('prevweek')">שבוע קודם</button>
+      <button class="compare-preset" id="cmpCustom"   onclick="applyComparePreset('custom')">בחירה…</button>
+      <input type="date" class="dp-input" id="dpCompare" style="display:none" onchange="onCompareDate()">
+    </div>
+
+    <!-- hidden legacy elements so old JS refs don't crash -->
+    <div class="date-chips" id="dateChips" style="display:none"></div>
     <div class="date-chips" id="compareChips" style="display:none"></div>
-    <button class="btn btn-secondary" style="padding:4px 10px;font-size:11px" onclick="toggleCompareMode()" id="compareModeBtn">➕ הוסף השוואה</button>
   </div>
 
   <div class="filter-bar" id="filterBar">
@@ -428,6 +522,7 @@ tr.refunded-row td{background:rgba(137,87,229,.04)}
     <button class="tab-btn" onclick="switchTab('branches',this)">🏪 סניפים</button>
     <button class="tab-btn" onclick="switchTab('customers',this)">👥 לקוחות</button>
     <button class="tab-btn" onclick="switchTab('trends',this)">📈 טרנדים</button>
+    <button class="tab-btn" onclick="switchTab('weekcomp',this)" id="weekCompTabBtn">📅 שבוע vs שבוע</button>
     <button class="tab-btn" onclick="switchTab('orders',this)">📋 הזמנות</button>
   </div>
 
@@ -548,6 +643,112 @@ tr.refunded-row td{background:rgba(137,87,229,.04)}
     </div>
   </div>
 
+  <!-- ══════════════════════════════════════════ -->
+  <!--  WEEK COMPARISON TAB                       -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="tab-pane" id="tab-weekcomp">
+
+    <!-- Summary KPIs -->
+    <div class="wow-chart-section">
+      <div class="wow-chart-header">
+        <div>
+          <div class="wow-chart-title">📅 השוואת שבועות — סיכום</div>
+          <div class="wow-chart-sub" id="wcRangeLabel">שבוע נוכחי מול שבוע קודם</div>
+        </div>
+        <div class="wow-legend">
+          <span><span class="wl-dot" style="background:var(--blue)"></span><span class="wl-label">שבוע נוכחי</span></span>
+          <span><span class="wl-dot" style="background:var(--orange)"></span><span class="wl-label">שבוע קודם</span></span>
+        </div>
+      </div>
+      <div class="wow-summary-row">
+        <div class="wow-sum-card">
+          <div class="wow-sum-icon">📦</div>
+          <div>
+            <div class="wow-sum-label">הזמנות</div>
+            <div class="wow-sum-values">
+              <span class="wow-sum-curr" id="wcKpiOrdersCurr" style="color:var(--blue)">—</span>
+              <span class="wow-sum-prev" id="wcKpiOrdersPrev">vs —</span>
+              <span class="wow-sum-chg flat" id="wcKpiOrdersChg">—</span>
+            </div>
+          </div>
+        </div>
+        <div class="wow-sum-card">
+          <div class="wow-sum-icon">💰</div>
+          <div>
+            <div class="wow-sum-label">מכירות (GOV)</div>
+            <div class="wow-sum-values">
+              <span class="wow-sum-curr" id="wcKpiSalesCurr" style="color:var(--green)">—</span>
+              <span class="wow-sum-prev" id="wcKpiSalesPrev">vs —</span>
+              <span class="wow-sum-chg flat" id="wcKpiSalesChg">—</span>
+            </div>
+          </div>
+        </div>
+        <div class="wow-sum-card">
+          <div class="wow-sum-icon">❌</div>
+          <div>
+            <div class="wow-sum-label">דחיות</div>
+            <div class="wow-sum-values">
+              <span class="wow-sum-curr" id="wcKpiRejCurr" style="color:var(--red)">—</span>
+              <span class="wow-sum-prev" id="wcKpiRejPrev">vs —</span>
+              <span class="wow-sum-chg flat" id="wcKpiRejChg">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3-metric grouped bar chart -->
+      <div class="wow-chart-wrap">
+        <canvas id="chartWcSummary"></canvas>
+      </div>
+    </div>
+
+    <!-- Daily breakdown charts -->
+    <div class="wow-charts-grid">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">📦 הזמנות יומיות</div>
+            <div class="chart-sub">כחול = שבוע נוכחי | כתום = שבוע קודם</div>
+          </div>
+          <div class="wow-metric-tabs" id="wcMetricTabs">
+            <button class="wm-tab active" id="wmTabOrders"  onclick="switchWcMetric('orders')">הזמנות</button>
+            <button class="wm-tab"        id="wmTabSales"   onclick="switchWcMetric('sales')">מכירות</button>
+            <button class="wm-tab"        id="wmTabRej"     onclick="switchWcMetric('rejections')">דחיות</button>
+          </div>
+        </div>
+        <div class="wow-chart-wrap tall">
+          <canvas id="chartWcDaily"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">📊 % שינוי יומי</div>
+            <div class="chart-sub">ירוק = שיפור | אדום = ירידה</div>
+          </div>
+        </div>
+        <div class="wow-chart-wrap tall">
+          <canvas id="chartWcDelta"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Branch breakdown -->
+    <div class="wow-chart-section" style="margin-top:12px">
+      <div class="wow-chart-header">
+        <div>
+          <div class="wow-chart-title">🏪 השוואת סניפים — שבוע vs שבוע</div>
+          <div class="chart-sub">Top 12 סניפים לפי כמות הזמנות בשבוע נוכחי</div>
+        </div>
+      </div>
+      <div class="wow-chart-wrap tall" style="height:340px">
+        <canvas id="chartWcBranch"></canvas>
+      </div>
+    </div>
+
+  </div>
+  <!-- END WEEK COMP TAB -->
+
   <div class="tab-pane" id="tab-orders">
     <div class="filters mb12">
       <input class="filter-input" id="orderSearch" placeholder="🔍 חיפוש..." oninput="filterOrders()" style="width:190px">
@@ -584,9 +785,19 @@ const PAGE_SIZE = 30;
 const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTAtc0vyPuariz_HuCrOWuZmjDc2CbUpvZxWemBbNfjvYNMLFXG1nBRWZQSQwu1Cl5Yi2ZY8nuL2s52/pub?gid=0&single=true&output=csv'; 
 
 let allData = [];          // ALL accumulated orders
-let selectedDate = '';     
-let compareDate = '';      
-let compareMode = false;   
+let selectedDate = '';     // legacy – kept for compat
+let compareDate = '';      // legacy – kept for compat
+let compareMode = false;   // legacy
+
+// ── New range-based selection state ──
+// viewFrom / viewTo : DD/MM/YYYY strings (inclusive), '' = no bound
+let viewFrom  = '';
+let viewTo    = '';
+let viewPreset = 'today';  // 'today'|'yesterday'|'curweek'|'prevweek'|'all'|'custom'
+
+let cmpPreset  = '';       // ''|'yesterday'|'prevweek'|'custom'
+let cmpFrom   = '';
+let cmpTo     = '';
 
 // Filter state
 let fbBranchVal = '', fbStatusVal = '', fbRejMsgVal = '';
@@ -628,10 +839,15 @@ async function loadFromGoogleSheets() {
         } else {
             const newDates = [...new Set(newRows.map(r => r.dateStr).filter(Boolean))];
             newDates.forEach(d => { allData = allData.filter(r => r.dateStr !== d); });
-            
             allData = [...allData, ...newRows];
             saveToLS();
-            selectedDate = newDates[0];
+            selectedDate = newDates[0]; // legacy
+            viewPreset = 'today';
+            const [gsf,gst] = presetRange('today');
+            const todayRows2 = allData.filter(r=>r.dateStr===gsf);
+            if(todayRows2.length){ viewFrom=gsf; viewTo=gst; }
+            else { viewFrom=newDates[0]; viewTo=newDates[0]; viewPreset='custom'; }
+            cmpFrom=''; cmpTo=''; cmpPreset='';
             refreshAll();
             console.log('סנכרון מהענן הושלם');
         }
@@ -821,8 +1037,17 @@ function loadFile(input) {
       allData = [...allData, ...newRows];
       saveToLS();
       newDates.sort((a,b)=>dateToSortKey(b)-dateToSortKey(a));
-      selectedDate = newDates[0];
-      compareDate = ''; 
+      selectedDate = newDates[0]; // legacy
+      compareDate = '';
+      viewPreset = 'today';
+      const [f,t] = presetRange('today');
+      const todayRows = allData.filter(r=>r.dateStr===f);
+      if(todayRows.length){
+        viewFrom=f; viewTo=t;
+      } else {
+        viewFrom=newDates[0]; viewTo=newDates[0]; viewPreset='custom';
+      }
+      cmpFrom=''; cmpTo=''; cmpPreset='';
       refreshAll();
     } catch(ex) {
       alert('שגיאה בקריאת הקובץ: '+ex.message);
@@ -834,61 +1059,135 @@ function loadFile(input) {
 }
 
 // ══════════════════════════════════════════════════════════
-//  DATE NAVIGATION
+//  DATE HELPERS & NAVIGATION
 // ══════════════════════════════════════════════════════════
-function buildDateNav() {
-  const dates = getAvailableDates(allData);
-  const chipsEl = document.getElementById('dateChips');
-  const compareEl = document.getElementById('compareChips');
-  document.getElementById('dmDaysCount').textContent = dates.length;
 
-  if(!dates.length){
-    chipsEl.innerHTML = '<span style="color:var(--text3);font-size:12px">סנכרן מהענן או טען קובץ</span>';
-    compareEl.innerHTML = '';
-    return;
+// DD/MM/YYYY <-> Date <-> YYYY-MM-DD conversions
+function dmy2date(s){ if(!s)return null; const p=s.split('/'); if(p.length<3)return null; const d=new Date(+p[2],+p[1]-1,+p[0]); return isNaN(d)?null:d; }
+function date2dmy(d){ if(!d||isNaN(d))return ''; return d.getDate().toString().padStart(2,'0')+'/'+(d.getMonth()+1).toString().padStart(2,'0')+'/'+d.getFullYear(); }
+function date2iso(d){ if(!d||isNaN(d))return ''; return d.getFullYear()+'-'+(d.getMonth()+1).toString().padStart(2,'0')+'-'+d.getDate().toString().padStart(2,'0'); }
+function iso2date(s){ if(!s)return null; const d=new Date(s+'T00:00:00'); return isNaN(d)?null:d; }
+function addDays(d,n){ const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+// Monday of the week containing d (ISO week: Mon=start)
+function weekStart(d){ const r=new Date(d); const day=r.getDay(); const diff=(day===0?-6:1-day); r.setDate(r.getDate()+diff); return r; }
+
+// Compute [fromDMY, toDMY] for a preset
+function presetRange(preset){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const yesterday = addDays(today,-1);
+  const monThis = weekStart(today);
+  const sunThis = addDays(monThis,6);
+  const monPrev = addDays(monThis,-7);
+  const sunPrev = addDays(monThis,-1);
+  switch(preset){
+    case 'today':     return [date2dmy(today),     date2dmy(today)];
+    case 'yesterday': return [date2dmy(yesterday), date2dmy(yesterday)];
+    case 'curweek':   return [date2dmy(monThis),   date2dmy(sunThis)];
+    case 'prevweek':  return [date2dmy(monPrev),   date2dmy(sunPrev)];
+    case 'all':       return ['',''];
+    default:          return ['',''];
   }
-
-  if(!selectedDate || !dates.includes(selectedDate)) selectedDate = dates[0];
-
-  let html = '';
-  const todayStr = fmtDate(new Date());
-  dates.forEach(d => {
-    const isToday = d===todayStr;
-    const isActive = d===selectedDate;
-    html += `<span class="date-chip${isActive?' active':''}${isToday?' today':''}" onclick="selectDate('${d}')">${isToday?'🟢 ':''} ${d}${isToday?' (היום)':''}</span>`;
-  });
-  chipsEl.innerHTML = html;
-
-  const compareDates = dates.filter(d=>d!==selectedDate);
-  let chtml = '<span class="date-chip" onclick="selectCompare(\'\')" style="'+(compareDate?'':'font-style:italic;opacity:.6')+'"">ללא השוואה</span>';
-  compareDates.forEach(d => {
-    const isActive = d===compareDate;
-    chtml += `<span class="date-chip${isActive?' compare-active':''}" onclick="selectCompare('${d}')">${d}</span>`;
-  });
-  compareEl.innerHTML = chtml;
-
-  const showCompare = compareMode && dates.length > 1;
-  document.getElementById('compareNavSep').style.display = showCompare?'block':'none';
-  document.getElementById('compareNavLabel').style.display = showCompare?'block':'none';
-  compareEl.style.display = showCompare?'flex':'none';
-  document.getElementById('compareModeBtn').textContent = compareMode ? '➖ הסתר השוואה' : '➕ הוסף השוואה';
-  document.getElementById('hdrSub').textContent = `${dates.length} ימים | ${allData.length.toLocaleString('he-IL')} הזמנות`;
 }
 
+// Apply a preset to the main view
+function applyPreset(preset){
+  viewPreset = preset;
+  const pickerWrap = document.getElementById('customPickers');
+  if(preset==='custom'){
+    pickerWrap.style.display='flex';
+    const f = viewFrom ? dmy2date(viewFrom) : new Date();
+    const t = viewTo   ? dmy2date(viewTo)   : new Date();
+    document.getElementById('dpFrom').value = date2iso(f||new Date());
+    document.getElementById('dpTo').value   = date2iso(t||new Date());
+  } else {
+    pickerWrap.style.display='none';
+    const [f,t] = presetRange(preset);
+    viewFrom = f; viewTo = t;
+    refreshAll();
+  }
+  updatePresetUI();
+}
+
+// Handle custom range picker changes
+function onCustomRange(){
+  const f = document.getElementById('dpFrom').value;
+  const t = document.getElementById('dpTo').value;
+  if(f) viewFrom = date2dmy(iso2date(f));
+  if(t) viewTo   = date2dmy(iso2date(t));
+  if(f && t) refreshAll();
+}
+
+// Update visual active state of preset buttons + range badge
+function updatePresetUI(){
+  const map = {'pretoday':'today','preyesterday':'yesterday','precurweek':'curweek','preprevweek':'prevweek','preall':'all','precustom':'custom'};
+  Object.entries(map).forEach(([id,p])=>{
+    const el=document.getElementById(id); if(el) el.classList.toggle('active', p===viewPreset);
+  });
+  const badge = document.getElementById('rangeBadge');
+  if(viewFrom||viewTo){
+    const lbl = (viewFrom&&viewTo&&viewFrom===viewTo) ? viewFrom
+              : (viewFrom&&viewTo) ? viewFrom+' — '+viewTo
+              : (viewFrom||viewTo);
+    badge.textContent = '📅 '+lbl;
+    badge.style.display = 'inline-flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+// Compare preset
+function applyComparePreset(preset){
+  cmpPreset = preset;
+  document.getElementById('dpCompare').style.display = (preset==='custom') ? 'inline-block' : 'none';
+  if(preset==='custom'){
+    cmpFrom=''; cmpTo='';
+  } else if(preset===''){
+    cmpFrom=''; cmpTo='';
+    updateCompareUI(); updateAll();
+  } else {
+    const [f,t] = presetRange(preset);
+    cmpFrom=f; cmpTo=t;
+    updateCompareUI(); updateAll();
+  }
+}
+function onCompareDate(){
+  const v=document.getElementById('dpCompare').value;
+  if(v){ cmpFrom=date2dmy(iso2date(v)); cmpTo=cmpFrom; updateCompareUI(); updateAll(); }
+}
+function updateCompareUI(){
+  const map={'cmpnone':'','cmpyest':'yesterday','cmpprevweek':'prevweek','cmpcustom':'custom'};
+  Object.entries(map).forEach(([id,p])=>{
+    const el=document.getElementById(id); if(el) el.classList.toggle('active', p===cmpPreset);
+  });
+}
+
+function buildDateNav() {
+  const dates = getAvailableDates(allData);
+  document.getElementById('dmDaysCount').textContent = dates.length;
+  document.getElementById('hdrSub').textContent = `${dates.length} ימים | ${allData.length.toLocaleString('he-IL')} הזמנות`;
+  // If no explicit range yet, try to set 'today'
+  if(!viewFrom && !viewTo && viewPreset==='today' && dates.length){
+    const [f,t] = presetRange('today');
+    viewFrom=f; viewTo=t;
+  }
+  updatePresetUI();
+  updateCompareUI();
+}
+
+
 function selectDate(d) {
-  selectedDate = d;
-  if(compareDate === d) compareDate = ''; 
+  // legacy – used by old chips if any
+  viewFrom = d; viewTo = d;
   refreshAll();
 }
 function selectCompare(d) {
-  compareDate = d;
-  refreshAll();
+  // legacy
+  cmpFrom = d; cmpTo = d;
+  if(!d){ cmpPreset=''; cmpFrom=''; cmpTo=''; }
+  updateAll();
 }
 function toggleCompareMode() {
-  compareMode = !compareMode;
-  if(!compareMode) compareDate = '';
-  buildDateNav();
-  updateAll();
+  // legacy no-op, compare is always accessible via presets
 }
 
 // ══════════════════════════════════════════════════════════
@@ -929,16 +1228,37 @@ function resetFilters() {
   updateAll();
 }
 
+// Is dateStr d within [from, to] range? (DD/MM/YYYY, '' = unbounded)
+function inRange(d, from, to){
+  const k  = dateToSortKey(d);
+  const kf = from ? dateToSortKey(from) : 0;
+  const kt = to   ? dateToSortKey(to)   : 99999999;
+  return k>=kf && k<=kt;
+}
+
 function getViewData() {
-  let data = selectedDate ? allData.filter(r=>r.dateStr===selectedDate) : allData;
+  let data;
+  if(!viewFrom && !viewTo){
+    data = allData; // 'כל הנתונים'
+  } else if(viewFrom===viewTo && viewFrom){
+    data = allData.filter(r=>r.dateStr===viewFrom);
+  } else {
+    data = allData.filter(r=>inRange(r.dateStr, viewFrom, viewTo));
+  }
   if(fbBranchVal) data=data.filter(r=>r.branch===fbBranchVal);
   if(fbStatusVal) data=data.filter(r=>r.status===fbStatusVal);
   if(fbRejMsgVal) data=data.filter(r=>r.rejMsg===fbRejMsgVal);
   return data;
 }
+
 function getCompareData() {
-  if(!compareDate) return null;
-  let data = allData.filter(r=>r.dateStr===compareDate);
+  if(!cmpFrom && !cmpTo) return null;
+  let data;
+  if(cmpFrom===cmpTo && cmpFrom){
+    data = allData.filter(r=>r.dateStr===cmpFrom);
+  } else {
+    data = allData.filter(r=>inRange(r.dateStr, cmpFrom, cmpTo));
+  }
   if(fbBranchVal) data=data.filter(r=>r.branch===fbBranchVal);
   return data;
 }
@@ -991,7 +1311,12 @@ function computeStats(data) {
 
 function refreshAll() {
   buildDateNav();
-  buildFilterBar(selectedDate ? allData.filter(r=>r.dateStr===selectedDate) : allData);
+  // filter bar options based on current view (before filters)
+  let fbData;
+  if(!viewFrom && !viewTo) fbData = allData;
+  else if(viewFrom===viewTo && viewFrom) fbData = allData.filter(r=>r.dateStr===viewFrom);
+  else fbData = allData.filter(r=>inRange(r.dateStr, viewFrom, viewTo));
+  buildFilterBar(fbData);
   updateAll();
 }
 
@@ -1002,10 +1327,13 @@ function updateAll() {
   const p = compareDataArr ? computeStats(compareDataArr) : null;
 
   const isFiltered = fbBranchVal||fbStatusVal||fbRejMsgVal;
-  const totalForDate = selectedDate ? allData.filter(r=>r.dateStr===selectedDate).length : allData.length;
+  let totalForRange;
+  if(!viewFrom && !viewTo) totalForRange = allData.length;
+  else if(viewFrom===viewTo && viewFrom) totalForRange = allData.filter(r=>r.dateStr===viewFrom).length;
+  else totalForRange = allData.filter(r=>inRange(r.dateStr, viewFrom, viewTo)).length;
   document.getElementById('fbCount').textContent = isFiltered
-    ? `מציג ${viewData.length} מתוך ${totalForDate}`
-    : `סה"כ ${totalForDate} הזמנות`;
+    ? `מציג ${viewData.length} מתוך ${totalForRange}`
+    : `סה"כ ${totalForRange} הזמנות`;
 
   updateWow(c, p);
   updateKPIs(c, p);
@@ -1018,6 +1346,9 @@ function updateAll() {
   buildHeatmap(viewData);
   buildOrdersTable(viewData);
   buildOrderLocalBranchFilter(c.branches);
+  // rebuild week-comp if tab is visible
+  const wcPane=document.getElementById('tab-weekcomp');
+  if(wcPane&&wcPane.classList.contains('active')) buildWcCharts();
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1251,6 +1582,7 @@ function switchTab(id,btn){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+id)?.classList.add('active');
   btn.classList.add('active');
+  if(id==='weekcomp') buildWcCharts();
 }
 
 function sortTable(tbl,col){
@@ -1259,10 +1591,235 @@ function sortTable(tbl,col){
   if(tbl==='branch') sortAndRenderBranch();
 }
 
+// ══════════════════════════════════════════════════════════
+//  WEEK COMPARISON CHARTS
+// ══════════════════════════════════════════════════════════
+let wcMetric = 'orders';   // current metric shown in daily chart
+
+function switchWcMetric(m){
+  wcMetric = m;
+  ['wmTabOrders','wmTabSales','wmTabRej'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  const tabMap={orders:'wmTabOrders',sales:'wmTabSales',rejections:'wmTabRej'};
+  document.getElementById(tabMap[m])?.classList.add('active');
+  buildWcCharts();
+}
+
+// Aggregate data by day-of-week (Mon=0..Sun=6) for a given date range
+function aggregateByDay(data, fromDMY, toDMY){
+  const days=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+  // Build a map date->stats
+  const dateMap = {};
+  data.forEach(r=>{
+    if(!r.dateStr) return;
+    if(!dateMap[r.dateStr]) dateMap[r.dateStr]={orders:0,sales:0,rejections:0,delivered:0};
+    const d = dateMap[r.dateStr];
+    d.orders++;
+    if(r.status==='delivered'){ d.sales+=r.gov; d.delivered++; }
+    if(r.status==='rejected')  d.rejections++;
+  });
+  // Get sorted dates in range
+  const filtered = Object.keys(dateMap)
+    .filter(d=>inRange(d,fromDMY,toDMY))
+    .sort((a,b)=>dateToSortKey(a)-dateToSortKey(b));
+  return filtered.map(d=>{
+    const jsDate = dmy2date(d);
+    const dayIdx = jsDate ? jsDate.getDay() : 0; // 0=Sun,1=Mon,...,6=Sat
+    return {
+      date: d,
+      label: (jsDate ? days[dayIdx] : d) + '\n' + d,
+      shortLabel: d,
+      dayLabel: jsDate ? days[dayIdx] : d,
+      ...dateMap[d]
+    };
+  });
+}
+
+function buildWcCharts(){
+  const tab = document.getElementById('tab-weekcomp');
+  if(!tab || !tab.classList.contains('active')) return; // only build if visible
+
+  // Determine week ranges
+  const [cwFrom,cwTo] = presetRange('curweek');
+  const [pwFrom,pwTo] = presetRange('prevweek');
+
+  const cwData = allData.filter(r=>inRange(r.dateStr,cwFrom,cwTo));
+  const pwData = allData.filter(r=>inRange(r.dateStr,pwFrom,pwTo));
+
+  const cwStats = computeStats(cwData);
+  const pwStats = computeStats(pwData);
+
+  // Update range label
+  const lbl = document.getElementById('wcRangeLabel');
+  if(lbl) lbl.textContent = cwFrom+' — '+cwTo + '  vs  ' + pwFrom+' — '+pwTo;
+
+  // ── KPI summary cards ──────────────────────────
+  function wcChg(curr,prev,invertGood=false){
+    if(!prev) return {cls:'flat',txt:'—'};
+    const pct=((curr-prev)/Math.abs(prev)*100);
+    const isUp=pct>=0;
+    const isGood = invertGood ? !isUp : isUp;
+    return {cls: isGood?'up':(invertGood&&isUp?'down':'down'), txt:(isUp?'▲':'▼')+Math.abs(pct).toFixed(1)+'%'};
+  }
+  function setKpi(idCurr,idPrev,idChg,curr,prev,fmt,invertGood=false){
+    const el=(id)=>document.getElementById(id);
+    if(el(idCurr)) el(idCurr).textContent = fmt(curr);
+    if(el(idPrev)) el(idPrev).textContent  = 'vs '+fmt(prev);
+    if(el(idChg)){
+      const {cls,txt}=wcChg(curr,prev,invertGood);
+      el(idChg).className='wow-sum-chg '+cls;
+      el(idChg).textContent=txt;
+    }
+  }
+  setKpi('wcKpiOrdersCurr','wcKpiOrdersPrev','wcKpiOrdersChg', cwStats.total,    pwStats.total,    fmtNum);
+  setKpi('wcKpiSalesCurr', 'wcKpiSalesPrev', 'wcKpiSalesChg',  cwStats.sales,    pwStats.sales,    fmtMoney);
+  setKpi('wcKpiRejCurr',   'wcKpiRejPrev',   'wcKpiRejChg',    cwStats.rejected, pwStats.rejected, fmtNum, true);
+
+  // ── Summary grouped bar (orders, sales normalised, rejections) ─
+  const pctSales = pwStats.sales ? Math.round(cwStats.sales/pwStats.sales*100) : 0;
+  const pctOrders= pwStats.total ? Math.round(cwStats.total/pwStats.total*100) : 0;
+  const pctRej   = pwStats.rejected ? Math.round(cwStats.rejected/pwStats.rejected*100) : 0;
+  mkChart('chartWcSummary',{
+    type:'bar',
+    data:{
+      labels:['הזמנות','מכירות','דחיות'],
+      datasets:[
+        {label:'שבוע נוכחי', data:[cwStats.total,cwStats.sales,cwStats.rejected],
+          backgroundColor:['rgba(0,157,224,.8)','rgba(46,160,67,.8)','rgba(218,54,51,.8)'],
+          borderRadius:6, borderWidth:0},
+        {label:'שבוע קודם',  data:[pwStats.total,pwStats.sales,pwStats.rejected],
+          backgroundColor:['rgba(0,157,224,.25)','rgba(46,160,67,.25)','rgba(218,54,51,.25)'],
+          borderRadius:6, borderWidth:1,
+          borderColor:['rgba(0,157,224,.5)','rgba(46,160,67,.5)','rgba(218,54,51,.5)']}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#8B949E',font:{size:11}}}},
+      scales:{
+        x:{ticks:{color:'#8B949E'},grid:{color:'rgba(48,54,61,.5)'}},
+        y:{ticks:{color:'#8B949E'},grid:{color:'rgba(48,54,61,.5)'}}
+      }
+    }
+  });
+
+  // ── Daily breakdown chart ───────────────────────
+  const cwDays = aggregateByDay(cwData, cwFrom, cwTo);
+  const pwDays = aggregateByDay(pwData, pwFrom, pwTo);
+
+  const metricLabel = {orders:'הזמנות',sales:'מכירות ₪',rejections:'דחיות'};
+  const metricColor = {orders:'rgba(0,157,224,.8)',sales:'rgba(46,160,67,.8)',rejections:'rgba(218,54,51,.8)'};
+  const metricColorDim={orders:'rgba(0,157,224,.25)',sales:'rgba(46,160,67,.25)',rejections:'rgba(218,54,51,.25)'};
+
+  mkChart('chartWcDaily',{
+    type:'bar',
+    data:{
+      labels: cwDays.map(d=>d.shortLabel),
+      datasets:[
+        {label:'שבוע נוכחי', data:cwDays.map(d=>d[wcMetric]),
+          backgroundColor:metricColor[wcMetric], borderRadius:5, borderWidth:0,
+          order:2},
+        {label:'שבוע קודם',  data:pwDays.map(d=>d[wcMetric]),
+          backgroundColor:metricColorDim[wcMetric],
+          borderColor:metricColor[wcMetric].replace(/\.8/,'.5'), borderWidth:1,
+          borderRadius:5, order:3},
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#8B949E',font:{size:11}}}},
+      scales:{
+        x:{ticks:{color:'#8B949E',maxRotation:45},grid:{color:'rgba(48,54,61,.5)'}},
+        y:{ticks:{color:'#8B949E'},grid:{color:'rgba(48,54,61,.5)'}}
+      }
+    }
+  });
+
+  // ── Delta chart (% change day by day) ─────────
+  const maxLen = Math.min(cwDays.length, pwDays.length);
+  const deltaLabels=[], deltaData=[], deltaColors=[];
+  for(let i=0;i<maxLen;i++){
+    const curr=cwDays[i][wcMetric], prev=pwDays[i][wcMetric];
+    const pct = prev ? ((curr-prev)/Math.abs(prev)*100) : 0;
+    deltaLabels.push(cwDays[i].shortLabel);
+    deltaData.push(parseFloat(pct.toFixed(1)));
+    // for rejections, negative delta is GREEN (good); for orders/sales positive is GREEN
+    const invertGoodForRej = wcMetric==='rejections';
+    const isGood = invertGoodForRej ? pct<=0 : pct>=0;
+    deltaColors.push(isGood ? 'rgba(46,160,67,.8)' : 'rgba(218,54,51,.8)');
+  }
+  mkChart('chartWcDelta',{
+    type:'bar',
+    data:{
+      labels:deltaLabels,
+      datasets:[{
+        label:'% שינוי',
+        data:deltaData,
+        backgroundColor:deltaColors,
+        borderRadius:5,borderWidth:0
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>ctx.raw+'%'}}
+      },
+      scales:{
+        x:{ticks:{color:'#8B949E',maxRotation:45},grid:{color:'rgba(48,54,61,.5)'}},
+        y:{
+          ticks:{color:'#8B949E',callback:v=>v+'%'},
+          grid:{color:'rgba(48,54,61,.5)'},
+          border:{dash:[4,4]}
+        }
+      }
+    }
+  });
+
+  // ── Branch comparison horizontal bar ──────────
+  const cwBMap={}, pwBMap={};
+  cwStats.branches.forEach(b=>cwBMap[b.name]={orders:b.total,sales:b.gov,rejections:b.rejected});
+  pwStats.branches.forEach(b=>pwBMap[b.name]={orders:b.total,sales:b.gov,rejections:b.rejected});
+  const allBranches=[...new Set([...Object.keys(cwBMap),...Object.keys(pwBMap)])];
+  const topBranches=allBranches.sort((a,b)=>(cwBMap[b]?.orders||0)-(cwBMap[a]?.orders||0)).slice(0,12);
+  mkChart('chartWcBranch',{
+    type:'bar',
+    data:{
+      labels:topBranches,
+      datasets:[
+        {label:'שבוע נוכחי', data:topBranches.map(n=>cwBMap[n]?.orders||0),
+          backgroundColor:'rgba(0,157,224,.7)', borderRadius:4, borderWidth:0},
+        {label:'שבוע קודם',  data:topBranches.map(n=>pwBMap[n]?.orders||0),
+          backgroundColor:'rgba(227,179,65,.5)', borderRadius:4, borderWidth:1,
+          borderColor:'rgba(227,179,65,.6)'}
+      ]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#8B949E',font:{size:11}}}},
+      scales:{
+        x:{ticks:{color:'#8B949E'},grid:{color:'rgba(48,54,61,.5)'}},
+        y:{ticks:{color:'#E6EDF3',font:{size:11}},grid:{display:false}}
+      }
+    }
+  });
+}
+
 function init(){
   allData = loadFromLS();
   if(allData.length){
-    selectedDate = getLatestDate(allData);
+    selectedDate = getLatestDate(allData); // legacy compat
+    viewPreset = 'today';
+    const [f,t] = presetRange('today');
+    // If today's data exists use it, else fall back to latest date
+    const todayRows = allData.filter(r=>r.dateStr===f);
+    if(todayRows.length){
+      viewFrom=f; viewTo=t;
+    } else {
+      const latest = getLatestDate(allData);
+      viewFrom=latest; viewTo=latest;
+      viewPreset='custom'; // flag as custom single date
+    }
     refreshAll();
   }
   
