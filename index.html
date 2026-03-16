@@ -126,7 +126,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(13,17,23,0.97);backdrop
   border:1px solid rgba(0,157,224,.25);border-radius:10px;padding:1px 8px;font-weight:600}
 
 /* KPI row inside panel */
-.wf-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:0}
+.wf-kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:0}
 .wf-kpi{background:var(--card2);border:1px solid var(--border);border-radius:10px;
   padding:10px 12px;text-align:center}
 .wf-kpi .v{display:block;font-size:22px;font-weight:900;line-height:1.1}
@@ -482,7 +482,7 @@ tr.refunded-row td{background:rgba(137,87,229,.04)}
     <!-- Panel A: שבוע נוכחי כשלות -->
     <div class="wf-panel highlight">
       <div class="wf-title">
-        📅 כשלות שבוע נוכחי
+        📅 סה"כ שבוע נוכחי
         <span class="wf-range-badge" id="wfWeekRange">—</span>
       </div>
       <div class="wf-sub">נתוני השבוע הנוכחי — ראשון עד שבת — ללא תלות בפילטר הנוכחי</div>
@@ -502,6 +502,10 @@ tr.refunded-row td{background:rgba(137,87,229,.04)}
         <div class="wf-kpi purple">
           <span class="v" id="wfKpiUniqOrders">—</span>
           <span class="l">הזמנות ייחודיות<br>שנכשלו</span>
+        </div>
+        <div class="wf-kpi" style="border-color:rgba(46,160,67,.35)">
+          <span class="v" id="wfKpiPureFailCust" style="color:var(--green)">—</span>
+          <span class="l">כשל ייחודי<br>(נכשלו בלבד)</span>
         </div>
       </div>
     </div>
@@ -1763,6 +1767,7 @@ function buildWeekFailurePanels(){
   set('wfKpiFails',     fmtNum(failRowsCount));
   set('wfKpiUniqCust',  fmtNum(uniqCustFailed));
   set('wfKpiUniqOrders',fmtNum(uniqFailOrders));
+  // wfKpiPureFailCust is set after overlap is computed — see below
 
   // ── Panel B: overlap customers ─────────────────────────
   // For each phone that had at least one rejection,
@@ -1791,7 +1796,11 @@ function buildWeekFailurePanels(){
 
   overlapCustomers.sort((a,b)=>b.overlapDays - a.overlapDays || b.rejCount - a.rejCount);
 
-  const overlapCount = overlapCustomers.length;
+  const overlapCount    = overlapCustomers.length;
+  // כשל ייחודי = לקוחות שנכשלו MINUS אלה שגם הצליחו באותו יום
+  const pureFailCount   = Math.max(0, uniqCustFailed - overlapCount);
+  set('wfKpiPureFailCust', fmtNum(pureFailCount));
+
   const overlapPct   = uniqCustFailed > 0
     ? ((overlapCount / uniqCustFailed) * 100).toFixed(1) + '% מהלקוחות שנכשלו'
     : '—';
