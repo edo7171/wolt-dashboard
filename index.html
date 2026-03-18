@@ -1860,9 +1860,10 @@ tr.refunded-row td{background:rgba(137,87,229,.04)}
     <div class="monthly-section mb16" id="tmMonthlySection">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px">
         <div class="tm-chart-title" style="margin-bottom:0">📆 מצטבר חודשי לפי סניף</div>
-        <div class="monthly-month-select" id="tmMonthButtons" style="margin-bottom:0">
-          <!-- month buttons injected by JS -->
+        <div id="tmCurrentMonthLabel" style="font-size:13px;color:var(--orange);font-weight:700;padding:4px 14px;background:var(--orange-dim);border-radius:20px;border:1px solid var(--orange);">
+          <!-- current month label injected by JS -->
         </div>
+        <div id="tmMonthButtons" style="display:none"><!-- hidden --></div>
       </div>
       <div id="tmMonthCompareInfo" style="font-size:11px;color:var(--text2);margin-bottom:12px;background:var(--card2);border-radius:8px;padding:8px 12px;"></div>
 
@@ -3221,11 +3222,20 @@ function tmParseRows(raw) {
     const dateStr = dt ? fmtDate(dt) : '';
     if (!dateStr) return null;
 
-    // Branch — strip trailing " |" e.g. "Domino's Pizza | Holon |" → "Holon"
+    // Branch — handles all formats:
+    //   "Domino's Pizza | Holon |"  → "Holon"
+    //   "Holon |"                   → "Holon"  (trailing pipe only)
+    //   "Holon"                     → "Holon"
     const rawBranch = branchCol ? String(r[branchCol] || '') : '';
-    const branch = rawBranch.includes(' | ')
-      ? rawBranch.split(' | ')[1].replace(/\s*\|?\s*$/, '').trim()
-      : rawBranch.trim() || 'לא ידוע';
+    let branch;
+    if (rawBranch.includes(' | ')) {
+      // Format: "Chain | BranchName |" → take the last non-empty part before trailing |
+      const parts = rawBranch.split(' | ').map(p => p.replace(/\s*\|+\s*$/, '').trim()).filter(Boolean);
+      branch = parts[parts.length - 1] || rawBranch.replace(/\s*\|+\s*$/, '').trim() || 'לא ידוע';
+    } else {
+      // Format: "BranchName |" or "BranchName" — just strip trailing pipes/spaces
+      branch = rawBranch.replace(/\s*\|+\s*$/, '').trim() || 'לא ידוע';
+    }
 
     // Orders
     // ── FIX: if ordersCol not found → treat each row as 1 order (order-level sheet)
@@ -3293,7 +3303,7 @@ async function tmLoadFromSheets() {
     if (!rows.length) { alert('לא נמצאו נתוני זמנים תקינים.'); }
     // Show load summary in console
     const _dbgTotal = rows.reduce((s,r)=>s+r.orders,0);
-    console.log('[tmLoadFromSheets] Loaded:', rows.length, 'rows |', _dbgTotal, 'total orders');
+    console.log('[tmLoadFromSheets] Loaded:', rows.length, 'rows |', _dbgTotal, 'total orders | unique branches:', [...new Set(rows.map(r=>r.branch))].length);
     // Show toast if big discrepancy (all orders = row count = ordersCol was null)
     const _uniqueOrderVals = [...new Set(rows.map(r=>r.orders))];
     if (_uniqueOrderVals.length === 1 && _uniqueOrderVals[0] === 1) {
@@ -3304,6 +3314,12 @@ async function tmLoadFromSheets() {
       tmSaveLs();
       tmAutoSetView();
       tmRefreshAll();
+      // Always rebuild growth table with fresh data
+      setTimeout(() => {
+        tmBuildGrowthTable();
+        tmBuildMonthlyTrendChart();
+        console.log('[tmLoadFromSheets] Growth table rebuilt, months:', tmGetMonths());
+      }, 200);
     }
   } catch (e) {
     console.error(e);
@@ -3340,14 +3356,18 @@ function tmLoadFile(input) {
 }
 
 function tmAutoSetView() {
-  tmViewPreset = 'yesterday';
-  const [f, t] = presetRange('yesterday');
-  const yRows = tmAllData.filter(r => r.dateStr === f);
-  if (yRows.length) { tmViewFrom = f; tmViewTo = t; }
-  else {
-    const dates = tmGetDates();
-    tmViewFrom = dates[0] || ''; tmViewTo = dates[0] || '';
-    tmViewPreset = 'custom';
+  // Default view: show ALL data so total matches the sheet.
+  // User can switch to 'yesterday' / 'curweek' using the preset buttons.
+  const [yf, yt] = presetRange('yesterday');
+  const yRows = tmAllData.filter(r => r.dateStr === yf);
+  if (yRows.length) {
+    // Yesterday has data → show yesterday by default
+    tmViewPreset = 'yesterday';
+    tmViewFrom = yf; tmViewTo = yt;
+  } else {
+    // No yesterday data → show ALL data
+    tmViewPreset = 'all';
+    tmViewFrom = ''; tmViewTo = '';
   }
   tmCmpFrom = ''; tmCmpTo = ''; tmCmpPreset = '';
   // BUG1 FIX: set tmSelectedMonth to latest month that HAS actual data
@@ -3356,7 +3376,7 @@ function tmAutoSetView() {
 }
 
 // ── LocalStorage ──────────────────────────────────────────
-const TM_LS_KEY = 'wolt_times_v1';
+const TM_LS_KEY = 'wolt_times_v4';  // v4: auto-invalidate stale cache
 function tmSaveLs() {
   try { localStorage.setItem(TM_LS_KEY, JSON.stringify(tmAllData)); } catch (e) {}
 }
@@ -4572,12 +4592,20 @@ function tmBuildTrendChart() {
 
 // ── MONTHLY CUMULATIVE ────────────────────────────────────
 function tmInitMonthButtons() {
+  // No buttons needed – always show current (most recent) month
   const months = tmGetMonths();
-  const container = document.getElementById('tmMonthButtons');
-  if (!container) return;
-  container.innerHTML = months.map(m =>
-    `<button class="month-btn ${m === tmSelectedMonth ? 'active' : ''}" onclick="tmSelectMonth('${m}')">${m}</button>`
-  ).join('');
+  if (!months.length) return;
+  // Auto-select most recent month
+  if (!tmSelectedMonth || !months.includes(tmSelectedMonth)) {
+    tmSelectedMonth = months[0];
+  }
+  // Update the current-month label
+  const label = document.getElementById('tmCurrentMonthLabel');
+  if (label) {
+    const heMonths = {'01':'ינואר','02':'פברואר','03':'מרץ','04':'אפריל','05':'מאי','06':'יוני','07':'יולי','08':'אוגוסט','09':'ספטמבר','10':'אוקטובר','11':'נובמבר','12':'דצמבר'};
+    const [mm, yy] = tmSelectedMonth.split('/');
+    label.textContent = '📆 ' + (heMonths[mm] || mm) + ' ' + yy;
+  }
 }
 
 function tmGetMonths() {
@@ -4980,10 +5008,14 @@ function tmBuildGrowthTable() {
   const tfoot = document.getElementById('growthTfoot');
   if (!tbody || !thead || !tfoot) return;
 
+  console.log('[tmBuildGrowthTable] tmAllData.length =', tmAllData.length);
+
   // All months oldest→newest
   const allMonths = [...tmGetMonths()].reverse(); // oldest first
+  console.log('[tmBuildGrowthTable] months found:', allMonths);
+
   if (!allMonths.length) {
-    tbody.innerHTML = '<tr><td colspan="3" class="nodata-msg">טען נתונים כדי לראות את הטבלה</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" class="nodata-msg">אין נתונים – לחץ על 🔄 סנכרן גיליון</td></tr>';
     return;
   }
 
@@ -5138,6 +5170,18 @@ function tmBuildGrowthTable() {
   const sub = document.getElementById('growthTableSub');
   if (sub) sub.textContent = `${sorted.length} סניפים · ${allMonths.length} חודשים`;
   tmUpdateGrowthBadge();
+  // Update subtitle with actual months present in data
+  const _months = tmGetMonths();
+  const _sub = document.getElementById('growthTableSub');
+  if (_sub) {
+    if (_months.length === 0) {
+      _sub.textContent = 'אין נתונים – לחץ על סנכרן גיליון';
+    } else {
+      const heMonths = {'01':'ינו','02':'פבר','03':'מרץ','04':'אפר','05':'מאי','06':'יונ','07':'יול','08':'אוג','09':'ספט','10':'אוק','11':'נוב','12':'דצמ'};
+      const monthLabels = _months.map(m => { const [mm,yy] = m.split('/'); return (heMonths[mm]||mm)+' '+yy.slice(2); });
+      _sub.textContent = monthLabels.join(' · ') + ' — ' + tmAllData.length.toLocaleString('he-IL') + ' שורות';
+    }
+  }
 }
 
 function tmExportGrowthCSV() {
@@ -5386,10 +5430,23 @@ function tmShowLoading(v) { document.getElementById('tmLoadingOverlay')?.classLi
 
 // ── Init times ────────────────────────────────────────────
 function tmInit() {
+  // Clean up old keys from previous versions to avoid stale data
+  ['wolt_times_v1','wolt_times_v2','wolt_times_v3'].forEach(k => {
+    try { localStorage.removeItem(k); } catch(e) {}
+  });
   tmAllData = tmLoadLs();
   if (tmAllData.length) {
     tmAutoSetView();
-    // labels already set in parse; restore them from stored data
+    tmRefreshAll();
+    console.log('[tmInit] Loaded from localStorage:', tmAllData.length, 'rows');
+    const months = tmGetMonths();
+    console.log('[tmInit] Months in cache:', months);
+  } else {
+    // localStorage empty (new key) → auto-sync from Google Sheet
+    console.log('[tmInit] No local data, auto-syncing from Google Sheets...');
+    if (typeof GOOGLE_SHEET2_CSV_URL !== 'undefined' && GOOGLE_SHEET2_CSV_URL) {
+      setTimeout(() => tmLoadFromSheets(), 800);
+    }
   }
 }
 // tmInit() called via window.load above
