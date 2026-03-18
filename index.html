@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>דשבורד הזמנות Wolt | דומינו'ס</title>
+<title> V דשבורד הזמנות Wolt | דומינו'ס</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -2372,10 +2372,17 @@ function tmParseRows(raw) {
   const headers = Object.keys(raw[0]);
   const firstRow = raw[0];
 
+  // ── Auto-detect date format FIRST (D/M/Y vs M/D/Y) ───
+  TM_DATE_FMT = tmDetectDateFormat(raw);
+  console.log('[TM] Date format detected:', TM_DATE_FMT);
+
   // ── Smart column detection ─────────────────────────────
   let dateCol   = tmDetectDateCol(headers, firstRow);
   let branchCol = tmDetectBranchCol(headers, firstRow, dateCol);
-  let ordersCol = tmFindCol(headers, TM_COL_MAP.orders) || headers[4] || null;
+  // Orders: try name-match first, then common positions (C=2, D=3, E=4)
+  let ordersCol = tmFindCol(headers, TM_COL_MAP.orders)
+    || headers.find(h => { const n=parseFloat(firstRow[h]); return n>0 && n<10000 && h!==dateCol && h!==branchCol; })
+    || null;
 
   // F, G, H: name lookup first, then positional fallback (cols 5,6,7 = F,G,H in 0-indexed)
   let colFH = tmFindCol(headers, TM_COL_MAP.colF) || headers[5] || null;
@@ -2421,9 +2428,9 @@ function tmParseRows(raw) {
     }
     if (!branch) branch = 'לא ידוע';
 
-    // ── Orders ──
+    // ── Orders ── (if no dedicated column, each row = 1 order)
     const ordersRaw = ordersCol ? r[ordersCol] : '';
-    const orders = parseFloat(ordersRaw) || 0;
+    const orders = ordersRaw !== '' ? (parseFloat(ordersRaw) || 0) : 1;
 
     // ── Times (F, G, H) ──
     const parseTime = (v) => {
@@ -2445,37 +2452,161 @@ function tmParseRows(raw) {
     return { dateStr, branch, orders, avgF, avgG, avgH };
   });
 
-  const result = parsed.filter(r => r !== null && r.branch);
+  const result = parsed.filter(r => r !== null && r.branch && r.dateStr);
+
+  // Save detected column info for debug display
+  window._tmDebug = { headers, dateCol, branchCol, ordersCol, colFH, colGH, colHH,
+    totalRaw: raw.length, totalParsed: result.length, fmt: TM_DATE_FMT,
+    sample: raw.slice(0,3).map(r => JSON.stringify(r).substring(0,120)) };
 
   // If completely empty, log a helpful diagnostic
   if (!result.length && raw.length > 0) {
-    console.error('[TM] Parsing failed for all', raw.length, 'rows. Sample row:', JSON.stringify(raw[0]));
-    console.error('[TM] Tip: Check that your Sheet 2 has these columns (or similar): Date, Branch/Venue, Orders, ColF, ColG, ColH');
+    console.error('[TM] Parsing failed for all', raw.length, 'rows.');
+    console.error('[TM] Date format detected:', TM_DATE_FMT);
+    console.error('[TM] Sample row:', JSON.stringify(raw[0]));
+    console.error('[TM] Headers:', headers);
   }
 
   return result;
 }
 
+// ── Date parsing — supports multiple formats ─────────────
+// Auto-detects D/M/Y vs M/D/Y from the dataset
+let TM_DATE_FMT = 'auto'; // 'dmy' | 'mdy' | 'auto'
+
+function tmDetectDateFormat(raw) {
+  // Scan up to 30 rows to determine the date format
+  let dmy = 0, mdy = 0;
+  const sample = raw.slice(0, 30);
+  const dateHdr = tmFindCol(Object.keys(raw[0] || {}), TM_COL_MAP.date);
+  sample.forEach(r => {
+    const v = String(dateHdr ? (r[dateHdr] || '') : (r[Object.keys(r)[0]] || '')).trim();
+    const m = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if (m) {
+      const a = parseInt(m[1]), b = parseInt(m[2]);
+      if (a > 12 && b <= 12) dmy++;       // first > 12 → must be day → D/M/Y
+      else if (b > 12 && a <= 12) mdy++;  // second > 12 → must be day → M/D/Y
+    }
+  });
+  if (dmy > 0 && mdy === 0) return 'dmy';
+  if (mdy > 0 && dmy === 0) return 'mdy';
+  // If ambiguous, default to D/M/Y (Israeli standard)
+  return 'dmy';
+}
+
 function tmParseDate(v) {
-  if (!v) return null;
-  if (v instanceof Date) return isNaN(v) ? null : v;
-  if (typeof v === 'number') { const d = new Date((v - 25569) * 86400 * 1000); return isNaN(d) ? null : d; }
+  if (!v && v !== 0) return null;
+  if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
+
+  // Excel/Sheets serial number (integer or float)
+  if (typeof v === 'number') {
+    if (v > 1 && v < 100000) {
+      // Google Sheets uses 1900-based serial (same as Excel but with leap-year bug)
+      const d = new Date(Date.UTC(1899, 11, 30) + v * 86400000);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    // Unix timestamp (milliseconds)
+    if (v > 1e10) { const d = new Date(v); return isNaN(d.getTime()) ? null : d; }
+    return null;
+  }
+
   const s = String(v).trim();
-  // DD/MM/YYYY (format used in the sheet: 16/03/2026)
-  const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (dmy) { const d = new Date(+dmy[3], +dmy[2]-1, +dmy[1]); return isNaN(d) ? null : d; }
-  // YYYY-MM-DD
-  const ymd = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (ymd) { const d = new Date(+ymd[1], +ymd[2]-1, +ymd[3]); return isNaN(d) ? null : d; }
-  // fallback
+  if (!s) return null;
+
+  // ISO: YYYY-MM-DD or YYYY/MM/DD
+  const iso = s.match(/^(\d{4})[\-\/](\d{1,2})[\-\/](\d{1,2})$/);
+  if (iso) {
+    const d = new Date(+iso[1], +iso[2]-1, +iso[3]);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // D/M/Y or M/D/Y  — auto-detect based on TM_DATE_FMT
+  const slash = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (slash) {
+    let day, mon, yr;
+    const a = parseInt(slash[1]), b = parseInt(slash[2]), c = parseInt(slash[3]);
+    yr = c < 100 ? 2000 + c : c;
+    if (a > 12) { day = a; mon = b; }       // definitely D/M/Y
+    else if (b > 12) { mon = a; day = b; }  // definitely M/D/Y
+    else if (TM_DATE_FMT === 'mdy') { mon = a; day = b; }
+    else { day = a; mon = b; }              // default: D/M/Y (Israeli)
+    if (mon < 1 || mon > 12 || day < 1 || day > 31) return null;
+    const d = new Date(yr, mon-1, day);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // DD.MM.YYYY (dot separator)
+  const dot = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/);
+  if (dot) {
+    const yr = parseInt(dot[3]); const yr4 = yr < 100 ? 2000+yr : yr;
+    const d = new Date(yr4, parseInt(dot[2])-1, parseInt(dot[1]));
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // Fallback: let JS try
   const d = new Date(s);
-  return isNaN(d) ? null : d;
+  if (!isNaN(d.getTime()) && d.getFullYear() >= 2000) return d;
+  return null;
 }
 
 // ── Loading ───────────────────────────────────────────────
 function tmShowColInfo() {
   if (!tmAllData.length) { alert('אין נתונים טעונים עדיין.'); return; }
-  alert(`עמודות שזוהו:\n\n• זמן F: ${tmColF}\n• זמן G: ${tmColG}\n• זמן H: ${tmColH}\n\nסה"כ רשומות: ${tmAllData.length}\nחודשים: ${tmGetMonths().join(', ')}`);
+  const d = window._tmDebug || {};
+  const months = tmGetMonths();
+  let msg = `📊 דוח אבחון\n`;
+  msg += `${'='.repeat(40)}\n`;
+  msg += `פורמט תאריך שזוהה: ${d.fmt || TM_DATE_FMT}\n`;
+  msg += `שורות גולמיות: ${d.totalRaw || '?'} → שורות תקינות: ${d.totalParsed || tmAllData.length}\n\n`;
+  msg += `עמודות שנמצאו:\n`;
+  msg += `• תאריך:   ${d.dateCol || '—'}\n`;
+  msg += `• סניף:    ${d.branchCol || '—'}\n`;
+  msg += `• הזמנות:  ${d.ordersCol || 'לא נמצא (חושב כ-1 לשורה)'}\n`;
+  msg += `• עמודה F: ${d.colFH || '—'} → ${tmColF}\n`;
+  msg += `• עמודה G: ${d.colGH || '—'} → ${tmColG}\n`;
+  msg += `• עמודה H: ${d.colHH || '—'} → ${tmColH}\n\n`;
+  msg += `כל הכותרות: ${(d.headers || []).join(' | ')}\n\n`;
+  msg += `חודשים בנתונים: ${months.join(', ')}\n\n`;
+  if (d.sample && d.sample.length) {
+    msg += `3 שורות ראשונות:\n${d.sample.map((s,i) => (i+1)+'. '+s).join('\n')}`;
+  }
+  alert(msg);
+}
+
+function tmShowPreview() {
+  if (!tmAllData.length) { alert('אין נתונים טעונים.'); return; }
+  const rows = tmAllData.slice(0, 10);
+  let html = `<style>
+    #tmPreviewModal { position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center }
+    #tmPreviewModal .inner { background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px;max-width:95%;max-height:85vh;overflow:auto;min-width:600px }
+    #tmPreviewModal table { width:100%;border-collapse:collapse;font-size:12px;direction:rtl }
+    #tmPreviewModal th { background:#21262d;color:#58a6ff;padding:6px 10px;border-bottom:1px solid #30363d;white-space:nowrap }
+    #tmPreviewModal td { padding:5px 10px;border-bottom:1px solid #21262d;color:#c9d1d9 }
+    #tmPreviewModal .close-btn { float:left;background:none;border:1px solid #30363d;color:#8b949e;border-radius:6px;padding:4px 10px;cursor:pointer }
+  </style>
+  <div id="tmPreviewModal" onclick="if(event.target.id==='tmPreviewModal')this.remove()">
+    <div class="inner">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <strong style="color:#e6edf3">👁️ תצוגה מקדימה — 10 שורות ראשונות</strong>
+        <button class="close-btn" onclick="document.getElementById('tmPreviewModal').remove()">✕ סגור</button>
+      </div>
+      <div style="font-size:11px;color:#8b949e;margin-bottom:10px">
+        פורמט תאריך: <strong style="color:#3fb950">${TM_DATE_FMT}</strong> &nbsp;|&nbsp;
+        סה"כ רשומות: <strong style="color:#3fb950">${tmAllData.length.toLocaleString('he-IL')}</strong> &nbsp;|&nbsp;
+        עמודה F: <strong style="color:#3fb950">${tmColF}</strong>
+      </div>
+      <table>
+        <thead><tr><th>#</th><th>תאריך</th><th>סניף</th><th>הזמנות</th><th>${tmColF}</th><th>${tmColG}</th><th>${tmColH}</th></tr></thead>
+        <tbody>`;
+  rows.forEach((r, i) => {
+    html += `<tr><td>${i+1}</td><td>${r.dateStr}</td><td>${r.branch}</td><td>${r.orders}</td>
+      <td style="color:${r.avgF>45?'#f85149':r.avgF>30?'#e3b341':'#3fb950'}">${r.avgF.toFixed(1)}</td>
+      <td>${r.avgG.toFixed(1)}</td><td>${r.avgH.toFixed(1)}</td></tr>`;
+  });
+  html += `</tbody></table></div></div>`;
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  document.body.appendChild(div.firstChild);
 }
 
 async function tmLoadFromSheets() {
@@ -2515,6 +2646,7 @@ async function tmLoadFromSheets() {
         toastEl.style.display = 'block';
         setTimeout(() => toastEl.style.display = 'none', 4000);
         const cb = document.getElementById('tmColInfoBtn'); if (cb) cb.style.display = '';
+        const pb = document.getElementById('tmPreviewBtn'); if (pb) pb.style.display = '';
       }
     }
   } catch (e) {
@@ -2616,7 +2748,10 @@ function tmGetCmpData() {
 function tmCompute(data) {
   if (!data || !data.length) return { totalOrders: 0, avgF: 0, avgG: 0, avgH: 0, branches: [], byDate: {} };
 
-  const totalOrders = data.reduce((s, r) => s + r.orders, 0);
+  let totalOrders = data.reduce((s, r) => s + r.orders, 0);
+  // If no orders column was found, every row has orders=1, but for pre-aggregated
+  // sheets orders was stored correctly. If all rows show 0 orders, fallback to row count.
+  if (totalOrders === 0) totalOrders = data.length;
 
   // Average of averages for global
   const vF = data.filter(r => r.avgF > 0).map(r => r.avgF);
@@ -2631,7 +2766,7 @@ function tmCompute(data) {
   data.forEach(r => {
     if (!bMap[r.branch]) bMap[r.branch] = { branch: r.branch, orders: 0, fVals: [], gVals: [], hVals: [] };
     const b = bMap[r.branch];
-    b.orders += r.orders;
+    b.orders += (r.orders > 0 ? r.orders : 1);
     if (r.avgF > 0) b.fVals.push(r.avgF);
     if (r.avgG > 0) b.gVals.push(r.avgG);
     if (r.avgH > 0) b.hVals.push(r.avgH);
@@ -3661,7 +3796,10 @@ tmInit();
       </button>
       <input type="file" id="tmFileInput" accept=".xlsx,.xls,.csv" hidden onchange="tmLoadFile(this)">
       <button class="btn btn-secondary" id="tmColInfoBtn" onclick="tmShowColInfo()" style="display:none">
-        🔍 עמודות שזוהו
+        🔍 אבחון עמודות
+      </button>
+      <button class="btn btn-secondary" id="tmPreviewBtn" onclick="tmShowPreview()" style="display:none">
+        👁️ תצוגה מקדימה
       </button>
     </div>
   </header>
