@@ -357,7 +357,7 @@ tr.refunded-row td{background:rgba(137,87,229,.04)}
   gap:40px;
   transition:opacity .5s, visibility .5s;
 }
-#landingScreen.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+#landingScreen.hidden{display:none;}
 
 .landing-logo{font-size:56px;text-align:center;margin-bottom:0;
   animation:floatLogo 3s ease-in-out infinite;}
@@ -1420,7 +1420,479 @@ tr.refunded-row td{background:rgba(137,87,229,.04)}
     <div class="pagination" id="orderPag"></div>
   </div>
 
-</div><script>
+</div>
+
+</div><!-- /ordersApp -->
+
+<!-- ═══════════════════════════════════════════════════
+     TIMES APP
+════════════════════════════════════════════════════ -->
+<div id="timesApp">
+
+  <!-- Loading overlay (times) -->
+  <div class="loading-overlay" id="tmLoadingOverlay">
+    <div class="spinner"></div>
+    <div style="color:var(--text2);font-size:13px">טוען נתוני זמנים...</div>
+  </div>
+
+  <!-- Header (times) -->
+  <header>
+    <div class="hdr-brand">
+      <button class="back-btn" onclick="showApp('landing')">← חזור</button>
+      &nbsp;
+      <span class="logo">⏱️</span>
+      <div>
+        <h1>דשבורד זמני שילוח</h1>
+        <small id="tmHdrSub">Domino's Pizza — Delivery Times</small>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <span id="tmColNames" style="font-size:11px;color:var(--text2);"></span>
+      <button class="btn btn-primary" onclick="tmLoadFromSheets()"
+        style="background:var(--green-dim);border-color:var(--green);color:var(--green)">
+        <span class="dot" id="tmSyncDot"></span>🔄 סנכרן גיליון 2
+      </button>
+      <button class="btn btn-secondary" onclick="document.getElementById('tmFileInput').click()">
+        📂 טען קובץ ידני
+      </button>
+      <input type="file" id="tmFileInput" accept=".xlsx,.xls,.csv" hidden onchange="tmLoadFile(this)">
+    </div>
+  </header>
+
+  <div class="main">
+
+    <!-- DATE NAV (times) -->
+    <div class="date-nav" id="tmDateNav">
+      <span class="date-nav-title">📅 הצג:</span>
+      <div class="preset-btns">
+        <button class="preset-btn" id="tmPreYesterday" onclick="tmApplyPreset('yesterday')">📆 אתמול</button>
+        <button class="preset-btn" id="tmPreCurWeek"   onclick="tmApplyPreset('curweek')">📅 שבוע נוכחי</button>
+        <button class="preset-btn" id="tmPrePrevWeek"  onclick="tmApplyPreset('prevweek')">⏪ שבוע קודם</button>
+        <button class="preset-btn" id="tmPreAll"       onclick="tmApplyPreset('all')">🗂️ כל הנתונים</button>
+        <button class="preset-btn" id="tmPreCustom"    onclick="tmApplyPreset('custom')">🗓️ בחירה ידנית</button>
+      </div>
+      <div class="date-picker-wrap" id="tmCustomPickers" style="display:none">
+        <span style="font-size:11px;color:var(--text2)">מ-</span>
+        <input type="date" class="dp-input" id="tmDpFrom" onchange="tmOnCustomRange()">
+        <span class="date-picker-sep">—</span>
+        <span style="font-size:11px;color:var(--text2)">עד</span>
+        <input type="date" class="dp-input" id="tmDpTo" onchange="tmOnCustomRange()">
+      </div>
+      <span class="range-badge" id="tmRangeBadge" style="display:none"></span>
+      <div style="flex:1"></div>
+      <!-- Compare -->
+      <div class="date-nav-sep"></div>
+      <div class="compare-section">
+        <span class="compare-label">📊 השווה:</span>
+        <button class="compare-preset" id="tmCmpNone"     onclick="tmApplyCompare('')">ללא</button>
+        <button class="compare-preset" id="tmCmpYest"     onclick="tmApplyCompare('yesterday')">אתמול</button>
+        <button class="compare-preset" id="tmCmpPrevWeek" onclick="tmApplyCompare('prevweek')">שבוע קודם</button>
+        <button class="compare-preset" id="tmCmpCustom"   onclick="tmApplyCompare('custom')">בחירה…</button>
+        <input type="date" class="dp-input" id="tmDpCompare" style="display:none" onchange="tmOnCompareDate()">
+      </div>
+    </div>
+
+    <!-- BRANCH FILTER (times) — enhanced -->
+    <div class="filter-bar" id="tmFilterBar">
+      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;width:100%">
+        <span class="fb-label">🔍 סניף:</span>
+        <select class="fb-select" id="tmFbBranch" onchange="tmApplyFilters()" style="min-width:180px">
+          <option value="">כל הסניפים</option>
+        </select>
+        <div class="mf-range" title="סנן לפי זמן מסירה (H) דקות">
+          <span class="metric-filter-label">⏱️ זמן מסירה:</span>
+          <input type="number" id="tmMinH" min="0" max="120" step="1" placeholder="min" onchange="tmApplyFilters()">
+          <span>—</span>
+          <input type="number" id="tmMaxH" min="0" max="120" step="1" placeholder="max" onchange="tmApplyFilters()">
+          <span style="color:var(--text3);margin-right:2px">דקות</span>
+        </div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+          <button class="preset-btn" onclick="tmQuickFilter('fast')">🟢 מהירים</button>
+          <button class="preset-btn" onclick="tmQuickFilter('warn')">🟡 בינוני</button>
+          <button class="preset-btn" onclick="tmQuickFilter('slow')">🔴 איטיים</button>
+        </div>
+        <button class="fb-reset" onclick="tmResetFilters()">✕ אפס הכל</button>
+        <span class="fb-count" id="tmFbCount"></span>
+      </div>
+      <div class="tm-active-filters" id="tmActiveFilters"></div>
+    </div>
+
+    <!-- KPI CARDS (times) -->
+    <div class="tm-kpi-grid mb16" id="tmKpiGrid">
+      <div class="tm-kpi-card blue">
+        <div class="kpi-top"><span class="kpi-label">סה"כ הזמנות</span><span class="kpi-icon">📦</span></div>
+        <div class="kpi-value" id="tmKpiOrders">—</div>
+        <div class="kpi-sub">הזמנות בטווח</div>
+        <span class="kpi-change flat" id="tmKpiOrdersChg">—</span>
+      </div>
+      <div class="tm-kpi-card green">
+        <div class="kpi-top"><span class="kpi-label" id="tmLblF">זמן ממוצע F</span><span class="kpi-icon">⏱️</span></div>
+        <div class="tm-time-val" id="tmKpiF">—</div>
+        <div class="kpi-sub">ממוצע כלל הסניפים</div>
+        <span class="kpi-change flat" id="tmKpiFChg">—</span>
+      </div>
+      <div class="tm-kpi-card orange">
+        <div class="kpi-top"><span class="kpi-label" id="tmLblG">זמן ממוצע G</span><span class="kpi-icon">🕐</span></div>
+        <div class="tm-time-val" id="tmKpiG">—</div>
+        <div class="kpi-sub">ממוצע כלל הסניפים</div>
+        <span class="kpi-change flat" id="tmKpiGChg">—</span>
+      </div>
+      <div class="tm-kpi-card purple">
+        <div class="kpi-top"><span class="kpi-label" id="tmLblH">זמן ממוצע H</span><span class="kpi-icon">🚴</span></div>
+        <div class="tm-time-val" id="tmKpiH">—</div>
+        <div class="kpi-sub">ממוצע כלל הסניפים</div>
+        <span class="kpi-change flat" id="tmKpiHChg">—</span>
+      </div>
+    </div>
+
+    <!-- INSIGHTS (times) -->
+    <div class="tm-insights-grid mb16" id="tmInsightsGrid">
+      <!-- filled by JS -->
+    </div>
+
+    <!-- BRANCH TABLE (times) -->
+    <div class="chart-card mb16">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">📋 ביצועי סניף</div>
+          <div class="chart-sub" id="tmTableSub">סה"כ לפי טווח הנבחר</div>
+        </div>
+        <button class="export-btn" onclick="tmExportCSV()">⬇️ ייצא CSV</button>
+      </div>
+      <div class="tm-branch-wrap">
+        <table class="tm-table">
+          <thead>
+            <tr>
+              <th onclick="tmSortBranch('branch')">סניף ↕</th>
+              <th onclick="tmSortBranch('orders')">הזמנות ↕</th>
+              <th style="font-size:11px;color:var(--text3)">הזמנות Δ</th>
+              <th id="thF" onclick="tmSortBranch('avgF')">— ↕</th>
+              <th style="font-size:11px;color:var(--text3)">F Δ</th>
+              <th id="thG" onclick="tmSortBranch('avgG')">— ↕</th>
+              <th style="font-size:11px;color:var(--text3)">G Δ</th>
+              <th id="thH" onclick="tmSortBranch('avgH')">— ↕</th>
+              <th style="font-size:11px;color:var(--text3)">H Δ</th>
+            </tr>
+          </thead>
+          <tbody id="tmBranchTbody">
+            <tr><td colspan="9" class="nodata-msg">⏳ טוען נתונים… לחץ על "סנכרן גיליון 2"</td></tr>
+          </tbody>
+          <tfoot id="tmBranchTfoot"></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ ORDERS BY BRANCH TREND CHART ══ -->
+    <div class="chart-card mb16" id="tmOrdersByBranchSection">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">📦 הזמנות לפי סניף — השוואה לתקופה קודמת</div>
+          <div class="chart-sub" id="tmOrdersBranchSub">ירוק = עלייה, אדום = ירידה מול תקופה קודמת</div>
+        </div>
+      </div>
+      <div class="tm-chart-wrap tall" style="height:360px">
+        <canvas id="tmChartOrdersByBranch"></canvas>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--text3);">
+        * מוצגים Top 12 סניפים לפי מספר הזמנות. בחר טווח השוואה כדי לראות שינוי צבע.
+      </div>
+    </div>
+
+    <!-- ══ GOOD vs BAD TABLE ══ -->
+    <div class="gb-section mb16" id="tmGoodBadSection">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+        <div class="tm-chart-title" style="margin-bottom:0">🏆 השוואה טובים מול גרועים — ביצועי זמנים</div>
+        <div style="display:flex;gap:6px;">
+          <button class="preset-btn active" id="gbMetF" onclick="gbSetMetric('avgF')">קריאה לוולט</button>
+          <button class="preset-btn" id="gbMetG" onclick="gbSetMetric('avgG')">עד איסוף</button>
+          <button class="preset-btn" id="gbMetH" onclick="gbSetMetric('avgH')">עד מסירה</button>
+        </div>
+      </div>
+      <div id="gbMetricLabel" style="font-size:11px;color:var(--text2);margin-bottom:10px;"></div>
+      <div class="gb-grid">
+        <div>
+          <div class="gb-half-title">🥇 Top 5 — הכי מהירים</div>
+          <table class="gb-table">
+            <thead><tr><th>#</th><th>סניף</th><th>ממוצע</th><th>הזמנות</th><th>ויזואל</th></tr></thead>
+            <tbody id="gbBestTbody"><tr><td colspan="5" class="nodata-msg">טוען…</td></tr></tbody>
+          </table>
+        </div>
+        <div>
+          <div class="gb-half-title">⚠️ Bottom 5 — הכי איטיים</div>
+          <table class="gb-table">
+            <thead><tr><th>#</th><th>סניף</th><th>ממוצע</th><th>הזמנות</th><th>ויזואל</th></tr></thead>
+            <tbody id="gbWorstTbody"><tr><td colspan="5" class="nodata-msg">טוען…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div style="margin-top:12px;font-size:11px;color:var(--text3);">
+        * ממוצע מחושב כממוצע של ממוצעים (average of averages) לפי יום וסניף. מוצגים רק סניפים עם לפחות 5 הזמנות.
+      </div>
+    </div>
+
+    <!-- ══ WEEKLY PERFORMANCE CHART (א–ש) ══ -->
+    <div class="weekly-perf-section mb16" id="tmWeeklyPerfSection">
+      <div class="weekly-ctrl-row">
+        <div>
+          <div class="tm-chart-title" style="margin-bottom:4px">📅 ביצועים יומיים — השוואה שבוע מול שבוע</div>
+          <div class="weekly-sub" id="tmWeeklyPerfSub">שבוע נוכחי vs שבוע קודם (א–ש)</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="preset-btn active" id="wpMetF" onclick="wpSetMetric('avgF')">קריאה לוולט</button>
+          <button class="preset-btn" id="wpMetG" onclick="wpSetMetric('avgG')">עד איסוף</button>
+          <button class="preset-btn" id="wpMetH" onclick="wpSetMetric('avgH')">עד מסירה</button>
+          <button class="preset-btn" id="wpMetOrders" onclick="wpSetMetric('orders')">הזמנות</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px" id="tmWeeklyKpiRow"></div>
+      <div class="tm-chart-wrap tall"><canvas id="tmChartWeeklyPerf"></canvas></div>
+      <div style="margin-top:8px;font-size:11px;color:var(--text3);">
+        * שבוע מוגדר ממוצאי (א׳) עד שבת (ש׳). ימים ללא נתונים מוצגים כריקים.
+      </div>
+    </div>
+
+    <!-- CHARTS (times) -->
+    <div class="tm-charts-grid mb16">
+      <div class="tm-chart-section" style="grid-column:1/-1">
+        <div class="tm-chart-title">📊 ממוצע זמנים לפי סניף (Top 15)</div>
+        <div class="tm-chart-wrap tall"><canvas id="tmChartBranch"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ══ ROW 2: Donut charts ══ -->
+    <div class="tm-charts-grid mb16">
+      <!-- Donut 1: Speed-tier distribution -->
+      <div class="tm-chart-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+          <div class="tm-chart-title" style="margin-bottom:0">🍩 התפלגות סניפים לפי מהירות מסירה</div>
+          <div id="tmDonutTierLegend" style="font-size:11px;color:var(--text2);"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center">
+          <div style="position:relative;height:240px"><canvas id="tmChartTierDonut"></canvas></div>
+          <div id="tmTierStats" style="min-width:130px;display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+      </div>
+      <!-- Donut 2: Time breakdown F/G/courier -->
+      <div class="tm-chart-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+          <div class="tm-chart-title" style="margin-bottom:0">🥧 פירוק זמן מסירה ממוצע</div>
+          <div id="tmDonutBreakdownSub" style="font-size:11px;color:var(--text2);"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center">
+          <div style="position:relative;height:240px"><canvas id="tmChartBreakdownDonut"></canvas></div>
+          <div id="tmBreakdownStats" style="min-width:130px;display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ROW 3: Line charts ══ -->
+    <div class="tm-charts-grid mb16">
+      <!-- Line 1: Daily + 7-day rolling avg -->
+      <div class="tm-chart-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+          <div class="tm-chart-title" style="margin-bottom:0">📈 מגמת זמנים + ממוצע נע 7 ימים</div>
+          <div style="display:flex;gap:5px">
+            <button class="preset-btn active" id="tmLineMetF"    onclick="tmSetLineMetric('avgF')">קריאה לוולט</button>
+            <button class="preset-btn"        id="tmLineMetG"    onclick="tmSetLineMetric('avgG')">עד איסוף</button>
+            <button class="preset-btn"        id="tmLineMetH"    onclick="tmSetLineMetric('avgH')">עד מסירה</button>
+          </div>
+        </div>
+        <div class="tm-chart-wrap tall"><canvas id="tmChartRollingLine"></canvas></div>
+      </div>
+      <!-- Line 2: Top-5 branches trend -->
+      <div class="tm-chart-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+          <div class="tm-chart-title" style="margin-bottom:0">🏪 טרנד זמן מסירה — Top 5 סניפים</div>
+          <span id="tmTop5Sub" style="font-size:11px;color:var(--text2)"></span>
+        </div>
+        <div class="tm-chart-wrap tall"><canvas id="tmChartBranchLine"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ══ ROW 4: original trend + orders ══ -->
+    <div class="tm-charts-grid mb16">
+      <div class="tm-chart-section">
+        <div class="tm-chart-title">📈 מגמת כל הזמנים לאורך זמן</div>
+        <div class="tm-chart-wrap"><canvas id="tmChartTrend"></canvas></div>
+      </div>
+      <div class="tm-chart-section">
+        <div class="tm-chart-title">📦 הזמנות לפי יום</div>
+        <div class="tm-chart-wrap"><canvas id="tmChartOrders"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ══ TRENDS SECTION ══ -->
+    <div class="tm-chart-section mb16" id="tmTrendsSection">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+        <div class="tm-chart-title" style="margin-bottom:0">📉 טרנדים והשוואות</div>
+        <div class="trend-mode-bar" style="margin-bottom:0">
+          <button class="trend-mode-btn active" id="tmTrendDvD" onclick="tmSetTrendMode('dvd')">יום מול יום שבוע שעבר</button>
+          <button class="trend-mode-btn" id="tmTrendWvW" onclick="tmSetTrendMode('wvw')">שבוע מול שבוע</button>
+        </div>
+      </div>
+      <div id="tmTrendRangeLabel" style="font-size:11px;color:var(--text2);margin-bottom:12px;"></div>
+      <!-- Metric selector -->
+      <div style="display:flex;gap:6px;margin-bottom:12px;">
+        <button class="preset-btn active" id="tmTrMetF" onclick="tmSetTrendMetric('avgF')">זמן F</button>
+        <button class="preset-btn" id="tmTrMetG" onclick="tmSetTrendMetric('avgG')">זמן G</button>
+        <button class="preset-btn" id="tmTrMetH" onclick="tmSetTrendMetric('avgH')">זמן H</button>
+        <button class="preset-btn" id="tmTrMetOrders" onclick="tmSetTrendMetric('orders')">הזמנות</button>
+      </div>
+      <div class="tm-chart-wrap tall"><canvas id="tmChartTrendComp"></canvas></div>
+    </div>
+
+    <!-- ══ MONTHLY ORDERS TREND BY BRANCH ══ -->
+    <div class="tm-trend-chart-section mb16" id="tmMonthlyTrendSection">
+      <div class="tm-trend-top-bar">
+        <div>
+          <div class="tm-chart-title" style="margin-bottom:2px">📈 טרנד חודשי — לפי סניף</div>
+          <div style="font-size:11px;color:var(--text3)">כמות הזמנות / זמן מסירה לכל סניף לאורך חודשים | לחץ על סניף בלגנדה להסתרה</div>
+        </div>
+        <div class="tm-trend-controls">
+          <!-- Metric selector -->
+          <div style="display:flex;gap:4px;">
+            <button class="preset-btn tm-trendm-btn active" data-m="orders"    onclick="tmSetTrendMetricM('orders')">📦 הזמנות</button>
+            <button class="preset-btn tm-trendm-btn"        data-m="avgF"      onclick="tmSetTrendMetricM('avgF')">⏱ זמן F</button>
+            <button class="preset-btn tm-trendm-btn"        data-m="avgH"      onclick="tmSetTrendMetricM('avgH')">🏁 זמן H</button>
+          </div>
+          <!-- Top-N selector (disabled when filter active) -->
+          <div id="tmTopNWrap" style="display:flex;gap:4px;border-right:1px solid var(--border);padding-right:8px;margin-right:2px;">
+            <span style="font-size:11px;color:var(--text3);align-self:center;">Top:</span>
+            <button class="preset-btn tm-topn-btn"        data-n="5"   onclick="tmSetTrendTopN(5)">5</button>
+            <button class="preset-btn tm-topn-btn active" data-n="10"  onclick="tmSetTrendTopN(10)">10</button>
+            <button class="preset-btn tm-topn-btn"        data-n="all" onclick="tmSetTrendTopN(Infinity)">כולם</button>
+          </div>
+          <!-- Branch filter button + dropdown -->
+          <div class="tm-filter-wrap" id="tmTrendFilterWrap">
+            <button class="tm-filter-btn" id="tmTrendFilterBtn" onclick="tmOpenTrendFilter()">
+              🔍 סניפים
+              <span class="tm-filter-badge" id="tmTrendFilterBadge" style="display:none"></span>
+            </button>
+            <div class="tm-filter-panel" id="tmTrendFilterPanel">
+              <!-- Search -->
+              <div class="tm-filter-search-wrap">
+                <input class="tm-filter-search" id="tmTrendFilterSearch"
+                  placeholder="🔍 חיפוש סניף..."
+                  oninput="tmRenderFilterList(document.getElementById('tmTrendFilterPanel')._branches||[], this.value)">
+              </div>
+              <!-- Bulk actions -->
+              <div class="tm-filter-actions">
+                <button class="tm-filter-act-btn" onclick="tmTrendFilterSelectAll()">✅ בחר הכל</button>
+                <button class="tm-filter-act-btn" onclick="tmTrendFilterClearAll()">🗑 נקה הכל</button>
+              </div>
+              <!-- List -->
+              <div class="tm-filter-list" id="tmTrendFilterList">
+                <div style="padding:16px;text-align:center;color:var(--text3);font-size:12px;">טוען סניפים…</div>
+              </div>
+              <!-- Footer -->
+              <div class="tm-filter-footer">
+                <span class="tm-filter-count-lbl" id="tmFilterCountLbl">0 סניפים</span>
+                <button class="tm-filter-apply-btn" onclick="tmApplyTrendFilter()">החל ←</button>
+              </div>
+            </div>
+          </div>
+          <!-- Reset filter (shown only when filter active) -->
+          <button id="tmResetTrendFilterBtn"
+            style="display:none;padding:5px 10px;background:var(--red-dim);border:1px solid var(--red);border-radius:7px;color:var(--red);font-size:11px;cursor:pointer;"
+            onclick="tmResetTrendFilter()">✕ איפוס פילטר</button>
+        </div>
+      </div>
+      <!-- Chart -->
+      <div class="tm-trend-chart-wrap">
+        <canvas id="tmChartMonthlyTrend"></canvas>
+      </div>
+      <!-- Custom legend -->
+      <div class="tm-trend-legend" id="tmTrendLegend"></div>
+      <div style="margin-top:6px;font-size:11px;color:var(--text3);">
+        * הקו הכחול המקוטע מסמן את החודש הנבחר בטבלה למטה. ערכים חסרים (null) = אין נתונים לאותו חודש בסניף זה.
+      </div>
+    </div>
+
+    <!-- ══ MONTHLY GROWTH TABLE ══ -->
+    <div class="growth-section mb16" id="tmGrowthSection">
+      <div class="growth-header">
+        <div>
+          <div class="tm-chart-title" style="margin-bottom:2px">📊 השוואה חודשית — צמיחה/ירידה לפי סניף</div>
+          <div class="chart-sub" id="growthTableSub" style="font-size:11px;color:var(--text3)">טוען…</div>
+        </div>
+        <div class="growth-metric-bar">
+          <!-- Metric selector -->
+          <span class="growth-sort-label">מדד:</span>
+          <button class="preset-btn growth-met-btn active" data-m="orders" onclick="tmSetGrowthMetric('orders')">📦 הזמנות</button>
+          <button class="preset-btn growth-met-btn"        data-m="avgF"   onclick="tmSetGrowthMetric('avgF')">⏱ זמן F</button>
+          <button class="preset-btn growth-met-btn"        data-m="avgH"   onclick="tmSetGrowthMetric('avgH')">🏁 זמן H</button>
+          <!-- Export -->
+          <button class="export-btn" onclick="tmExportGrowthCSV()" style="margin-right:8px;">⬇️ CSV</button>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;font-size:11px;">
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:2px;background:rgba(46,160,67,.35);display:inline-block"></span>צמיחה חזקה (≥10%)</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:2px;background:rgba(46,160,67,.12);display:inline-block"></span>צמיחה קלה (&lt;10%)</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:2px;background:rgba(218,54,51,.12);display:inline-block"></span>ירידה קלה</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:2px;background:rgba(218,54,51,.35);display:inline-block"></span>ירידה חזקה (≥10%)</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:2px;background:rgba(139,148,158,.12);display:inline-block"></span>אין נתונים</span>
+        <span style="color:var(--text3);">* % = שינוי מהחודש הקודם | לחץ על כותרת עמודה למיון</span>
+      </div>
+
+      <!-- Table -->
+      <div class="growth-table-wrap">
+        <table class="growth-table">
+          <thead id="growthThead">
+            <tr><th>טוען…</th></tr>
+          </thead>
+          <tbody id="growthTbody">
+            <tr><td class="nodata-msg">טוען נתונים…</td></tr>
+          </tbody>
+          <tfoot id="growthTfoot"></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ MONTHLY CUMULATIVE SECTION ══ -->
+    <div class="monthly-section mb16" id="tmMonthlySection">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+        <div class="tm-chart-title" style="margin-bottom:0">📆 מצטבר חודשי לפי סניף</div>
+        <div class="monthly-month-select" id="tmMonthButtons" style="margin-bottom:0">
+          <!-- month buttons injected by JS -->
+        </div>
+      </div>
+      <div id="tmMonthCompareInfo" style="font-size:11px;color:var(--text2);margin-bottom:12px;background:var(--card2);border-radius:8px;padding:8px 12px;"></div>
+
+      <!-- Monthly KPI row -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px" id="tmMonthlyKpiRow"></div>
+
+      <!-- Monthly branch table -->
+      <div class="tm-branch-wrap mb16">
+        <table class="tm-table">
+          <thead>
+            <tr>
+              <th>סניף</th>
+              <th>הזמנות</th>
+              <th id="tmMonthThF">זמן F</th>
+              <th id="tmMonthThG">זמן G</th>
+              <th id="tmMonthThH">זמן H</th>
+              <th>F החודש הקודם</th>
+              <th>שינוי F</th>
+            </tr>
+          </thead>
+          <tbody id="tmMonthlyTbody">
+            <tr><td colspan="7" class="nodata-msg">בחר חודש לצפייה</td></tr>
+          </tbody>
+          <tfoot id="tmMonthlyTfoot"></tfoot>
+        </table>
+      </div>
+      <!-- Monthly chart -->
+      <div class="tm-chart-wrap tall"><canvas id="tmChartMonthly"></canvas></div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /timesApp -->
+
+
+<!-- Main Dashboard Script (moved out of #ordersApp for GitHub Pages compatibility) -->
+<script>
 // ══════════════════════════════════════════════════════════
 //  CONSTANTS & STATE
 // ══════════════════════════════════════════════════════════
@@ -2585,15 +3057,37 @@ function init(){
   }
 }
 
-init();
+// ── GitHub Pages fix: wrap init in window.load to ensure CDN scripts are ready ──
+window.addEventListener('load', function() {
+  try { init(); } catch(e) { console.error('[Dashboard] init() error:', e); }
+  try { tmInit(); } catch(e) { console.error('[Dashboard] tmInit() error:', e); }
+});
 
 // ═══════════════════════════════════════════════════════════
 //  LANDING / APP NAVIGATION
 // ═══════════════════════════════════════════════════════════
 function showApp(app) {
-  document.getElementById('landingScreen').classList.toggle('hidden', app !== 'landing');
-  document.getElementById('ordersApp').classList.toggle('active', app === 'orders');
-  document.getElementById('timesApp').classList.toggle('active', app === 'times');
+  // GitHub Pages hardened: use direct style + class for reliability
+  var ls = document.getElementById('landingScreen');
+  var oa = document.getElementById('ordersApp');
+  var ta = document.getElementById('timesApp');
+  if (!ls || !oa || !ta) {
+    console.error('[showApp] DOM elements not found. app='+app);
+    return;
+  }
+  if (app === 'landing') {
+    ls.classList.remove('hidden');
+    oa.classList.remove('active');
+    ta.classList.remove('active');
+  } else if (app === 'orders') {
+    ls.classList.add('hidden');
+    oa.classList.add('active');
+    ta.classList.remove('active');
+  } else if (app === 'times') {
+    ls.classList.add('hidden');
+    oa.classList.remove('active');
+    ta.classList.add('active');
+  }
 
   if (app === 'times') {
     // Auto-sync if data is present; otherwise load
@@ -4820,477 +5314,8 @@ function tmInit() {
     // labels already set in parse; restore them from stored data
   }
 }
-tmInit();
+// tmInit() called via window.load above
 
 </script>
-
-</div><!-- /ordersApp -->
-
-<!-- ═══════════════════════════════════════════════════
-     TIMES APP
-════════════════════════════════════════════════════ -->
-<div id="timesApp">
-
-  <!-- Loading overlay (times) -->
-  <div class="loading-overlay" id="tmLoadingOverlay">
-    <div class="spinner"></div>
-    <div style="color:var(--text2);font-size:13px">טוען נתוני זמנים...</div>
-  </div>
-
-  <!-- Header (times) -->
-  <header>
-    <div class="hdr-brand">
-      <button class="back-btn" onclick="showApp('landing')">← חזור</button>
-      &nbsp;
-      <span class="logo">⏱️</span>
-      <div>
-        <h1>דשבורד זמני שילוח</h1>
-        <small id="tmHdrSub">Domino's Pizza — Delivery Times</small>
-      </div>
-    </div>
-    <div class="hdr-right">
-      <span id="tmColNames" style="font-size:11px;color:var(--text2);"></span>
-      <button class="btn btn-primary" onclick="tmLoadFromSheets()"
-        style="background:var(--green-dim);border-color:var(--green);color:var(--green)">
-        <span class="dot" id="tmSyncDot"></span>🔄 סנכרן גיליון 2
-      </button>
-      <button class="btn btn-secondary" onclick="document.getElementById('tmFileInput').click()">
-        📂 טען קובץ ידני
-      </button>
-      <input type="file" id="tmFileInput" accept=".xlsx,.xls,.csv" hidden onchange="tmLoadFile(this)">
-    </div>
-  </header>
-
-  <div class="main">
-
-    <!-- DATE NAV (times) -->
-    <div class="date-nav" id="tmDateNav">
-      <span class="date-nav-title">📅 הצג:</span>
-      <div class="preset-btns">
-        <button class="preset-btn" id="tmPreYesterday" onclick="tmApplyPreset('yesterday')">📆 אתמול</button>
-        <button class="preset-btn" id="tmPreCurWeek"   onclick="tmApplyPreset('curweek')">📅 שבוע נוכחי</button>
-        <button class="preset-btn" id="tmPrePrevWeek"  onclick="tmApplyPreset('prevweek')">⏪ שבוע קודם</button>
-        <button class="preset-btn" id="tmPreAll"       onclick="tmApplyPreset('all')">🗂️ כל הנתונים</button>
-        <button class="preset-btn" id="tmPreCustom"    onclick="tmApplyPreset('custom')">🗓️ בחירה ידנית</button>
-      </div>
-      <div class="date-picker-wrap" id="tmCustomPickers" style="display:none">
-        <span style="font-size:11px;color:var(--text2)">מ-</span>
-        <input type="date" class="dp-input" id="tmDpFrom" onchange="tmOnCustomRange()">
-        <span class="date-picker-sep">—</span>
-        <span style="font-size:11px;color:var(--text2)">עד</span>
-        <input type="date" class="dp-input" id="tmDpTo" onchange="tmOnCustomRange()">
-      </div>
-      <span class="range-badge" id="tmRangeBadge" style="display:none"></span>
-      <div style="flex:1"></div>
-      <!-- Compare -->
-      <div class="date-nav-sep"></div>
-      <div class="compare-section">
-        <span class="compare-label">📊 השווה:</span>
-        <button class="compare-preset" id="tmCmpNone"     onclick="tmApplyCompare('')">ללא</button>
-        <button class="compare-preset" id="tmCmpYest"     onclick="tmApplyCompare('yesterday')">אתמול</button>
-        <button class="compare-preset" id="tmCmpPrevWeek" onclick="tmApplyCompare('prevweek')">שבוע קודם</button>
-        <button class="compare-preset" id="tmCmpCustom"   onclick="tmApplyCompare('custom')">בחירה…</button>
-        <input type="date" class="dp-input" id="tmDpCompare" style="display:none" onchange="tmOnCompareDate()">
-      </div>
-    </div>
-
-    <!-- BRANCH FILTER (times) — enhanced -->
-    <div class="filter-bar" id="tmFilterBar">
-      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;width:100%">
-        <span class="fb-label">🔍 סניף:</span>
-        <select class="fb-select" id="tmFbBranch" onchange="tmApplyFilters()" style="min-width:180px">
-          <option value="">כל הסניפים</option>
-        </select>
-        <div class="mf-range" title="סנן לפי זמן מסירה (H) דקות">
-          <span class="metric-filter-label">⏱️ זמן מסירה:</span>
-          <input type="number" id="tmMinH" min="0" max="120" step="1" placeholder="min" onchange="tmApplyFilters()">
-          <span>—</span>
-          <input type="number" id="tmMaxH" min="0" max="120" step="1" placeholder="max" onchange="tmApplyFilters()">
-          <span style="color:var(--text3);margin-right:2px">דקות</span>
-        </div>
-        <div style="display:flex;gap:5px;flex-wrap:wrap;">
-          <button class="preset-btn" onclick="tmQuickFilter('fast')">🟢 מהירים</button>
-          <button class="preset-btn" onclick="tmQuickFilter('warn')">🟡 בינוני</button>
-          <button class="preset-btn" onclick="tmQuickFilter('slow')">🔴 איטיים</button>
-        </div>
-        <button class="fb-reset" onclick="tmResetFilters()">✕ אפס הכל</button>
-        <span class="fb-count" id="tmFbCount"></span>
-      </div>
-      <div class="tm-active-filters" id="tmActiveFilters"></div>
-    </div>
-
-    <!-- KPI CARDS (times) -->
-    <div class="tm-kpi-grid mb16" id="tmKpiGrid">
-      <div class="tm-kpi-card blue">
-        <div class="kpi-top"><span class="kpi-label">סה"כ הזמנות</span><span class="kpi-icon">📦</span></div>
-        <div class="kpi-value" id="tmKpiOrders">—</div>
-        <div class="kpi-sub">הזמנות בטווח</div>
-        <span class="kpi-change flat" id="tmKpiOrdersChg">—</span>
-      </div>
-      <div class="tm-kpi-card green">
-        <div class="kpi-top"><span class="kpi-label" id="tmLblF">זמן ממוצע F</span><span class="kpi-icon">⏱️</span></div>
-        <div class="tm-time-val" id="tmKpiF">—</div>
-        <div class="kpi-sub">ממוצע כלל הסניפים</div>
-        <span class="kpi-change flat" id="tmKpiFChg">—</span>
-      </div>
-      <div class="tm-kpi-card orange">
-        <div class="kpi-top"><span class="kpi-label" id="tmLblG">זמן ממוצע G</span><span class="kpi-icon">🕐</span></div>
-        <div class="tm-time-val" id="tmKpiG">—</div>
-        <div class="kpi-sub">ממוצע כלל הסניפים</div>
-        <span class="kpi-change flat" id="tmKpiGChg">—</span>
-      </div>
-      <div class="tm-kpi-card purple">
-        <div class="kpi-top"><span class="kpi-label" id="tmLblH">זמן ממוצע H</span><span class="kpi-icon">🚴</span></div>
-        <div class="tm-time-val" id="tmKpiH">—</div>
-        <div class="kpi-sub">ממוצע כלל הסניפים</div>
-        <span class="kpi-change flat" id="tmKpiHChg">—</span>
-      </div>
-    </div>
-
-    <!-- INSIGHTS (times) -->
-    <div class="tm-insights-grid mb16" id="tmInsightsGrid">
-      <!-- filled by JS -->
-    </div>
-
-    <!-- BRANCH TABLE (times) -->
-    <div class="chart-card mb16">
-      <div class="chart-header">
-        <div>
-          <div class="chart-title">📋 ביצועי סניף</div>
-          <div class="chart-sub" id="tmTableSub">סה"כ לפי טווח הנבחר</div>
-        </div>
-        <button class="export-btn" onclick="tmExportCSV()">⬇️ ייצא CSV</button>
-      </div>
-      <div class="tm-branch-wrap">
-        <table class="tm-table">
-          <thead>
-            <tr>
-              <th onclick="tmSortBranch('branch')">סניף ↕</th>
-              <th onclick="tmSortBranch('orders')">הזמנות ↕</th>
-              <th style="font-size:11px;color:var(--text3)">הזמנות Δ</th>
-              <th id="thF" onclick="tmSortBranch('avgF')">— ↕</th>
-              <th style="font-size:11px;color:var(--text3)">F Δ</th>
-              <th id="thG" onclick="tmSortBranch('avgG')">— ↕</th>
-              <th style="font-size:11px;color:var(--text3)">G Δ</th>
-              <th id="thH" onclick="tmSortBranch('avgH')">— ↕</th>
-              <th style="font-size:11px;color:var(--text3)">H Δ</th>
-            </tr>
-          </thead>
-          <tbody id="tmBranchTbody">
-            <tr><td colspan="9" class="nodata-msg">⏳ טוען נתונים… לחץ על "סנכרן גיליון 2"</td></tr>
-          </tbody>
-          <tfoot id="tmBranchTfoot"></tfoot>
-        </table>
-      </div>
-    </div>
-
-    <!-- ══ ORDERS BY BRANCH TREND CHART ══ -->
-    <div class="chart-card mb16" id="tmOrdersByBranchSection">
-      <div class="chart-header">
-        <div>
-          <div class="chart-title">📦 הזמנות לפי סניף — השוואה לתקופה קודמת</div>
-          <div class="chart-sub" id="tmOrdersBranchSub">ירוק = עלייה, אדום = ירידה מול תקופה קודמת</div>
-        </div>
-      </div>
-      <div class="tm-chart-wrap tall" style="height:360px">
-        <canvas id="tmChartOrdersByBranch"></canvas>
-      </div>
-      <div style="margin-top:8px;font-size:11px;color:var(--text3);">
-        * מוצגים Top 12 סניפים לפי מספר הזמנות. בחר טווח השוואה כדי לראות שינוי צבע.
-      </div>
-    </div>
-
-    <!-- ══ GOOD vs BAD TABLE ══ -->
-    <div class="gb-section mb16" id="tmGoodBadSection">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
-        <div class="tm-chart-title" style="margin-bottom:0">🏆 השוואה טובים מול גרועים — ביצועי זמנים</div>
-        <div style="display:flex;gap:6px;">
-          <button class="preset-btn active" id="gbMetF" onclick="gbSetMetric('avgF')">קריאה לוולט</button>
-          <button class="preset-btn" id="gbMetG" onclick="gbSetMetric('avgG')">עד איסוף</button>
-          <button class="preset-btn" id="gbMetH" onclick="gbSetMetric('avgH')">עד מסירה</button>
-        </div>
-      </div>
-      <div id="gbMetricLabel" style="font-size:11px;color:var(--text2);margin-bottom:10px;"></div>
-      <div class="gb-grid">
-        <div>
-          <div class="gb-half-title">🥇 Top 5 — הכי מהירים</div>
-          <table class="gb-table">
-            <thead><tr><th>#</th><th>סניף</th><th>ממוצע</th><th>הזמנות</th><th>ויזואל</th></tr></thead>
-            <tbody id="gbBestTbody"><tr><td colspan="5" class="nodata-msg">טוען…</td></tr></tbody>
-          </table>
-        </div>
-        <div>
-          <div class="gb-half-title">⚠️ Bottom 5 — הכי איטיים</div>
-          <table class="gb-table">
-            <thead><tr><th>#</th><th>סניף</th><th>ממוצע</th><th>הזמנות</th><th>ויזואל</th></tr></thead>
-            <tbody id="gbWorstTbody"><tr><td colspan="5" class="nodata-msg">טוען…</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-      <div style="margin-top:12px;font-size:11px;color:var(--text3);">
-        * ממוצע מחושב כממוצע של ממוצעים (average of averages) לפי יום וסניף. מוצגים רק סניפים עם לפחות 5 הזמנות.
-      </div>
-    </div>
-
-    <!-- ══ WEEKLY PERFORMANCE CHART (א–ש) ══ -->
-    <div class="weekly-perf-section mb16" id="tmWeeklyPerfSection">
-      <div class="weekly-ctrl-row">
-        <div>
-          <div class="tm-chart-title" style="margin-bottom:4px">📅 ביצועים יומיים — השוואה שבוע מול שבוע</div>
-          <div class="weekly-sub" id="tmWeeklyPerfSub">שבוע נוכחי vs שבוע קודם (א–ש)</div>
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="preset-btn active" id="wpMetF" onclick="wpSetMetric('avgF')">קריאה לוולט</button>
-          <button class="preset-btn" id="wpMetG" onclick="wpSetMetric('avgG')">עד איסוף</button>
-          <button class="preset-btn" id="wpMetH" onclick="wpSetMetric('avgH')">עד מסירה</button>
-          <button class="preset-btn" id="wpMetOrders" onclick="wpSetMetric('orders')">הזמנות</button>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px" id="tmWeeklyKpiRow"></div>
-      <div class="tm-chart-wrap tall"><canvas id="tmChartWeeklyPerf"></canvas></div>
-      <div style="margin-top:8px;font-size:11px;color:var(--text3);">
-        * שבוע מוגדר ממוצאי (א׳) עד שבת (ש׳). ימים ללא נתונים מוצגים כריקים.
-      </div>
-    </div>
-
-    <!-- CHARTS (times) -->
-    <div class="tm-charts-grid mb16">
-      <div class="tm-chart-section" style="grid-column:1/-1">
-        <div class="tm-chart-title">📊 ממוצע זמנים לפי סניף (Top 15)</div>
-        <div class="tm-chart-wrap tall"><canvas id="tmChartBranch"></canvas></div>
-      </div>
-    </div>
-
-    <!-- ══ ROW 2: Donut charts ══ -->
-    <div class="tm-charts-grid mb16">
-      <!-- Donut 1: Speed-tier distribution -->
-      <div class="tm-chart-section">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">
-          <div class="tm-chart-title" style="margin-bottom:0">🍩 התפלגות סניפים לפי מהירות מסירה</div>
-          <div id="tmDonutTierLegend" style="font-size:11px;color:var(--text2);"></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center">
-          <div style="position:relative;height:240px"><canvas id="tmChartTierDonut"></canvas></div>
-          <div id="tmTierStats" style="min-width:130px;display:flex;flex-direction:column;gap:8px"></div>
-        </div>
-      </div>
-      <!-- Donut 2: Time breakdown F/G/courier -->
-      <div class="tm-chart-section">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">
-          <div class="tm-chart-title" style="margin-bottom:0">🥧 פירוק זמן מסירה ממוצע</div>
-          <div id="tmDonutBreakdownSub" style="font-size:11px;color:var(--text2);"></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center">
-          <div style="position:relative;height:240px"><canvas id="tmChartBreakdownDonut"></canvas></div>
-          <div id="tmBreakdownStats" style="min-width:130px;display:flex;flex-direction:column;gap:8px"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══ ROW 3: Line charts ══ -->
-    <div class="tm-charts-grid mb16">
-      <!-- Line 1: Daily + 7-day rolling avg -->
-      <div class="tm-chart-section">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
-          <div class="tm-chart-title" style="margin-bottom:0">📈 מגמת זמנים + ממוצע נע 7 ימים</div>
-          <div style="display:flex;gap:5px">
-            <button class="preset-btn active" id="tmLineMetF"    onclick="tmSetLineMetric('avgF')">קריאה לוולט</button>
-            <button class="preset-btn"        id="tmLineMetG"    onclick="tmSetLineMetric('avgG')">עד איסוף</button>
-            <button class="preset-btn"        id="tmLineMetH"    onclick="tmSetLineMetric('avgH')">עד מסירה</button>
-          </div>
-        </div>
-        <div class="tm-chart-wrap tall"><canvas id="tmChartRollingLine"></canvas></div>
-      </div>
-      <!-- Line 2: Top-5 branches trend -->
-      <div class="tm-chart-section">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
-          <div class="tm-chart-title" style="margin-bottom:0">🏪 טרנד זמן מסירה — Top 5 סניפים</div>
-          <span id="tmTop5Sub" style="font-size:11px;color:var(--text2)"></span>
-        </div>
-        <div class="tm-chart-wrap tall"><canvas id="tmChartBranchLine"></canvas></div>
-      </div>
-    </div>
-
-    <!-- ══ ROW 4: original trend + orders ══ -->
-    <div class="tm-charts-grid mb16">
-      <div class="tm-chart-section">
-        <div class="tm-chart-title">📈 מגמת כל הזמנים לאורך זמן</div>
-        <div class="tm-chart-wrap"><canvas id="tmChartTrend"></canvas></div>
-      </div>
-      <div class="tm-chart-section">
-        <div class="tm-chart-title">📦 הזמנות לפי יום</div>
-        <div class="tm-chart-wrap"><canvas id="tmChartOrders"></canvas></div>
-      </div>
-    </div>
-
-    <!-- ══ TRENDS SECTION ══ -->
-    <div class="tm-chart-section mb16" id="tmTrendsSection">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
-        <div class="tm-chart-title" style="margin-bottom:0">📉 טרנדים והשוואות</div>
-        <div class="trend-mode-bar" style="margin-bottom:0">
-          <button class="trend-mode-btn active" id="tmTrendDvD" onclick="tmSetTrendMode('dvd')">יום מול יום שבוע שעבר</button>
-          <button class="trend-mode-btn" id="tmTrendWvW" onclick="tmSetTrendMode('wvw')">שבוע מול שבוע</button>
-        </div>
-      </div>
-      <div id="tmTrendRangeLabel" style="font-size:11px;color:var(--text2);margin-bottom:12px;"></div>
-      <!-- Metric selector -->
-      <div style="display:flex;gap:6px;margin-bottom:12px;">
-        <button class="preset-btn active" id="tmTrMetF" onclick="tmSetTrendMetric('avgF')">זמן F</button>
-        <button class="preset-btn" id="tmTrMetG" onclick="tmSetTrendMetric('avgG')">זמן G</button>
-        <button class="preset-btn" id="tmTrMetH" onclick="tmSetTrendMetric('avgH')">זמן H</button>
-        <button class="preset-btn" id="tmTrMetOrders" onclick="tmSetTrendMetric('orders')">הזמנות</button>
-      </div>
-      <div class="tm-chart-wrap tall"><canvas id="tmChartTrendComp"></canvas></div>
-    </div>
-
-    <!-- ══ MONTHLY ORDERS TREND BY BRANCH ══ -->
-    <div class="tm-trend-chart-section mb16" id="tmMonthlyTrendSection">
-      <div class="tm-trend-top-bar">
-        <div>
-          <div class="tm-chart-title" style="margin-bottom:2px">📈 טרנד חודשי — לפי סניף</div>
-          <div style="font-size:11px;color:var(--text3)">כמות הזמנות / זמן מסירה לכל סניף לאורך חודשים | לחץ על סניף בלגנדה להסתרה</div>
-        </div>
-        <div class="tm-trend-controls">
-          <!-- Metric selector -->
-          <div style="display:flex;gap:4px;">
-            <button class="preset-btn tm-trendm-btn active" data-m="orders"    onclick="tmSetTrendMetricM('orders')">📦 הזמנות</button>
-            <button class="preset-btn tm-trendm-btn"        data-m="avgF"      onclick="tmSetTrendMetricM('avgF')">⏱ זמן F</button>
-            <button class="preset-btn tm-trendm-btn"        data-m="avgH"      onclick="tmSetTrendMetricM('avgH')">🏁 זמן H</button>
-          </div>
-          <!-- Top-N selector (disabled when filter active) -->
-          <div id="tmTopNWrap" style="display:flex;gap:4px;border-right:1px solid var(--border);padding-right:8px;margin-right:2px;">
-            <span style="font-size:11px;color:var(--text3);align-self:center;">Top:</span>
-            <button class="preset-btn tm-topn-btn"        data-n="5"   onclick="tmSetTrendTopN(5)">5</button>
-            <button class="preset-btn tm-topn-btn active" data-n="10"  onclick="tmSetTrendTopN(10)">10</button>
-            <button class="preset-btn tm-topn-btn"        data-n="all" onclick="tmSetTrendTopN(Infinity)">כולם</button>
-          </div>
-          <!-- Branch filter button + dropdown -->
-          <div class="tm-filter-wrap" id="tmTrendFilterWrap">
-            <button class="tm-filter-btn" id="tmTrendFilterBtn" onclick="tmOpenTrendFilter()">
-              🔍 סניפים
-              <span class="tm-filter-badge" id="tmTrendFilterBadge" style="display:none"></span>
-            </button>
-            <div class="tm-filter-panel" id="tmTrendFilterPanel">
-              <!-- Search -->
-              <div class="tm-filter-search-wrap">
-                <input class="tm-filter-search" id="tmTrendFilterSearch"
-                  placeholder="🔍 חיפוש סניף..."
-                  oninput="tmRenderFilterList(document.getElementById('tmTrendFilterPanel')._branches||[], this.value)">
-              </div>
-              <!-- Bulk actions -->
-              <div class="tm-filter-actions">
-                <button class="tm-filter-act-btn" onclick="tmTrendFilterSelectAll()">✅ בחר הכל</button>
-                <button class="tm-filter-act-btn" onclick="tmTrendFilterClearAll()">🗑 נקה הכל</button>
-              </div>
-              <!-- List -->
-              <div class="tm-filter-list" id="tmTrendFilterList">
-                <div style="padding:16px;text-align:center;color:var(--text3);font-size:12px;">טוען סניפים…</div>
-              </div>
-              <!-- Footer -->
-              <div class="tm-filter-footer">
-                <span class="tm-filter-count-lbl" id="tmFilterCountLbl">0 סניפים</span>
-                <button class="tm-filter-apply-btn" onclick="tmApplyTrendFilter()">החל ←</button>
-              </div>
-            </div>
-          </div>
-          <!-- Reset filter (shown only when filter active) -->
-          <button id="tmResetTrendFilterBtn"
-            style="display:none;padding:5px 10px;background:var(--red-dim);border:1px solid var(--red);border-radius:7px;color:var(--red);font-size:11px;cursor:pointer;"
-            onclick="tmResetTrendFilter()">✕ איפוס פילטר</button>
-        </div>
-      </div>
-      <!-- Chart -->
-      <div class="tm-trend-chart-wrap">
-        <canvas id="tmChartMonthlyTrend"></canvas>
-      </div>
-      <!-- Custom legend -->
-      <div class="tm-trend-legend" id="tmTrendLegend"></div>
-      <div style="margin-top:6px;font-size:11px;color:var(--text3);">
-        * הקו הכחול המקוטע מסמן את החודש הנבחר בטבלה למטה. ערכים חסרים (null) = אין נתונים לאותו חודש בסניף זה.
-      </div>
-    </div>
-
-    <!-- ══ MONTHLY GROWTH TABLE ══ -->
-    <div class="growth-section mb16" id="tmGrowthSection">
-      <div class="growth-header">
-        <div>
-          <div class="tm-chart-title" style="margin-bottom:2px">📊 השוואה חודשית — צמיחה/ירידה לפי סניף</div>
-          <div class="chart-sub" id="growthTableSub" style="font-size:11px;color:var(--text3)">טוען…</div>
-        </div>
-        <div class="growth-metric-bar">
-          <!-- Metric selector -->
-          <span class="growth-sort-label">מדד:</span>
-          <button class="preset-btn growth-met-btn active" data-m="orders" onclick="tmSetGrowthMetric('orders')">📦 הזמנות</button>
-          <button class="preset-btn growth-met-btn"        data-m="avgF"   onclick="tmSetGrowthMetric('avgF')">⏱ זמן F</button>
-          <button class="preset-btn growth-met-btn"        data-m="avgH"   onclick="tmSetGrowthMetric('avgH')">🏁 זמן H</button>
-          <!-- Export -->
-          <button class="export-btn" onclick="tmExportGrowthCSV()" style="margin-right:8px;">⬇️ CSV</button>
-        </div>
-      </div>
-
-      <!-- Legend -->
-      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;font-size:11px;">
-        <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:2px;background:rgba(46,160,67,.35);display:inline-block"></span>צמיחה חזקה (≥10%)</span>
-        <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:2px;background:rgba(46,160,67,.12);display:inline-block"></span>צמיחה קלה (&lt;10%)</span>
-        <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:2px;background:rgba(218,54,51,.12);display:inline-block"></span>ירידה קלה</span>
-        <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:2px;background:rgba(218,54,51,.35);display:inline-block"></span>ירידה חזקה (≥10%)</span>
-        <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:2px;background:rgba(139,148,158,.12);display:inline-block"></span>אין נתונים</span>
-        <span style="color:var(--text3);">* % = שינוי מהחודש הקודם | לחץ על כותרת עמודה למיון</span>
-      </div>
-
-      <!-- Table -->
-      <div class="growth-table-wrap">
-        <table class="growth-table">
-          <thead id="growthThead">
-            <tr><th>טוען…</th></tr>
-          </thead>
-          <tbody id="growthTbody">
-            <tr><td class="nodata-msg">טוען נתונים…</td></tr>
-          </tbody>
-          <tfoot id="growthTfoot"></tfoot>
-        </table>
-      </div>
-    </div>
-
-    <!-- ══ MONTHLY CUMULATIVE SECTION ══ -->
-    <div class="monthly-section mb16" id="tmMonthlySection">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px">
-        <div class="tm-chart-title" style="margin-bottom:0">📆 מצטבר חודשי לפי סניף</div>
-        <div class="monthly-month-select" id="tmMonthButtons" style="margin-bottom:0">
-          <!-- month buttons injected by JS -->
-        </div>
-      </div>
-      <div id="tmMonthCompareInfo" style="font-size:11px;color:var(--text2);margin-bottom:12px;background:var(--card2);border-radius:8px;padding:8px 12px;"></div>
-
-      <!-- Monthly KPI row -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px" id="tmMonthlyKpiRow"></div>
-
-      <!-- Monthly branch table -->
-      <div class="tm-branch-wrap mb16">
-        <table class="tm-table">
-          <thead>
-            <tr>
-              <th>סניף</th>
-              <th>הזמנות</th>
-              <th id="tmMonthThF">זמן F</th>
-              <th id="tmMonthThG">זמן G</th>
-              <th id="tmMonthThH">זמן H</th>
-              <th>F החודש הקודם</th>
-              <th>שינוי F</th>
-            </tr>
-          </thead>
-          <tbody id="tmMonthlyTbody">
-            <tr><td colspan="7" class="nodata-msg">בחר חודש לצפייה</td></tr>
-          </tbody>
-          <tfoot id="tmMonthlyTfoot"></tfoot>
-        </table>
-      </div>
-      <!-- Monthly chart -->
-      <div class="tm-chart-wrap tall"><canvas id="tmChartMonthly"></canvas></div>
-    </div>
-
-  </div><!-- /main -->
-</div><!-- /timesApp -->
-
 </body>
 </html>
