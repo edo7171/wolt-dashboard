@@ -978,8 +978,9 @@ tr.refunded-row td{background:rgba(137,87,229,.04)}
     <div class="compare-section">
       <span class="compare-label">📊 השווה:</span>
       <button class="compare-preset" id="cmpNone"     onclick="applyComparePreset('')">ללא</button>
-      <button class="compare-preset" id="cmpYest"     onclick="applyComparePreset('yesterday')">אתמול</button>
-      <button class="compare-preset" id="cmpPrevWeek" onclick="applyComparePreset('prevweek')">שבוע קודם</button>
+      <button class="compare-preset" id="cmpYest"      onclick="applyComparePreset('yesterday')">אתמול</button>
+      <button class="compare-preset" id="cmpSameDay7"  onclick="applyComparePreset('sameday7')">📅 יום זהה ש׳ שעבר</button>
+      <button class="compare-preset" id="cmpPrevWeek"  onclick="applyComparePreset('prevweek')">שבוע קודם</button>
       <button class="compare-preset" id="cmpCustom"   onclick="applyComparePreset('custom')">בחירה…</button>
       <input type="date" class="dp-input" id="dpCompare" style="display:none" onchange="onCompareDate()">
     </div>
@@ -1484,10 +1485,11 @@ tr.refunded-row td{background:rgba(137,87,229,.04)}
       <div class="date-nav-sep"></div>
       <div class="compare-section">
         <span class="compare-label">📊 השווה:</span>
-        <button class="compare-preset" id="tmCmpNone"     onclick="tmApplyCompare('')">ללא</button>
-        <button class="compare-preset" id="tmCmpYest"     onclick="tmApplyCompare('yesterday')">אתמול</button>
-        <button class="compare-preset" id="tmCmpPrevWeek" onclick="tmApplyCompare('prevweek')">שבוע קודם</button>
-        <button class="compare-preset" id="tmCmpCustom"   onclick="tmApplyCompare('custom')">בחירה…</button>
+        <button class="compare-preset" id="tmCmpNone"      onclick="tmApplyCompare('')">ללא</button>
+        <button class="compare-preset" id="tmCmpYest"      onclick="tmApplyCompare('yesterday')">אתמול</button>
+        <button class="compare-preset" id="tmCmpSameDay7"  onclick="tmApplyCompare('sameday7')">📅 יום זהה ש׳ שעבר</button>
+        <button class="compare-preset" id="tmCmpPrevWeek"  onclick="tmApplyCompare('prevweek')">שבוע קודם</button>
+        <button class="compare-preset" id="tmCmpCustom"    onclick="tmApplyCompare('custom')">בחירה…</button>
         <input type="date" class="dp-input" id="tmDpCompare" style="display:none" onchange="tmOnCompareDate()">
       </div>
     </div>
@@ -1812,7 +1814,11 @@ tr.refunded-row td{background:rgba(137,87,229,.04)}
     <div class="growth-section mb16" id="tmGrowthSection">
       <div class="growth-header">
         <div>
-          <div class="tm-chart-title" style="margin-bottom:2px">📊 השוואה חודשית — צמיחה/ירידה לפי סניף</div>
+          <div class="tm-chart-title" style="margin-bottom:2px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            📊 השוואה חודשית — צמיחה/ירידה לפי סניף
+            <span id="growthDataBadge" style="font-size:11px;color:var(--text3);font-weight:400"></span>
+            <button onclick="tmClearCacheAndReload()" style="font-size:11px;padding:3px 10px;border-radius:12px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;" title="נקה נתונים ישנים מה-cache ורענן">🗑️ נקה Cache</button>
+          </div>
           <div class="chart-sub" id="growthTableSub" style="font-size:11px;color:var(--text3)">טוען…</div>
         </div>
         <div class="growth-metric-bar">
@@ -2203,6 +2209,7 @@ function presetRange(preset){
     case 'yesterday': return [date2dmy(yesterday), date2dmy(yesterday)];
     case 'curweek':   return [date2dmy(monThis),   date2dmy(sunThis)];
     case 'prevweek':  return [date2dmy(monPrev),   date2dmy(sunPrev)];
+    case 'sameday7':  return [date2dmy(addDays(yesterday,-7)), date2dmy(addDays(yesterday,-7))];
     case 'all':       return ['',''];
     default:          return ['',''];
   }
@@ -3140,7 +3147,7 @@ let tmCharts = {};
 const TM_COL_MAP = {
   date:    ['תאריך','Date','date','Time Received Date','יום'],
   branch:  ['Venue Name','סניף','Branch','venue_name','מסעדה'],
-  orders:  ['Count','הזמנות','Orders','כמות','order_count','סה"כ הזמנות','Orders Count'],
+  orders:  ['Count','כמות הזמנות','הזמנות','Orders','כמות','order_count','סה"כ הזמנות','Orders Count','מספר הזמנות','Total Orders','Quantity','qty','count','orders','total_orders'],
   colF:    ['כמה זמן לפני היציאה מהתנור קראו לוולט','קריאה לוולט','זמן קריאה'],
   colG:    ['מקריאה עד איסוף','זמן איסוף','קריאה עד איסוף'],
   colH:    ['מקריאה עד מסירה','זמן מסירה','קריאה עד מסירה']
@@ -3148,10 +3155,17 @@ const TM_COL_MAP = {
 
 function tmFindCol(headers, keys) {
   if (!keys.length) return null;
+  // Pass 1: exact match
   for (const k of keys) {
     const f = headers.find(h => String(h).trim() === k);
     if (f !== undefined) return f;
   }
+  // Pass 2: case-insensitive exact
+  for (const k of keys) {
+    const f = headers.find(h => String(h).trim().toLowerCase() === k.toLowerCase());
+    if (f !== undefined) return f;
+  }
+  // Pass 3: partial includes (case-insensitive)
   for (const k of keys) {
     const f = headers.find(h => String(h).toLowerCase().includes(k.toLowerCase()));
     if (f !== undefined) return f;
@@ -3192,7 +3206,15 @@ function tmParseRows(raw) {
   s('tmMonthThF', tmColF); s('tmMonthThG', tmColG); s('tmMonthThH', tmColH);
   s('tmColNames', tmColF + ' | ' + tmColG + ' | ' + tmColH);
 
-  return raw.map((r, i) => {
+  // ── Debug log: show which columns were detected ────────────────────────
+  console.log('[tmParseRows] Headers:', headers);
+  console.log('[tmParseRows] Detected:', {
+    dateCol, branchCol, ordersCol,
+    colFH, colGH, colHH,
+    rawRows: raw.length
+  });
+
+  const parsed = raw.map((r, i) => {
     // Date
     const rawDate = dateCol ? r[dateCol] : '';
     const dt = tmParseDate(rawDate);
@@ -3206,7 +3228,10 @@ function tmParseRows(raw) {
       : rawBranch.trim() || 'לא ידוע';
 
     // Orders
-    const orders = parseFloat(ordersCol ? r[ordersCol] : 0) || 0;
+    // ── FIX: if ordersCol not found → treat each row as 1 order (order-level sheet)
+    const orders = ordersCol
+      ? (parseFloat(r[ordersCol]) || 0)
+      : 1;
 
     // Times (F, G, H)
     const avgF = parseFloat(colFH ? r[colFH] : 0) || 0;
@@ -3215,6 +3240,21 @@ function tmParseRows(raw) {
 
     return { dateStr, branch, orders, avgF, avgG, avgH };
   }).filter(r => r && r.branch);
+
+  // ── FIX: if all orders = 0 (wrong col matched), fall back to row-count mode
+  const totalOrdersCheck = parsed.reduce((s, r) => s + r.orders, 0);
+  if (totalOrdersCheck === 0 && parsed.length > 0) {
+    console.warn('[tmParseRows] All orders=0 → switching to row-count mode (1 per row)');
+    parsed.forEach(r => r.orders = 1);
+  }
+
+  console.log('[tmParseRows] Result:', {
+    parsedRows: parsed.length,
+    filteredOut: raw.length - parsed.length,
+    totalOrders: parsed.reduce((s, r) => s + r.orders, 0)
+  });
+
+  return parsed;
 }
 
 function tmParseDate(v) {
@@ -3251,6 +3291,14 @@ async function tmLoadFromSheets() {
     const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
     const rows = tmParseRows(raw);
     if (!rows.length) { alert('לא נמצאו נתוני זמנים תקינים.'); }
+    // Show load summary in console
+    const _dbgTotal = rows.reduce((s,r)=>s+r.orders,0);
+    console.log('[tmLoadFromSheets] Loaded:', rows.length, 'rows |', _dbgTotal, 'total orders');
+    // Show toast if big discrepancy (all orders = row count = ordersCol was null)
+    const _uniqueOrderVals = [...new Set(rows.map(r=>r.orders))];
+    if (_uniqueOrderVals.length === 1 && _uniqueOrderVals[0] === 1) {
+      console.info('[tmLoadFromSheets] Note: orders column not found → counted 1 per row');
+    }
     else {
       tmAllData = rows;
       tmSaveLs();
@@ -3435,8 +3483,10 @@ function tmBuildDateNav() {
   // BUG3 FIX: use filtered view data, not all data
   const _navViewData = tmGetViewData();
   const _navOrders   = _navViewData.reduce((s, r) => s + r.orders, 0);
+  const _totalAllOrders = tmAllData.reduce((s, r) => s + r.orders, 0);
+  const _navDays = _navViewData.length ? [...new Set(_navViewData.map(r=>r.dateStr))].length : 0;
   const _navLabel    = (tmViewFrom || tmViewTo)
-    ? `${_navViewData.length ? [...new Set(_navViewData.map(r=>r.dateStr))].length : 0} ימים בטווח | ${_navOrders.toLocaleString('he-IL')} הזמנות`
+    ? `${_navDays} ימים בטווח | ${_navOrders.toLocaleString('he-IL')} הזמנות (סה"כ בגיליון: ${_totalAllOrders.toLocaleString('he-IL')})`
     : `${dates.length} ימים (הכל) | ${_navOrders.toLocaleString('he-IL')} הזמנות`;
   document.getElementById('tmHdrSub').textContent = _navLabel;
   if (!tmViewFrom && !tmViewTo && dates.length) {
@@ -3500,6 +3550,15 @@ function tmOnCustomRange() {
 function tmApplyCompare(preset) {
   tmCmpPreset = preset;
   document.getElementById('tmDpCompare').style.display = (preset === 'custom') ? 'inline-block' : 'none';
+  // Highlight active compare button
+  ['tmCmpNone','tmCmpYest','tmCmpSameDay7','tmCmpPrevWeek','tmCmpCustom'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.classList.remove('active');
+  });
+  const activeMap = { '': 'tmCmpNone', 'yesterday': 'tmCmpYest', 'sameday7': 'tmCmpSameDay7',
+                      'prevweek': 'tmCmpPrevWeek', 'custom': 'tmCmpCustom' };
+  if (activeMap[preset]) document.getElementById(activeMap[preset])?.classList.add('active');
+
   if (preset === 'custom') { tmCmpFrom = ''; tmCmpTo = ''; }
   else if (preset === '') { tmCmpFrom = ''; tmCmpTo = ''; tmUpdateCompareUI(); tmUpdateAll(); }
   else { const [f, t] = presetRange(preset); tmCmpFrom = f; tmCmpTo = t; tmUpdateCompareUI(); tmUpdateAll(); }
@@ -4896,6 +4955,25 @@ function tmGrowthSort(col) {
   tmBuildGrowthTable();
 }
 
+function tmClearCacheAndReload() {
+  if (!confirm('נקה את כל הנתונים השמורים של לשונית הזמנים ורענן? הנתונים ייטענו מחדש מ-Google Sheets.')) return;
+  try { localStorage.removeItem(TM_LS_KEY); } catch(e) {}
+  tmAllData = [];
+  tmBuildGrowthTable(); // will show empty
+  tmLoadFromSheets();   // reload fresh
+}
+
+// Update growth data badge
+function tmUpdateGrowthBadge() {
+  const el = document.getElementById('growthDataBadge');
+  if (!el || !tmAllData.length) return;
+  // Get date range of data
+  const dates = tmAllData.map(r => r.dateStr).filter(Boolean);
+  if (!dates.length) return;
+  const months = new Set(dates.map(d => { const p = d.split('/'); return p[1]+'/'+p[2]; }));
+  el.textContent = '(' + months.size + ' חודשים · ' + tmAllData.length.toLocaleString('he-IL') + ' שורות)';
+}
+
 function tmBuildGrowthTable() {
   const tbody = document.getElementById('growthTbody');
   const thead = document.getElementById('growthThead');
@@ -5059,6 +5137,7 @@ function tmBuildGrowthTable() {
   // Update sub-label
   const sub = document.getElementById('growthTableSub');
   if (sub) sub.textContent = `${sorted.length} סניפים · ${allMonths.length} חודשים`;
+  tmUpdateGrowthBadge();
 }
 
 function tmExportGrowthCSV() {
