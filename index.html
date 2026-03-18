@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -552,9 +553,303 @@ tr.refunded-row td{background:rgba(137,87,229,.04)}
 .mf-range input[type=number]{background:transparent;border:none;outline:none;color:var(--text);
   font-size:11px;width:52px;text-align:center;}
 .mf-range span{color:var(--text3);}
+/* ══════════════════════════════════════════
+   OTP / LOGIN SCREEN
+══════════════════════════════════════════ */
+#otpScreen {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 24px;
+}
+#otpScreen.hidden { display: none; }
+
+.otp-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 36px 40px;
+  width: 100%; max-width: 400px;
+  text-align: center;
+  box-shadow: 0 8px 40px rgba(0,0,0,.4);
+}
+.otp-logo { font-size: 48px; margin-bottom: 8px; }
+.otp-title {
+  font-size: 22px; font-weight: 900;
+  color: var(--text); margin-bottom: 4px;
+}
+.otp-subtitle {
+  font-size: 13px; color: var(--text2);
+  margin-bottom: 24px; line-height: 1.5;
+}
+
+/* Digit boxes */
+.otp-digits {
+  display: flex; gap: 8px; justify-content: center;
+  margin-bottom: 20px; direction: ltr;
+}
+.otp-digit {
+  width: 46px; height: 58px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  background: var(--card2);
+  font-size: 26px; font-weight: 900;
+  color: var(--text);
+  text-align: center;
+  caret-color: var(--blue);
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+.otp-digit:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(0,157,224,.2);
+}
+.otp-digit.filled { border-color: var(--blue); }
+.otp-digit.error  { border-color: var(--red); animation: shake .3s; }
+
+@keyframes shake {
+  0%,100%{transform:translateX(0)}
+  20%,60%{transform:translateX(-6px)}
+  40%,80%{transform:translateX(6px)}
+}
+
+/* Timer ring */
+.otp-timer-wrap {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; margin-bottom: 20px;
+}
+.otp-timer-svg { transform: rotate(-90deg); }
+.otp-timer-circle {
+  fill: none; stroke: var(--border); stroke-width: 3;
+}
+.otp-timer-arc {
+  fill: none; stroke: var(--blue); stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dashoffset .9s linear, stroke .5s;
+}
+.otp-timer-text {
+  font-size: 13px; color: var(--text2);
+  font-weight: 600;
+}
+
+/* Submit button */
+.otp-submit-btn {
+  width: 100%; padding: 12px;
+  border-radius: 12px; border: none;
+  background: var(--blue); color: #fff;
+  font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: opacity .2s, transform .1s;
+  margin-bottom: 14px;
+}
+.otp-submit-btn:hover { opacity: .9; }
+.otp-submit-btn:active { transform: scale(.98); }
+.otp-submit-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* Error / info messages */
+.otp-msg {
+  font-size: 12px; min-height: 18px;
+  margin-bottom: 12px; font-weight: 600;
+}
+.otp-msg.err { color: var(--red); }
+.otp-msg.ok  { color: var(--green); }
+
+/* Setup QR section */
+.otp-setup-link {
+  font-size: 11px; color: var(--text3);
+  cursor: pointer; text-decoration: underline;
+  margin-top: 4px; display: inline-block;
+}
+.otp-setup-link:hover { color: var(--blue); }
+
+#otpSetupPanel {
+  margin-top: 20px; border-top: 1px solid var(--border);
+  padding-top: 18px; display: none;
+}
+#otpSetupPanel.open { display: block; }
+.otp-qr-wrap {
+  background: #fff; border-radius: 12px;
+  display: inline-flex; padding: 10px;
+  margin: 10px auto 10px; justify-content: center;
+}
+.otp-secret-box {
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 14px;
+  font-family: monospace; font-size: 14px;
+  letter-spacing: 3px; color: var(--blue);
+  margin: 8px 0; word-break: break-all;
+  user-select: all; cursor: pointer;
+}
+.otp-setup-steps {
+  text-align: right; font-size: 11px;
+  color: var(--text2); line-height: 1.7;
+  margin-top: 10px;
+}
+
+/* Attempts badge */
+.otp-attempts {
+  font-size: 11px; color: var(--text3); margin-top: 6px;
+}
+
+/* Lock screen overlay */
+#otpLockOverlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(13,17,23,.97);
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: var(--red); font-size: 18px; font-weight: 700; text-align: center;
+  gap: 10px;
+}
+#otpLockOverlay.show { display: flex; }
+#otpLockOverlay .lock-icon { font-size: 52px; }
+#otpLockOverlay .lock-timer { font-size: 13px; color: var(--text2); margin-top: 6px; }
+/* Admin PIN dialog CSS removed — replaced by email whitelist */
+
+/* Logo click hint — subtle pulse when clicks accumulate */
+.otp-logo { cursor:default; }
+.otp-logo.tapping { animation: logoPulse .3s; }
+@keyframes logoPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.18)} }
+/* ══ Email input stage ══ */
+.otp-email-input {
+  width: 100%; padding: 12px 16px;
+  border-radius: 12px; border: 2px solid var(--border);
+  background: var(--card2); color: var(--text);
+  font-size: 15px; text-align: center; direction: ltr;
+  outline: none; transition: border-color .2s, box-shadow .2s;
+  margin-bottom: 10px; box-sizing: border-box;
+}
+.otp-email-input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(0,157,224,.2);
+}
+.otp-email-input.err { border-color: var(--red); }
+.otp-email-hint {
+  font-size: 10px; color: var(--text3); margin-top: 10px;
+  line-height: 1.4;
+}
+
+/* User badge shown above OTP stage */
+.otp-user-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 14px; border-radius: 20px;
+  background: var(--blue-dim); border: 1px solid rgba(0,157,224,.3);
+  font-size: 12px; color: var(--blue); font-weight: 700;
+  margin: 4px 0 10px; direction: ltr;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Auth stage slide transition */
+#otpCard .auth-stage { animation: stageFadeIn .3s ease; }
+@keyframes stageFadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 </style>
 </head>
 <body>
+
+<!-- ═══════════════════════════════════════════════════
+     OTP LOGIN SCREEN
+════════════════════════════════════════════════════ -->
+<div id="otpScreen">
+  <div class="otp-card" id="otpCard">
+
+    <!-- ── STAGE 1: Email input ──────────────────────────────── -->
+    <div id="authStageEmail">
+      <div class="otp-logo" id="otpLogo" onclick="otpLogoTap()" title="">🔐</div>
+      <div class="otp-title">דשבורד דומינו'ס</div>
+      <div class="otp-subtitle">הכנס את כתובת המייל שלך<br>לאימות גישה</div>
+      <input
+        type="email"
+        class="otp-email-input"
+        id="otpEmailInput"
+        placeholder="your@email.com"
+        inputmode="email"
+        autocomplete="email"
+        onkeydown="if(event.key==='Enter')otpEmailNext()"
+      >
+      <div class="otp-msg" id="otpEmailMsg"></div>
+      <button class="otp-submit-btn" id="otpEmailBtn" onclick="otpEmailNext()">המשך ←</button>
+      <div class="otp-email-hint" id="otpEmailHint">
+        המייל לא יישלח לאף שרת — הבדיקה מתבצעת מקומית בלבד
+      </div>
+    </div>
+
+    <!-- ── STAGE 2: QR Setup (first-time users) ─────────────── -->
+    <div id="authStageSetup" style="display:none">
+      <div class="otp-logo">📱</div>
+      <div class="otp-title">הגדרה ראשונה</div>
+      <div class="otp-subtitle">
+        ברוך הבא! זו הכניסה הראשונה שלך.<br>
+        סרוק את ה-QR עם Google Authenticator / Authy
+      </div>
+      <div class="otp-user-badge" id="otpUserBadge">
+        <!-- email shown here -->
+      </div>
+      <div class="otp-qr-wrap" style="margin:12px auto">
+        <div id="otpQrCode" style="width:180px;height:180px;"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin:6px 0 2px">או הכנס מפתח ידנית:</div>
+      <div class="otp-secret-box" id="otpSecretBox" onclick="otpCopySecret()" title="לחץ להעתקה">
+        <!-- filled by JS -->
+      </div>
+      <div class="otp-setup-steps">
+        1. פתח <strong>Google Authenticator</strong> / Authy<br>
+        2. לחץ ➕ → "סרוק קוד QR"<br>
+        3. הקוד מתחדש כל 30 שניות
+      </div>
+      <button class="otp-submit-btn" style="margin-top:16px" onclick="otpSetupDone()">
+        ✅ סרקתי — המשך לכניסה
+      </button>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;cursor:pointer"
+           onclick="otpBackToEmail()">← חזור</div>
+    </div>
+
+    <!-- ── STAGE 3: OTP entry ────────────────────────────────── -->
+    <div id="authStageOtp" style="display:none">
+      <div class="otp-logo">🔑</div>
+      <div class="otp-title">אימות דו-שלבי</div>
+      <div class="otp-user-badge" id="otpUserBadge2"><!-- email --></div>
+      <div class="otp-subtitle" style="margin-top:6px">
+        הכנס קוד 6 ספרות מ-<strong>Google Authenticator</strong>
+      </div>
+
+      <!-- Timer ring -->
+      <div class="otp-timer-wrap">
+        <svg class="otp-timer-svg" width="36" height="36" viewBox="0 0 36 36">
+          <circle class="otp-timer-circle" cx="18" cy="18" r="15.9"/>
+          <circle class="otp-timer-arc" id="otpArc" cx="18" cy="18" r="15.9"
+            stroke-dasharray="100 100" stroke-dashoffset="0"/>
+        </svg>
+        <span class="otp-timer-text" id="otpTimerTxt">30 שנ'</span>
+      </div>
+
+      <!-- 6 digit boxes -->
+      <div class="otp-digits" id="otpDigits">
+        <input class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" id="od0" autocomplete="one-time-code">
+        <input class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" id="od1">
+        <input class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" id="od2">
+        <input class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" id="od3">
+        <input class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" id="od4">
+        <input class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" id="od5">
+      </div>
+
+      <div class="otp-msg" id="otpMsg"></div>
+      <button class="otp-submit-btn" id="otpSubmitBtn" onclick="otpVerify()">כניסה ←</button>
+      <div class="otp-attempts" id="otpAttemptsMsg"></div>
+
+      <!-- "Not you?" link -->
+      <div style="font-size:11px;color:var(--text3);margin-top:10px;cursor:pointer"
+           onclick="otpBackToEmail()">← כניסה עם מייל אחר</div>
+    </div>
+
+  </div><!-- /otp-card -->
+</div>
+
+<!-- Lock overlay (after too many failed attempts) -->
+<div id="otpLockOverlay">
+  <div class="lock-icon">🔒</div>
+  <div>גישה חסומה זמנית</div>
+  <div class="lock-timer" id="lockTimerTxt"></div>
+</div>
+
 
 <!-- ═══════════════════════════════════════════════════
      LANDING SCREEN
@@ -3831,6 +4126,432 @@ function tmInit() {
   }
 }
 tmInit();
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  AUTH SYSTEM — Email whitelist + TOTP (Google Authenticator)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ┌─────────────────────────────────────────────────────────────────────────┐
+// │  📋  ALLOWED EMAILS — edit this list to add / remove users             │
+// └─────────────────────────────────────────────────────────────────────────┘
+const ALLOWED_EMAILS = [
+  // Add email addresses of authorized users below (lowercase)
+  'edo@dominos.co.il',
+  'yossi@dominos.co.il',
+  arie@dominos.co.il',
+  yaniv@dominos.co.il',
+  ifat@dominos.co.il',
+  liron@dominos.co.il',
+ 
+  // 'another@example.com',
+];
+
+// ┌─────────────────────────────────────────────────────────────────────────┐
+// │  🔑  TOTP CONFIGURATION                                                │
+// └─────────────────────────────────────────────────────────────────────────┘
+const OTP_CONFIG = {
+  secret:       'DOMINOS2025WOLT1', // Base32 secret — same for all users
+  appName:      'Dominos Dashboard',
+  issuer:       'Dominos',
+  sessionHours: 8,      // hours before re-login
+  maxAttempts:  5,      // failed OTP attempts before lockout
+  lockMinutes:  10,     // lockout duration
+  tolerance:    1,      // ±1 time step (±30 sec) clock tolerance
+};
+
+// ── Storage keys ─────────────────────────────────────────────────────────────
+const OTP_LS_SESSION  = 'wolt_otp_session';
+const OTP_LS_ATTEMPTS = 'wolt_otp_attempts';
+const OTP_LS_LOCK     = 'wolt_otp_lock';
+const OTP_LS_USERS    = 'wolt_otp_users';   // set of SHA-256(email) of registered users
+
+// ── Runtime state ─────────────────────────────────────────────────────────────
+let _otpCurrentEmail  = '';
+let _otpQrGenerated   = false;
+let _otpTimerInterval = null;
+let _otpLockInterval  = null;
+let _otpLogoTaps      = 0;
+let _otpLogoTimer     = null;
+
+// ── Crypto helpers ────────────────────────────────────────────────────────────
+async function sha256hex(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function otpBase32Decode(base32) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let bits = '', result = [];
+  const clean = base32.toUpperCase().replace(/=+$/, '').replace(/[^A-Z2-7]/g, '');
+  for (const ch of clean) {
+    const v = alphabet.indexOf(ch);
+    if (v < 0) continue;
+    bits += v.toString(2).padStart(5, '0');
+  }
+  for (let i = 0; i + 8 <= bits.length; i += 8)
+    result.push(parseInt(bits.slice(i, i + 8), 2));
+  return new Uint8Array(result);
+}
+
+async function otpHmacSha1(keyBytes, msgBytes) {
+  const key = await crypto.subtle.importKey(
+    'raw', keyBytes, { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, msgBytes);
+  return new Uint8Array(sig);
+}
+
+async function otpCompute(secret, counter) {
+  const keyBytes = otpBase32Decode(secret);
+  const msg = new Uint8Array(8);
+  let c = counter;
+  for (let i = 7; i >= 0; i--) { msg[i] = c & 0xff; c = Math.floor(c / 256); }
+  const hash = await otpHmacSha1(keyBytes, msg);
+  const offset = hash[hash.length - 1] & 0x0f;
+  const code = (
+    ((hash[offset]     & 0x7f) << 24) |
+    ((hash[offset + 1] & 0xff) << 16) |
+    ((hash[offset + 2] & 0xff) <<  8) |
+     (hash[offset + 3] & 0xff)
+  ) % 1000000;
+  return code.toString().padStart(6, '0');
+}
+
+async function otpCheck(entered) {
+  const step = Math.floor(Date.now() / 1000 / 30);
+  for (let delta = -OTP_CONFIG.tolerance; delta <= OTP_CONFIG.tolerance; delta++) {
+    if (entered === await otpCompute(OTP_CONFIG.secret, step + delta)) return true;
+  }
+  return false;
+}
+
+// ── Session ───────────────────────────────────────────────────────────────────
+function otpSetSession(email) {
+  const exp = Date.now() + OTP_CONFIG.sessionHours * 3600 * 1000;
+  sessionStorage.setItem(OTP_LS_SESSION, JSON.stringify({ exp, email }));
+}
+function otpGetSession() {
+  try {
+    const raw = sessionStorage.getItem(OTP_LS_SESSION);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    return s.exp > Date.now() ? s : null;
+  } catch { return null; }
+}
+
+// ── Registered-users set (localStorage, hashed) ──────────────────────────────
+async function otpIsRegistered(email) {
+  const h = await sha256hex(email.toLowerCase().trim());
+  const set = JSON.parse(localStorage.getItem(OTP_LS_USERS) || '[]');
+  return set.includes(h);
+}
+async function otpMarkRegistered(email) {
+  const h = await sha256hex(email.toLowerCase().trim());
+  const set = JSON.parse(localStorage.getItem(OTP_LS_USERS) || '[]');
+  if (!set.includes(h)) { set.push(h); localStorage.setItem(OTP_LS_USERS, JSON.stringify(set)); }
+}
+
+// ── Attempts / lock ───────────────────────────────────────────────────────────
+function otpGetAttempts() { return parseInt(localStorage.getItem(OTP_LS_ATTEMPTS) || '0'); }
+function otpSetAttempts(n) { localStorage.setItem(OTP_LS_ATTEMPTS, n.toString()); }
+function otpGetLockUntil() { return parseInt(localStorage.getItem(OTP_LS_LOCK) || '0'); }
+function otpSetLock() {
+  localStorage.setItem(OTP_LS_LOCK, (Date.now() + OTP_CONFIG.lockMinutes * 60000).toString());
+  otpSetAttempts(0);
+}
+function otpClearLock() {
+  localStorage.removeItem(OTP_LS_LOCK);
+  localStorage.removeItem(OTP_LS_ATTEMPTS);
+}
+
+// ── Stage navigation helpers ──────────────────────────────────────────────────
+function otpShowStage(stage) {
+  ['authStageEmail','authStageSetup','authStageOtp'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  const target = document.getElementById('authStage' + stage);
+  if (target) {
+    target.style.display = 'block';
+    target.classList.add('auth-stage');
+    setTimeout(() => target.classList.remove('auth-stage'), 400);
+  }
+}
+
+function otpShowEmailMsg(msg, type) {
+  const el = document.getElementById('otpEmailMsg');
+  if (el) { el.textContent = msg; el.className = 'otp-msg ' + (type || ''); }
+}
+
+function otpShowMsg(msg, type) {
+  const el = document.getElementById('otpMsg');
+  if (el) { el.textContent = msg; el.className = 'otp-msg ' + (type || ''); }
+}
+
+// ── STAGE 1 — Email validation ────────────────────────────────────────────────
+async function otpEmailNext() {
+  const inp = document.getElementById('otpEmailInput');
+  if (!inp) return;
+  const email = inp.value.trim().toLowerCase();
+
+  // Basic format check
+  if (!email || !email.includes('@')) {
+    inp.classList.add('err');
+    otpShowEmailMsg('הכנס כתובת מייל תקינה', 'err');
+    setTimeout(() => inp.classList.remove('err'), 700);
+    return;
+  }
+
+  // Whitelist check
+  const allowed = ALLOWED_EMAILS.map(e => e.toLowerCase().trim());
+  if (!allowed.includes(email)) {
+    inp.classList.add('err');
+    otpShowEmailMsg('❌ כתובת המייל אינה מורשית לגישה', 'err');
+    setTimeout(() => inp.classList.remove('err'), 700);
+    return;
+  }
+
+  _otpCurrentEmail = email;
+  otpShowEmailMsg('', '');
+
+  // Check if already registered on this device
+  const alreadyReg = await otpIsRegistered(email);
+  if (alreadyReg) {
+    // Go straight to OTP
+    otpGoToOtp();
+  } else {
+    // First time — show QR setup
+    otpGoToSetup();
+  }
+}
+
+// ── STAGE 2 — QR Setup ────────────────────────────────────────────────────────
+function otpGoToSetup() {
+  otpShowStage('Setup');
+  // Show email in badge
+  const badge = document.getElementById('otpUserBadge');
+  if (badge) badge.innerHTML = '✉️ ' + _otpCurrentEmail;
+  // Generate QR
+  otpGenerateQR();
+}
+
+function otpSetupDone() {
+  // Mark as registered and go to OTP
+  otpMarkRegistered(_otpCurrentEmail);
+  otpGoToOtp();
+}
+
+// ── STAGE 3 — OTP Entry ───────────────────────────────────────────────────────
+function otpGoToOtp() {
+  otpShowStage('Otp');
+  // Show email in badge
+  const badge = document.getElementById('otpUserBadge2');
+  if (badge) badge.innerHTML = '✉️ ' + _otpCurrentEmail;
+  // Init digits & timer
+  otpInitDigits();
+  otpStartTimer();
+  setTimeout(() => document.getElementById('od0')?.focus(), 150);
+  // Show previous attempt count if locked/partial
+  const prev = otpGetAttempts();
+  if (prev > 0) {
+    const attMsg = document.getElementById('otpAttemptsMsg');
+    if (attMsg) attMsg.textContent = `${prev}/${OTP_CONFIG.maxAttempts} ניסיונות`;
+  }
+}
+
+function otpBackToEmail() {
+  if (_otpTimerInterval) clearInterval(_otpTimerInterval);
+  otpShowStage('Email');
+  setTimeout(() => document.getElementById('otpEmailInput')?.focus(), 150);
+}
+
+// ── QR generation ─────────────────────────────────────────────────────────────
+function otpGenerateQR() {
+  const uri = `otpauth://totp/${encodeURIComponent(OTP_CONFIG.appName)}?secret=${OTP_CONFIG.secret}&issuer=${encodeURIComponent(OTP_CONFIG.issuer)}&algorithm=SHA1&digits=6&period=30`;
+  const el = document.getElementById('otpQrCode');
+  if (el && typeof QRCode !== 'undefined') {
+    el.innerHTML = '';
+    new QRCode(el, { text: uri, width: 180, height: 180, colorDark: '#000', colorLight: '#fff', correctLevel: QRCode.CorrectLevel.M });
+    _otpQrGenerated = true;
+  }
+  const sb = document.getElementById('otpSecretBox');
+  if (sb) sb.textContent = OTP_CONFIG.secret.match(/.{1,4}/g)?.join(' ') || OTP_CONFIG.secret;
+}
+
+function otpCopySecret() {
+  navigator.clipboard?.writeText(OTP_CONFIG.secret).then(() => {
+    const sb = document.getElementById('otpSecretBox');
+    if (sb) { sb.style.color = 'var(--green)'; setTimeout(() => sb.style.color = '', 1200); }
+  });
+}
+
+// ── Timer ring ────────────────────────────────────────────────────────────────
+function otpStartTimer() {
+  if (_otpTimerInterval) clearInterval(_otpTimerInterval);
+  function tick() {
+    const sec = 30 - (Math.floor(Date.now() / 1000) % 30);
+    const pct = (sec / 30) * 100;
+    const arc = document.getElementById('otpArc');
+    const txt = document.getElementById('otpTimerTxt');
+    if (!arc || !txt) return;
+    const C = 2 * Math.PI * 15.9;
+    arc.style.strokeDasharray  = C.toFixed(2);
+    arc.style.strokeDashoffset = (C * (1 - pct / 100)).toFixed(2);
+    arc.style.stroke = sec <= 5 ? 'var(--red)' : sec <= 10 ? 'var(--orange)' : 'var(--blue)';
+    txt.textContent = sec + " שנ'";
+  }
+  tick();
+  _otpTimerInterval = setInterval(tick, 1000);
+}
+
+// ── Digit inputs ──────────────────────────────────────────────────────────────
+function otpInitDigits() {
+  const digits = document.querySelectorAll('.otp-digit');
+  digits.forEach((inp, i) => {
+    // Clone to remove old listeners
+    const fresh = inp.cloneNode(true);
+    inp.parentNode.replaceChild(fresh, inp);
+    const d = document.querySelectorAll('.otp-digit')[i];
+    d.value = ''; d.classList.remove('filled','error');
+
+    d.addEventListener('input', () => {
+      const val = d.value.replace(/\D/g, '').slice(-1);
+      d.value = val;
+      d.classList.toggle('filled', !!val);
+      d.classList.remove('error');
+      if (val && i < 5) document.querySelectorAll('.otp-digit')[i + 1].focus();
+      if ([...document.querySelectorAll('.otp-digit')].every(x => x.value)) otpVerify();
+    });
+    d.addEventListener('keydown', e => {
+      const all = document.querySelectorAll('.otp-digit');
+      if (e.key === 'Backspace' && !d.value && i > 0) all[i - 1].focus();
+      if (e.key === 'Enter') otpVerify();
+      if (e.key === 'ArrowLeft'  && i > 0) all[i - 1].focus();
+      if (e.key === 'ArrowRight' && i < 5) all[i + 1].focus();
+    });
+    d.addEventListener('paste', e => {
+      e.preventDefault();
+      const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+      const all = document.querySelectorAll('.otp-digit');
+      pasted.split('').forEach((ch, j) => { if (all[j]) { all[j].value = ch; all[j].classList.add('filled'); } });
+      if (pasted.length === 6) { all[5].focus(); setTimeout(otpVerify, 100); }
+    });
+  });
+}
+
+// ── Lock overlay ──────────────────────────────────────────────────────────────
+function otpShowLock() {
+  const overlay = document.getElementById('otpLockOverlay');
+  if (!overlay) return;
+  overlay.classList.add('show');
+  if (_otpLockInterval) clearInterval(_otpLockInterval);
+  _otpLockInterval = setInterval(() => {
+    const remaining = Math.max(0, otpGetLockUntil() - Date.now());
+    const mins = Math.floor(remaining / 60000);
+    const secs = Math.floor((remaining % 60000) / 1000);
+    const txt = document.getElementById('lockTimerTxt');
+    if (txt) txt.textContent = `נסה שוב בעוד ${mins}:${secs.toString().padStart(2,'0')} דקות`;
+    if (remaining <= 0) {
+      clearInterval(_otpLockInterval);
+      overlay.classList.remove('show');
+      otpClearLock();
+      const btn = document.getElementById('otpSubmitBtn');
+      if (btn) btn.disabled = false;
+      const att = document.getElementById('otpAttemptsMsg');
+      if (att) att.textContent = '';
+    }
+  }, 1000);
+}
+
+// ── Main OTP verify ───────────────────────────────────────────────────────────
+async function otpVerify() {
+  if (otpGetLockUntil() > Date.now()) { otpShowLock(); return; }
+
+  const digits = [...document.querySelectorAll('.otp-digit')];
+  const code   = digits.map(d => d.value).join('');
+  if (code.length < 6) { otpShowMsg('הכנס 6 ספרות', 'err'); return; }
+
+  const btn = document.getElementById('otpSubmitBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ בודק…'; }
+
+  const valid = await otpCheck(code);
+
+  if (valid) {
+    otpClearLock();
+    otpSetSession(_otpCurrentEmail);
+    // Also make sure user is marked registered (in case they came from setup)
+    if (_otpCurrentEmail) otpMarkRegistered(_otpCurrentEmail);
+    digits.forEach(d => { d.classList.remove('error'); d.style.borderColor = 'var(--green)'; });
+    otpShowMsg('✅ גישה אושרה!', 'ok');
+    if (_otpTimerInterval) clearInterval(_otpTimerInterval);
+    setTimeout(() => document.getElementById('otpScreen').classList.add('hidden'), 600);
+  } else {
+    const attempts = otpGetAttempts() + 1;
+    otpSetAttempts(attempts);
+    const remaining = OTP_CONFIG.maxAttempts - attempts;
+    digits.forEach(d => d.classList.add('error'));
+    setTimeout(() => {
+      digits.forEach(d => { d.classList.remove('error'); d.value = ''; d.classList.remove('filled'); });
+      document.querySelectorAll('.otp-digit')[0]?.focus();
+    }, 600);
+
+    if (remaining <= 0) {
+      otpSetLock(); otpShowLock(); otpShowMsg('', '');
+    } else {
+      otpShowMsg(`❌ קוד שגוי — נסיונות שנותרו: ${remaining}`, 'err');
+      const attMsg = document.getElementById('otpAttemptsMsg');
+      if (attMsg) attMsg.textContent = `${attempts}/${OTP_CONFIG.maxAttempts} ניסיונות`;
+    }
+    if (btn) { btn.disabled = false; btn.textContent = 'כניסה ←'; }
+  }
+}
+
+// ── Secret logo trigger (5 taps → admin can re-show QR for a user) ────────────
+// (kept for support scenarios)
+function otpLogoTap() {
+  _otpLogoTaps++;
+  const logo = document.getElementById('otpLogo');
+  if (logo) { logo.classList.add('tapping'); setTimeout(() => logo.classList.remove('tapping'), 300); }
+  if (_otpLogoTimer) clearTimeout(_otpLogoTimer);
+  if (_otpLogoTaps >= 5) {
+    _otpLogoTaps = 0;
+    // Force re-show QR for the current email if any
+    if (_otpCurrentEmail) {
+      _otpQrGenerated = false; // allow re-gen
+      otpGoToSetup();
+    }
+    return;
+  }
+  _otpLogoTimer = setTimeout(() => { _otpLogoTaps = 0; }, 3000);
+}
+
+// ── Main init ─────────────────────────────────────────────────────────────────
+function otpInit() {
+  // Active lock?
+  if (otpGetLockUntil() > Date.now()) {
+    document.getElementById('otpScreen').classList.remove('hidden');
+    otpShowStage('Otp');
+    otpShowLock();
+    return;
+  }
+
+  // Valid session?
+  const sess = otpGetSession();
+  if (sess) {
+    document.getElementById('otpScreen').classList.add('hidden');
+    return;
+  }
+
+  // Show email entry
+  document.getElementById('otpScreen').classList.remove('hidden');
+  otpShowStage('Email');
+  setTimeout(() => document.getElementById('otpEmailInput')?.focus(), 200);
+}
+
+// Run on DOM ready
+document.addEventListener('DOMContentLoaded', otpInit);
+if (document.readyState !== 'loading') otpInit();
 
 </script>
 
