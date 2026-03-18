@@ -2285,51 +2285,113 @@ let tmSelectedMonth = '';     // 'MM/YYYY'
 let tmCharts = {};
 
 // ── Column detection ──────────────────────────────────────
-// Sheet 2 expected columns (flexible):
-// Date | Branch/Venue | OrderCount | ... | ColF | ColG | ColH
+// Sheet 2 expected columns (very flexible auto-detection):
+// Date | Branch/Venue | OrderCount | ColA | ColB | ColC | ColF | ColG | ColH
 const TM_COL_MAP = {
-  date:    ['תאריך','Date','date','Time Received Date','יום'],
-  branch:  ['Venue Name','סניף','Branch','venue_name','מסעדה'],
-  orders:  ['Count','הזמנות','Orders','כמות','order_count','סה"כ הזמנות','Orders Count'],
-  colF:    ['כמה זמן לפני היציאה מהתנור קראו לוולט','קריאה לוולט','זמן קריאה'],
-  colG:    ['מקריאה עד איסוף','זמן איסוף','קריאה עד איסוף'],
-  colH:    ['מקריאה עד מסירה','זמן מסירה','קריאה עד מסירה']
+  date:    ['תאריך','Date','date','Time Received Date','יום','day','created_at','order_date'],
+  branch:  ['Venue Name','סניף','Branch','venue_name','מסעדה','Restaurant','store','חנות','שם סניף','מיקום'],
+  orders:  ['Count','הזמנות','Orders','כמות','order_count','סה"כ הזמנות','Orders Count','Total','סהכ','# הזמנות','מספר הזמנות'],
+  colF:    ['כמה זמן לפני היציאה מהתנור קראו לוולט','קריאה לוולט','זמן קריאה','ממוצע F','F','col_f','עמודה F','זמן F','ממוצע זמן F'],
+  colG:    ['מקריאה עד איסוף','זמן איסוף','קריאה עד איסוף','ממוצע G','G','col_g','עמודה G','זמן G','ממוצע זמן G'],
+  colH:    ['מקריאה עד מסירה','זמן מסירה','קריאה עד מסירה','ממוצע H','H','col_h','עמודה H','זמן H','ממוצע זמן H']
 };
 
 function tmFindCol(headers, keys) {
-  if (!keys.length) return null;
+  if (!keys || !keys.length) return null;
+  // 1. Exact match
   for (const k of keys) {
-    const f = headers.find(h => String(h).trim() === k);
+    const f = headers.find(h => String(h).trim() === k.trim());
     if (f !== undefined) return f;
   }
+  // 2. Case-insensitive exact
   for (const k of keys) {
-    const f = headers.find(h => String(h).toLowerCase().includes(k.toLowerCase()));
+    const f = headers.find(h => String(h).trim().toLowerCase() === k.trim().toLowerCase());
+    if (f !== undefined) return f;
+  }
+  // 3. Substring (partial match)
+  for (const k of keys) {
+    const kl = k.toLowerCase();
+    const f = headers.find(h => String(h).toLowerCase().includes(kl) || kl.includes(String(h).toLowerCase()));
     if (f !== undefined) return f;
   }
   return null;
 }
 
+// Detect date column by scanning values in first data row
+function tmDetectDateCol(headers, firstRow) {
+  // Try known names first
+  const byName = tmFindCol(headers, TM_COL_MAP.date);
+  if (byName) return byName;
+  // Fallback: scan columns for a value that looks like a date
+  for (const h of headers) {
+    const v = firstRow[h];
+    if (v !== undefined && v !== null && v !== '') {
+      const d = tmParseDate(v);
+      if (d && d.getFullYear && d.getFullYear() >= 2020 && d.getFullYear() <= 2030) {
+        console.log('[TM] Auto-detected date column:', h, '→', v);
+        return h;
+      }
+    }
+  }
+  // Last resort: column 0 (A)
+  return headers[0] || null;
+}
+
+// Detect branch column by scanning values for text-like strings
+function tmDetectBranchCol(headers, firstRow, dateCol) {
+  const byName = tmFindCol(headers, TM_COL_MAP.branch);
+  if (byName) return byName;
+  // Find a column that has a non-empty string value that doesn't look like a number or date
+  for (let i = 0; i < headers.length; i++) {
+    const h = headers[i];
+    if (h === dateCol) continue;
+    const v = firstRow[h];
+    if (v && isNaN(Number(v)) && tmParseDate(v) === null && String(v).length > 1) {
+      console.log('[TM] Auto-detected branch column:', h, '→', v);
+      return h;
+    }
+  }
+  return headers[1] || null; // default to column B
+}
+
+// Smart column debug log
+function tmLogColumnDetection(headers, dateCol, branchCol, ordersCol, colFH, colGH, colHH) {
+  console.group('[TM] Column Detection Results');
+  console.log('All headers:', headers);
+  console.log('Date col   :', dateCol);
+  console.log('Branch col :', branchCol);
+  console.log('Orders col :', ordersCol);
+  console.log('Col F      :', colFH);
+  console.log('Col G      :', colGH);
+  console.log('Col H      :', colHH);
+  console.groupEnd();
+}
+
 function tmParseRows(raw) {
   if (!raw.length) return [];
   const headers = Object.keys(raw[0]);
+  const firstRow = raw[0];
 
-  // Find core columns by name
-  let dateCol   = tmFindCol(headers, TM_COL_MAP.date);
-  let branchCol = tmFindCol(headers, TM_COL_MAP.branch);
-  let ordersCol = tmFindCol(headers, TM_COL_MAP.orders);
+  // ── Smart column detection ─────────────────────────────
+  let dateCol   = tmDetectDateCol(headers, firstRow);
+  let branchCol = tmDetectBranchCol(headers, firstRow, dateCol);
+  let ordersCol = tmFindCol(headers, TM_COL_MAP.orders) || headers[4] || null;
 
-  // Find F, G, H by name first, then fallback to position 5,6,7
+  // F, G, H: name lookup first, then positional fallback (cols 5,6,7 = F,G,H in 0-indexed)
   let colFH = tmFindCol(headers, TM_COL_MAP.colF) || headers[5] || null;
   let colGH = tmFindCol(headers, TM_COL_MAP.colG) || headers[6] || null;
   let colHH = tmFindCol(headers, TM_COL_MAP.colH) || headers[7] || null;
 
+  // Debug log to browser console
+  tmLogColumnDetection(headers, dateCol, branchCol, ordersCol, colFH, colGH, colHH);
+
   // Update dynamic labels (shorten long Hebrew names for display)
   const shortName = (s) => {
     if (!s) return s;
-    if (s.includes('לפני היציאה')) return 'קריאה לוולט';
+    if (s.includes('לפני היציאה') || s.includes('לפני יציאה')) return 'קריאה לוולט';
     if (s.includes('עד איסוף'))   return 'קריאה → איסוף';
     if (s.includes('עד מסירה'))   return 'קריאה → מסירה';
-    return s.length > 20 ? s.substr(0,20)+'…' : s;
+    return s.length > 22 ? s.substr(0,22)+'…' : s;
   };
   if (colFH) tmColF = shortName(String(colFH));
   if (colGH) tmColG = shortName(String(colGH));
@@ -2342,29 +2404,56 @@ function tmParseRows(raw) {
   s('tmMonthThF', tmColF); s('tmMonthThG', tmColG); s('tmMonthThH', tmColH);
   s('tmColNames', tmColF + ' | ' + tmColG + ' | ' + tmColH);
 
-  return raw.map((r, i) => {
-    // Date
-    const rawDate = dateCol ? r[dateCol] : '';
+  const parsed = raw.map((r) => {
+    // ── Date ──
+    const rawDate = dateCol ? r[dateCol] : (r[headers[0]] || '');
     const dt = tmParseDate(rawDate);
     const dateStr = dt ? fmtDate(dt) : '';
     if (!dateStr) return null;
 
-    // Branch — strip trailing " |" e.g. "Domino's Pizza | Holon |" → "Holon"
+    // ── Branch ──
     const rawBranch = branchCol ? String(r[branchCol] || '') : '';
-    const branch = rawBranch.includes(' | ')
-      ? rawBranch.split(' | ')[1].replace(/\s*\|?\s*$/, '').trim()
-      : rawBranch.trim() || 'לא ידוע';
+    let branch = rawBranch.trim();
+    // Handle "Brand | Branch |" format
+    if (branch.includes(' | ')) {
+      const parts = branch.split(' | ').map(p => p.trim()).filter(Boolean);
+      branch = parts[parts.length - 1] || parts[0] || branch;
+    }
+    if (!branch) branch = 'לא ידוע';
 
-    // Orders
-    const orders = parseFloat(ordersCol ? r[ordersCol] : 0) || 0;
+    // ── Orders ──
+    const ordersRaw = ordersCol ? r[ordersCol] : '';
+    const orders = parseFloat(ordersRaw) || 0;
 
-    // Times (F, G, H)
-    const avgF = parseFloat(colFH ? r[colFH] : 0) || 0;
-    const avgG = parseFloat(colGH ? r[colGH] : 0) || 0;
-    const avgH = parseFloat(colHH ? r[colHH] : 0) || 0;
+    // ── Times (F, G, H) ──
+    const parseTime = (v) => {
+      if (!v && v !== 0) return 0;
+      const n = parseFloat(v);
+      if (!isNaN(n)) return n;
+      // Handle "HH:MM:SS" or "MM:SS" string format
+      const ts = String(v).trim();
+      const hms = ts.match(/^(\d+):(\d{2}):(\d{2})$/);
+      if (hms) return parseInt(hms[1])*60 + parseInt(hms[2]) + parseInt(hms[3])/60;
+      const ms = ts.match(/^(\d+):(\d{2})$/);
+      if (ms) return parseInt(ms[1]) + parseInt(ms[2])/60;
+      return 0;
+    };
+    const avgF = parseTime(colFH ? r[colFH] : 0);
+    const avgG = parseTime(colGH ? r[colGH] : 0);
+    const avgH = parseTime(colHH ? r[colHH] : 0);
 
     return { dateStr, branch, orders, avgF, avgG, avgH };
-  }).filter(r => r && r.branch);
+  });
+
+  const result = parsed.filter(r => r !== null && r.branch);
+
+  // If completely empty, log a helpful diagnostic
+  if (!result.length && raw.length > 0) {
+    console.error('[TM] Parsing failed for all', raw.length, 'rows. Sample row:', JSON.stringify(raw[0]));
+    console.error('[TM] Tip: Check that your Sheet 2 has these columns (or similar): Date, Branch/Venue, Orders, ColF, ColG, ColH');
+  }
+
+  return result;
 }
 
 function tmParseDate(v) {
@@ -2384,6 +2473,11 @@ function tmParseDate(v) {
 }
 
 // ── Loading ───────────────────────────────────────────────
+function tmShowColInfo() {
+  if (!tmAllData.length) { alert('אין נתונים טעונים עדיין.'); return; }
+  alert(`עמודות שזוהו:\n\n• זמן F: ${tmColF}\n• זמן G: ${tmColG}\n• זמן H: ${tmColH}\n\nסה"כ רשומות: ${tmAllData.length}\nחודשים: ${tmGetMonths().join(', ')}`);
+}
+
 async function tmLoadFromSheets() {
   if (!GOOGLE_SHEET2_CSV_URL || GOOGLE_SHEET2_CSV_URL.includes('SET_YOUR')) {
     alert('⚠️ יש להגדיר את ה-GID של גיליון 2 ב-GOOGLE_SHEET2_CSV_URL (שורה GOOGLE_SHEET2_CSV_URL בקוד)');
@@ -2400,12 +2494,28 @@ async function tmLoadFromSheets() {
     const ws = wb.Sheets[wb.SheetNames[0]];
     const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
     const rows = tmParseRows(raw);
-    if (!rows.length) { alert('לא נמצאו נתוני זמנים תקינים.'); }
+    if (!rows.length) {
+      // Show detailed diagnostic
+      const hdrs = raw.length ? Object.keys(raw[0]).join(' | ') : 'אין שורות';
+      const sample = raw.length ? JSON.stringify(raw[0]).substring(0, 200) : '';
+      const msg = `⚠️ לא נמצאו נתוני זמנים תקינים.\n\nכותרות עמודות שנמצאו:\n${hdrs}\n\nשורה ראשונה (דוגמה):\n${sample}\n\nוודא שגיליון 2 מכיל:\n• עמודת תאריך (תאריך / Date)\n• עמודת סניף (סניף / Venue Name / Branch)\n• עמודות זמנים (F, G, H)`;
+      alert(msg);
+      console.error('[TM] Raw headers:', raw.length ? Object.keys(raw[0]) : []);
+      console.error('[TM] Raw sample:', raw[0]);
+    }
     else {
       tmAllData = rows;
       tmSaveLs();
       tmAutoSetView();
       tmRefreshAll();
+      // Brief toast notification
+      const toastEl = document.getElementById('tmToast');
+      if (toastEl) {
+        toastEl.textContent = `✅ נטענו ${rows.length} רשומות | ${tmColF} | ${tmColG} | ${tmColH}`;
+        toastEl.style.display = 'block';
+        setTimeout(() => toastEl.style.display = 'none', 4000);
+        const cb = document.getElementById('tmColInfoBtn'); if (cb) cb.style.display = '';
+      }
     }
   } catch (e) {
     console.error(e);
@@ -2427,7 +2537,10 @@ function tmLoadFile(input) {
       const ws = wb.Sheets[wb.SheetNames[sheetIdx]];
       const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
       const rows = tmParseRows(raw);
-      if (!rows.length) { alert('לא נמצאו שורות תקינות.'); }
+      if (!rows.length) {
+        const hdrs = raw.length ? Object.keys(raw[0]).join(' | ') : 'אין שורות';
+        alert(`⚠️ לא נמצאו שורות תקינות.\n\nכותרות עמודות בקובץ:\n${hdrs}\n\nוודא שהקובץ מכיל עמודות: תאריך, סניף, ועמודות זמנים F/G/H`);
+      }
       else {
         tmAllData = rows;
         tmSaveLs();
@@ -2448,17 +2561,22 @@ function tmAutoSetView() {
   if (yRows.length) { tmViewFrom = f; tmViewTo = t; }
   else {
     const dates = tmGetDates();
-    tmViewFrom = dates[0] || ''; tmViewTo = dates[0] || '';
+    if (dates.length) {
+      // Use latest available date
+      tmViewFrom = dates[dates.length - 1]; tmViewTo = dates[dates.length - 1];
+    } else {
+      tmViewFrom = ''; tmViewTo = '';
+    }
     tmViewPreset = 'custom';
   }
   tmCmpFrom = ''; tmCmpTo = ''; tmCmpPreset = '';
-  // ✅ FIX: Set monthly to LATEST MONTH IN DATA (not current calendar month)
+  // Set monthly to LATEST MONTH IN DATA (not current calendar month)
   const months = tmGetMonths();
   tmSelectedMonth = months.length ? months[0] : '';
 }
 
 // ── LocalStorage ──────────────────────────────────────────
-const TM_LS_KEY = 'wolt_times_v1';
+const TM_LS_KEY = 'wolt_times_v3';  // bumped version → clears stale cache
 function tmSaveLs() {
   try { localStorage.setItem(TM_LS_KEY, JSON.stringify(tmAllData)); } catch (e) {}
 }
@@ -3242,14 +3360,15 @@ function tmGetMonths() {
   const s = new Set();
   tmAllData.forEach(r => {
     const p = r.dateStr.split('/');
-    // ✅ FIX: Only include months that actually have real data rows
-    if (p.length === 3 && r.orders > 0) s.add(p[1].padStart(2,'0') + '/' + p[2]);
+    // Include months that have data rows (allow orders=0 rows as they still represent time data)
+    if (p.length === 3) s.add(p[1].padStart(2,'0') + '/' + p[2]);
   });
-  // ✅ FIX: Sort correctly — by year first, then month (most recent first)
+  // Sort: most recent first — by year DESC, then by month DESC
   return [...s].sort((a, b) => {
-    const [am, ay] = a.split('/'); const [bm, by] = b.split('/');
-    if (ay !== by) return parseInt(by) - parseInt(ay);
-    return parseInt(bm) - parseInt(am);
+    const [am, ay] = a.split('/').map(Number);
+    const [bm, by] = b.split('/').map(Number);
+    if (ay !== by) return by - ay;   // year descending
+    return bm - am;                  // month descending (higher month = more recent)
   });
 }
 
@@ -3541,8 +3660,17 @@ tmInit();
         📂 טען קובץ ידני
       </button>
       <input type="file" id="tmFileInput" accept=".xlsx,.xls,.csv" hidden onchange="tmLoadFile(this)">
+      <button class="btn btn-secondary" id="tmColInfoBtn" onclick="tmShowColInfo()" style="display:none">
+        🔍 עמודות שזוהו
+      </button>
     </div>
   </header>
+
+  <!-- Toast notification (times) -->
+  <div id="tmToast" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:#1a3a1a;border:1px solid var(--green);color:var(--green);
+    padding:10px 20px;border-radius:8px;font-size:13px;z-index:9999;
+    max-width:90%;text-align:center"></div>
 
   <div class="main">
 
