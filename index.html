@@ -508,6 +508,50 @@ tr.refunded-row td{background:rgba(137,87,229,.04)}
 /* nodata */
 .nodata-msg{padding:40px;text-align:center;color:var(--text2);font-size:14px;}
 
+/* ══ Good vs Bad Table ══ */
+.gb-section{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:18px;margin-bottom:14px;}
+.gb-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:700px){.gb-grid{grid-template-columns:1fr;}}
+.gb-half-title{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.gb-table{width:100%;border-collapse:collapse;font-size:12px;}
+.gb-table th{padding:7px 10px;text-align:right;font-weight:600;color:var(--text2);
+  border-bottom:1px solid var(--border);background:var(--card2);}
+.gb-table td{padding:7px 10px;text-align:right;border-bottom:1px solid rgba(48,54,61,.4);}
+.gb-table tr:last-child td{border-bottom:none;}
+.gb-table tr:hover td{background:rgba(255,255,255,.02);}
+.gb-rank{display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;border-radius:50%;font-size:11px;font-weight:800;margin-left:5px;}
+.gb-rank.gold{background:#f0b429;color:#000;}
+.gb-rank.silver{background:#a0adb8;color:#000;}
+.gb-rank.bronze{background:#c77c3a;color:#fff;}
+.gb-rank.bad1{background:var(--red-dim);color:var(--red);}
+.gb-rank.badn{background:rgba(218,54,51,.1);color:var(--red);}
+.gb-metric-bar{height:6px;border-radius:3px;min-width:2px;display:inline-block;vertical-align:middle;margin-right:4px;}
+
+/* ══ Weekly Performance Chart ══ */
+.weekly-perf-section{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:18px;margin-bottom:14px;}
+.weekly-ctrl-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  gap:10px;margin-bottom:14px;}
+.weekly-sub{font-size:11px;color:var(--text2);margin-top:4px;}
+
+/* ══ Filter chip bar ══ */
+.tm-active-filters{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:0;}
+.filter-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:14px;
+  font-size:11px;font-weight:600;background:var(--blue-dim);color:var(--blue);
+  border:1px solid rgba(0,157,224,.3);}
+.filter-chip .chip-x{cursor:pointer;opacity:.7;margin-right:2px;}
+.filter-chip .chip-x:hover{opacity:1;}
+
+/* ══ Metric filter row ══ */
+.metric-filter-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:6px;}
+.metric-filter-label{font-size:11px;color:var(--text2);font-weight:600;}
+.mf-range{display:flex;align-items:center;gap:5px;background:var(--card2);
+  border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:11px;}
+.mf-range input[type=number]{background:transparent;border:none;outline:none;color:var(--text);
+  font-size:11px;width:52px;text-align:center;}
+.mf-range span{color:var(--text3);}
 </style>
 </head>
 <body>
@@ -2267,7 +2311,7 @@ function showApp(app) {
 const GOOGLE_SHEET2_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTAtc0vyPuariz_HuCrOWuZmjDc2CbUpvZxWemBbNfjvYNMLFXG1nBRWZQSQwu1Cl5Yi2ZY8nuL2s52/pub?gid=453940881&single=true&output=csv';
 
 let tmAllData   = [];   // all times rows
-let tmColF = 'זמן F', tmColG = 'זמן G', tmColH = 'זמן H'; // dynamic column names
+let tmColF = 'קריאה לוולט (לפני יציאה)', tmColG = 'קריאה עד איסוף', tmColH = 'קריאה עד מסירה'; // dynamic column names
 
 // View state
 let tmViewFrom = '', tmViewTo = '', tmViewPreset = 'yesterday';
@@ -2289,11 +2333,11 @@ let tmCharts = {};
 // Date | Branch/Venue | OrderCount | ... | ColF | ColG | ColH
 const TM_COL_MAP = {
   date:    ['תאריך','Date','date','Time Received Date','יום'],
-  branch:  ['סניף','Branch','Venue Name','venue_name','מסעדה'],
-  orders:  ['הזמנות','Orders','כמות','order_count','Count','סה"כ הזמנות','Orders Count'],
-  colF:    [], // will be detected by position (6th col) or any header
-  colG:    [],
-  colH:    []
+  branch:  ['Venue Name','סניף','Branch','venue_name','מסעדה'],
+  orders:  ['Count','הזמנות','Orders','כמות','order_count','סה"כ הזמנות','Orders Count'],
+  colF:    ['כמה זמן לפני היציאה מהתנור קראו לוולט','קריאה לוולט','זמן קריאה'],
+  colG:    ['מקריאה עד איסוף','זמן איסוף','קריאה עד איסוף'],
+  colH:    ['מקריאה עד מסירה','זמן מסירה','קריאה עד מסירה']
 };
 
 function tmFindCol(headers, keys) {
@@ -2313,29 +2357,27 @@ function tmParseRows(raw) {
   if (!raw.length) return [];
   const headers = Object.keys(raw[0]);
 
-  // Find core columns
+  // Find core columns by name
   let dateCol   = tmFindCol(headers, TM_COL_MAP.date);
   let branchCol = tmFindCol(headers, TM_COL_MAP.branch);
   let ordersCol = tmFindCol(headers, TM_COL_MAP.orders);
 
-  // Columns F, G, H = index 5, 6, 7 (0-based) if not found by name
-  // Try to find by exclusion: skip date, branch, orders, and pick next 3 numeric cols
-  const usedCols = new Set([dateCol, branchCol, ordersCol].filter(Boolean));
-  const numericHeaders = headers.filter(h => {
-    if (usedCols.has(h)) return false;
-    const vals = raw.slice(0, 5).map(r => r[h]);
-    return vals.some(v => v !== '' && !isNaN(parseFloat(v)));
-  });
+  // Find F, G, H by name first, then fallback to position 5,6,7
+  let colFH = tmFindCol(headers, TM_COL_MAP.colF) || headers[5] || null;
+  let colGH = tmFindCol(headers, TM_COL_MAP.colG) || headers[6] || null;
+  let colHH = tmFindCol(headers, TM_COL_MAP.colH) || headers[7] || null;
 
-  // F = index 5, G = index 6, H = index 7 if available; else use numericHeaders[0,1,2]
-  let colFH = headers[5] || numericHeaders[0] || null;
-  let colGH = headers[6] || numericHeaders[1] || null;
-  let colHH = headers[7] || numericHeaders[2] || null;
-
-  // Update dynamic labels
-  if (colFH) tmColF = String(colFH);
-  if (colGH) tmColG = String(colGH);
-  if (colHH) tmColH = String(colHH);
+  // Update dynamic labels (shorten long Hebrew names for display)
+  const shortName = (s) => {
+    if (!s) return s;
+    if (s.includes('לפני היציאה')) return 'קריאה לוולט';
+    if (s.includes('עד איסוף'))   return 'קריאה → איסוף';
+    if (s.includes('עד מסירה'))   return 'קריאה → מסירה';
+    return s.length > 20 ? s.substr(0,20)+'…' : s;
+  };
+  if (colFH) tmColF = shortName(String(colFH));
+  if (colGH) tmColG = shortName(String(colGH));
+  if (colHH) tmColH = shortName(String(colHH));
 
   // Update UI labels
   const s = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
@@ -2351,9 +2393,11 @@ function tmParseRows(raw) {
     const dateStr = dt ? fmtDate(dt) : '';
     if (!dateStr) return null;
 
-    // Branch
+    // Branch — strip trailing " |" e.g. "Domino's Pizza | Holon |" → "Holon"
     const rawBranch = branchCol ? String(r[branchCol] || '') : '';
-    const branch = rawBranch.includes(' | ') ? rawBranch.split(' | ')[1] : rawBranch || 'לא ידוע';
+    const branch = rawBranch.includes(' | ')
+      ? rawBranch.split(' | ')[1].replace(/\s*\|?\s*$/, '').trim()
+      : rawBranch.trim() || 'לא ידוע';
 
     // Orders
     const orders = parseFloat(ordersCol ? r[ordersCol] : 0) || 0;
@@ -2371,7 +2415,15 @@ function tmParseDate(v) {
   if (!v) return null;
   if (v instanceof Date) return isNaN(v) ? null : v;
   if (typeof v === 'number') { const d = new Date((v - 25569) * 86400 * 1000); return isNaN(d) ? null : d; }
-  const d = new Date(v);
+  const s = String(v).trim();
+  // DD/MM/YYYY (format used in the sheet: 16/03/2026)
+  const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dmy) { const d = new Date(+dmy[3], +dmy[2]-1, +dmy[1]); return isNaN(d) ? null : d; }
+  // YYYY-MM-DD
+  const ymd = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (ymd) { const d = new Date(+ymd[1], +ymd[2]-1, +ymd[3]); return isNaN(d) ? null : d; }
+  // fallback
+  const d = new Date(s);
   return isNaN(d) ? null : d;
 }
 
@@ -2474,6 +2526,11 @@ function tmGetViewData() {
   else if (tmViewFrom === tmViewTo && tmViewFrom) data = tmAllData.filter(r => r.dateStr === tmViewFrom);
   else data = tmAllData.filter(r => inRange(r.dateStr, tmViewFrom, tmViewTo));
   if (tmFbBranch) data = data.filter(r => r.branch === tmFbBranch);
+  // H range filter
+  const minH = parseFloat(document.getElementById('tmMinH')?.value) || 0;
+  const maxH = parseFloat(document.getElementById('tmMaxH')?.value) || 0;
+  if (minH > 0) data = data.filter(r => r.avgH >= minH);
+  if (maxH > 0) data = data.filter(r => r.avgH <= maxH);
   return data;
 }
 
@@ -2552,10 +2609,13 @@ function tmUpdateAll() {
 
   tmUpdateKpis(c, p);
   tmBuildBranchTable(c, p);
+  tmBuildGoodBad(c, p);
   tmBuildCharts(c);
   tmBuildTrendChart();
+  tmBuildWeeklyPerf();
   tmBuildInsights(c, p);
   tmUpdateFbCount(viewData.length);
+  tmUpdateActiveFilterChips();
 
   // Monthly (only if selected)
   if (tmSelectedMonth) tmBuildMonthly();
@@ -2637,6 +2697,313 @@ function tmOnCompareDate() {
 }
 
 // ── Filter bar ────────────────────────────────────────────
+
+// ══════════════════════════════════════════════════════════════
+// GOOD vs BAD  —  interactive best/worst branch table
+// ══════════════════════════════════════════════════════════════
+let gbMetric = 'avgF';   // which metric to rank by
+
+function gbSetMetric(m) {
+  gbMetric = m;
+  ['avgF','avgG','avgH'].forEach(k => {
+    const map = {avgF:'gbMetF', avgG:'gbMetG', avgH:'gbMetH'};
+    document.getElementById(map[k])?.classList.toggle('active', k === m);
+  });
+  const viewData = tmGetViewData();
+  const c = tmCompute(viewData);
+  const p = tmGetCmpData() ? tmCompute(tmGetCmpData()) : null;
+  tmBuildGoodBad(c, p);
+}
+
+function tmBuildGoodBad(c, p) {
+  if (!c || !c.branches || !c.branches.length) {
+    ['gbBestTbody','gbWorstTbody'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = '<tr><td colspan="5" class="nodata-msg">אין נתונים</td></tr>';
+    });
+    return;
+  }
+
+  // Label
+  const lMap = {avgF: tmColF || 'F', avgG: tmColG || 'G', avgH: tmColH || 'H'};
+  const lbl = lMap[gbMetric];
+  const el = document.getElementById('gbMetricLabel');
+  if (el) el.textContent = `מדד נוכחי: ${lbl} | מינימום הזמנות: 5`;
+
+  // Filter branches with enough orders and valid metric
+  const valid = c.branches.filter(b => b.orders >= 5 && b[gbMetric] > 0);
+  if (!valid.length) {
+    ['gbBestTbody','gbWorstTbody'].forEach(id => {
+      const el2 = document.getElementById(id);
+      if (el2) el2.innerHTML = '<tr><td colspan="5" class="nodata-msg">אין נתונים עם לפחות 5 הזמנות</td></tr>';
+    });
+    return;
+  }
+
+  const sorted = [...valid].sort((a, b) => a[gbMetric] - b[gbMetric]);
+  const best   = sorted.slice(0, 5);
+  const worst  = [...sorted].reverse().slice(0, 5);
+
+  // Max value for bar scaling
+  const maxVal = Math.max(...valid.map(b => b[gbMetric]));
+
+  function rankClass(i, isBest) {
+    if (isBest) return i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : 'badn';
+    return i === 0 ? 'bad1' : 'badn';
+  }
+
+  function buildRows(list, isBest) {
+    return list.map((b, i) => {
+      const val  = b[gbMetric];
+      const pct  = maxVal > 0 ? (val / maxVal * 100) : 0;
+      const col  = isBest
+        ? (val < 20 ? 'var(--green)' : val < 35 ? 'var(--blue)' : 'var(--orange)')
+        : (val > 45 ? 'var(--red)'   : val > 30  ? 'var(--orange)' : 'var(--blue)');
+      const pb   = p ? p.branches.find(pb2 => pb2.branch === b.branch) : null;
+      let delta  = '';
+      if (pb && pb[gbMetric]) {
+        const pct2 = ((val - pb[gbMetric]) / pb[gbMetric] * 100);
+        const cls  = pct2 <= 0 ? 'cmp-badge-pos' : 'cmp-badge-neg';
+        delta = ` <span class="${cls}">${pct2 >= 0 ? '▲' : '▼'}${Math.abs(pct2).toFixed(1)}%</span>`;
+      }
+      return `<tr>
+        <td><span class="gb-rank ${rankClass(i, isBest)}">${i + 1}</span></td>
+        <td><strong>${b.branch}</strong></td>
+        <td>${fmtTime(val)}${delta}</td>
+        <td>${b.orders.toLocaleString('he-IL')}</td>
+        <td><span class="gb-metric-bar" style="width:${Math.max(4,pct * 0.9)}px;background:${col};height:8px;border-radius:4px;"></span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  document.getElementById('gbBestTbody').innerHTML  = buildRows(best, true)  || '<tr><td colspan="5" class="nodata-msg">—</td></tr>';
+  document.getElementById('gbWorstTbody').innerHTML = buildRows(worst, false) || '<tr><td colspan="5" class="nodata-msg">—</td></tr>';
+}
+
+// ══════════════════════════════════════════════════════════════
+// WEEKLY PERFORMANCE CHART — grouped bar, Sun(א)…Sat(ש)
+// ══════════════════════════════════════════════════════════════
+let wpMetric = 'avgF';   // metric for weekly perf chart
+
+const HE_DAYS = ['א׳ ראשון','ב׳ שני','ג׳ שלישי','ד׳ רביעי','ה׳ חמישי','ו׳ שישי','ש׳ שבת'];
+const HE_DAYS_SHORT = ['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
+
+function wpSetMetric(m) {
+  wpMetric = m;
+  ['avgF','avgG','avgH','orders'].forEach(k => {
+    const map = {avgF:'wpMetF', avgG:'wpMetG', avgH:'wpMetH', orders:'wpMetOrders'};
+    document.getElementById(map[k])?.classList.toggle('active', k === m);
+  });
+  tmBuildWeeklyPerf();
+}
+
+function tmBuildWeeklyPerf() {
+  const ctx = document.getElementById('tmChartWeeklyPerf');
+  if (!ctx) return;
+
+  // Figure out current & previous week (Sun–Sat)
+  const today = new Date();
+  const todayDow = today.getDay(); // 0=Sun
+  const curSun = new Date(today); curSun.setDate(today.getDate() - todayDow);
+  const prevSun = new Date(curSun); prevSun.setDate(curSun.getDate() - 7);
+
+  function sundayOf(d) {
+    const dow = d.getDay();
+    const s = new Date(d); s.setDate(d.getDate() - dow); return s;
+  }
+
+  // Build a map: ISO date string → aggregated metric value
+  // We'll use tmAllData directly (no view range filter — we pick by actual date)
+  const dateValMap = {};
+  // Aggregate by date from ALL data (respect branch filter only)
+  let base = tmFbBranch ? tmAllData.filter(r => r.branch === tmFbBranch) : tmAllData;
+  // Also apply H range filter if active
+  const minH = parseFloat(document.getElementById('tmMinH')?.value) || 0;
+  const maxH = parseFloat(document.getElementById('tmMaxH')?.value) || 0;
+  if (minH > 0 || maxH > 0) {
+    base = base.filter(r => {
+      if (minH > 0 && r.avgH < minH) return false;
+      if (maxH > 0 && r.avgH > maxH) return false;
+      return true;
+    });
+  }
+
+  // Group by date
+  const byDate = {};
+  base.forEach(r => {
+    if (!byDate[r.dateStr]) byDate[r.dateStr] = { orders: 0, fVals: [], gVals: [], hVals: [] };
+    const d = byDate[r.dateStr];
+    d.orders += r.orders;
+    if (r.avgF > 0) d.fVals.push(r.avgF);
+    if (r.avgG > 0) d.gVals.push(r.avgG);
+    if (r.avgH > 0) d.hVals.push(r.avgH);
+  });
+  Object.keys(byDate).forEach(k => {
+    const d = byDate[k];
+    d.avgF = d.fVals.length ? d.fVals.reduce((a,b)=>a+b,0)/d.fVals.length : null;
+    d.avgG = d.gVals.length ? d.gVals.reduce((a,b)=>a+b,0)/d.gVals.length : null;
+    d.avgH = d.hVals.length ? d.hVals.reduce((a,b)=>a+b,0)/d.hVals.length : null;
+  });
+
+  // Helper: get value for a specific date
+  function getVal(isoStr) {
+    const d = byDate[isoStr];
+    if (!d) return null;
+    if (wpMetric === 'orders') return d.orders || null;
+    return d[wpMetric] || null;
+  }
+
+  // Build 7-element arrays for current week and previous week
+  const curData  = [];
+  const prevData = [];
+  const labels   = [];
+  for (let i = 0; i < 7; i++) {
+    const curDay  = new Date(curSun);  curDay.setDate(curSun.getDate()  + i);
+    const prevDay = new Date(prevSun); prevDay.setDate(prevSun.getDate() + i);
+    const curISO  = curDay.toISOString().slice(0,10);
+    const prevISO = prevDay.toISOString().slice(0,10);
+    // Convert ISO to DD/MM/YYYY for lookup
+    function iso2lookup(iso) {
+      const [y,m,d2] = iso.split('-');
+      return d2+'/'+m+'/'+y;
+    }
+    curData.push(getVal(iso2lookup(curISO)));
+    prevData.push(getVal(iso2lookup(prevISO)));
+    labels.push(HE_DAYS_SHORT[i]);
+  }
+
+  // KPI row
+  const kpiRow = document.getElementById('tmWeeklyKpiRow');
+  if (kpiRow) {
+    const curTotal  = curData.reduce((s,v)  => s + (v||0), 0);
+    const prevTotal = prevData.reduce((s,v) => s + (v||0), 0);
+    const curAvg    = curData.filter(v=>v!=null).length ? curTotal / curData.filter(v=>v!=null).length : 0;
+    const prevAvg   = prevData.filter(v=>v!=null).length ? prevTotal / prevData.filter(v=>v!=null).length : 0;
+    const delta     = prevAvg > 0 ? ((curAvg - prevAvg)/prevAvg*100) : null;
+    const deltaStr  = delta != null ? (delta >= 0 ? `▲ ${delta.toFixed(1)}%` : `▼ ${Math.abs(delta).toFixed(1)}%`) : '—';
+    const deltaColor = delta != null ? (delta <= 0 ? 'var(--green)' : 'var(--red)') : 'var(--text3)';
+    const isTimes = wpMetric !== 'orders';
+    const metLabel = {avgF: tmColF||'F', avgG: tmColG||'G', avgH: tmColH||'H', orders:'הזמנות'}[wpMetric];
+    kpiRow.innerHTML = `
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">ממוצע שבוע נוכחי — ${metLabel}</div>
+        <div style="font-size:22px;font-weight:900;color:var(--blue)">${isTimes ? fmtTime(curAvg) : curAvg.toFixed(0)}</div>
+      </div>
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">ממוצע שבוע קודם — ${metLabel}</div>
+        <div style="font-size:22px;font-weight:900;color:var(--text)">${isTimes ? fmtTime(prevAvg) : prevAvg.toFixed(0)}</div>
+        <div style="font-size:12px;font-weight:700;color:${deltaColor};margin-top:4px;">${deltaStr}</div>
+      </div>`;
+
+    // Update subtitle
+    const sub = document.getElementById('tmWeeklyPerfSub');
+    if (sub) {
+      function fmtD(d2) { return d2.toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit'}); }
+      const curEnd  = new Date(curSun); curEnd.setDate(curSun.getDate()+6);
+      const prevEnd = new Date(prevSun); prevEnd.setDate(prevSun.getDate()+6);
+      sub.textContent = `שבוע נוכחי: ${fmtD(curSun)}–${fmtD(curEnd)} | שבוע קודם: ${fmtD(prevSun)}–${fmtD(prevEnd)}`;
+    }
+  }
+
+  // Chart
+  tmDestroyChart('tmChartWeeklyPerf');
+  const isTimes = wpMetric !== 'orders';
+  const metLabel = {avgF: tmColF||'F', avgG: tmColG||'G', avgH: tmColH||'H', orders:'הזמנות'}[wpMetric];
+  tmMkChart('tmChartWeeklyPerf', {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'שבוע נוכחי',
+          data: curData,
+          backgroundColor: 'rgba(0,157,224,0.75)',
+          borderColor: 'rgba(0,157,224,1)',
+          borderWidth: 1.5,
+          borderRadius: 5,
+          spanGaps: false
+        },
+        {
+          label: 'שבוע קודם',
+          data: prevData,
+          backgroundColor: 'rgba(139,148,158,0.4)',
+          borderColor: 'rgba(139,148,158,0.7)',
+          borderWidth: 1.5,
+          borderRadius: 5,
+          spanGaps: false
+        }
+      ]
+    },
+    options: {
+      ...TM_CHART_DEFAULTS,
+      plugins: {
+        ...TM_CHART_DEFAULTS.plugins,
+        legend: { display: true, labels: { color:'#8B949E', font:{size:11} } },
+        tooltip: {
+          callbacks: {
+            label: ctx2 => {
+              const v = ctx2.raw;
+              if (v == null) return `${ctx2.dataset.label}: אין נתון`;
+              return `${ctx2.dataset.label}: ${isTimes ? fmtTime(v) : v.toFixed(0) + ' הזמנות'}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks:{color:'#8B949E'}, grid:{color:'rgba(48,54,61,.5)'} },
+        y: {
+          ticks: {
+            color:'#8B949E',
+            callback: v => isTimes ? v + ' ד׳' : v
+          },
+          grid:{color:'rgba(48,54,61,.5)'}
+        }
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// ENHANCED FILTER — quick filter buttons + active chips
+// ══════════════════════════════════════════════════════════════
+function tmQuickFilter(type) {
+  const minEl = document.getElementById('tmMinH');
+  const maxEl = document.getElementById('tmMaxH');
+  if (!minEl || !maxEl) return;
+  if (type === 'fast')  { minEl.value = '';  maxEl.value = '20'; }
+  if (type === 'warn')  { minEl.value = '20'; maxEl.value = '35'; }
+  if (type === 'slow')  { minEl.value = '35'; maxEl.value = ''; }
+  tmApplyFilters();
+}
+
+function tmUpdateActiveFilterChips() {
+  const bar = document.getElementById('tmActiveFilters');
+  if (!bar) return;
+  let chips = '';
+  if (tmFbBranch) {
+    chips += `<span class="filter-chip">🏪 ${tmFbBranch}<span class="chip-x" onclick="tmRemoveFilter('branch')">✕</span></span>`;
+  }
+  const minH = document.getElementById('tmMinH')?.value;
+  const maxH = document.getElementById('tmMaxH')?.value;
+  if (minH || maxH) {
+    const label = (minH ? minH + ' ד׳' : '') + ' — ' + (maxH ? maxH + ' ד׳' : '∞');
+    chips += `<span class="filter-chip">⏱️ זמן מסירה: ${label}<span class="chip-x" onclick="tmRemoveFilter('h')">✕</span></span>`;
+  }
+  bar.innerHTML = chips;
+}
+
+function tmRemoveFilter(type) {
+  if (type === 'branch') {
+    tmFbBranch = '';
+    const s = document.getElementById('tmFbBranch'); if (s) s.value = '';
+  }
+  if (type === 'h') {
+    const minEl = document.getElementById('tmMinH'); if (minEl) minEl.value = '';
+    const maxEl = document.getElementById('tmMaxH'); if (maxEl) maxEl.value = '';
+  }
+  tmApplyFilters();
+}
+
 function tmBuildFilterBar() {
   const branches = [...new Set(tmAllData.map(r => r.branch).filter(Boolean))].sort();
   const sel = document.getElementById('tmFbBranch');
@@ -2648,12 +3015,16 @@ function tmBuildFilterBar() {
 
 function tmApplyFilters() {
   tmFbBranch = document.getElementById('tmFbBranch').value;
+  tmUpdateActiveFilterChips();
   tmUpdateAll();
 }
 
 function tmResetFilters() {
   tmFbBranch = '';
-  document.getElementById('tmFbBranch').value = '';
+  const s = document.getElementById('tmFbBranch'); if (s) s.value = '';
+  const minEl = document.getElementById('tmMinH'); if (minEl) minEl.value = '';
+  const maxEl = document.getElementById('tmMaxH'); if (maxEl) maxEl.value = '';
+  tmUpdateActiveFilterChips();
   tmUpdateAll();
 }
 
@@ -2814,8 +3185,107 @@ function tmBuildCharts(c) {
     }
   });
 
-  // Trend over time
+  // ── Donut 1: Speed-tier distribution by avgH ─────────────
+  const tiers = [
+    { label: '🟢 מהיר (<20 דק)',  color: 'rgba(46,160,67,.85)',  min:  0, max: 20 },
+    { label: '🔵 סביר (20–30 דק)', color: 'rgba(0,157,224,.85)',  min: 20, max: 30 },
+    { label: '🟡 איטי (30–45 דק)', color: 'rgba(227,179,65,.85)', min: 30, max: 45 },
+    { label: '🔴 איטי מאוד (>45 דק)', color: 'rgba(218,54,51,.85)',  min: 45, max: Infinity },
+  ];
+  const tierCounts = tiers.map(t =>
+    c.branches.filter(b => b.avgH >= t.min && b.avgH < t.max).length
+  );
+  const tierBranches = tiers.map(t =>
+    c.branches.filter(b => b.avgH >= t.min && b.avgH < t.max).map(b => b.branch)
+  );
+
+  // Side-stats for Donut 1
+  const tierStatsEl = document.getElementById('tmTierStats');
+  if (tierStatsEl) {
+    tierStatsEl.innerHTML = tiers.map((t, i) => `
+      <div style="background:var(--card2);border-radius:8px;padding:8px 10px;border-right:3px solid ${t.color}">
+        <div style="font-size:11px;font-weight:700;color:var(--text)">${t.label}</div>
+        <div style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2">${tierCounts[i]}</div>
+        <div style="font-size:10px;color:var(--text2)">סניפים</div>
+      </div>`).join('');
+  }
+
+  tmMkChart('tmChartTierDonut', {
+    type: 'doughnut',
+    data: {
+      labels: tiers.map(t => t.label),
+      datasets: [{ data: tierCounts, backgroundColor: tiers.map(t => t.color), borderWidth: 0, hoverOffset: 10 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '62%',
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#8B949E', font: { size: 10 }, boxWidth: 12, padding: 10 } },
+        tooltip: { callbacks: {
+          label: ctx => ` ${ctx.label}: ${ctx.raw} סניפים`,
+          afterLabel: (ctx) => tierBranches[ctx.dataIndex].slice(0,3).join(', ') + (tierBranches[ctx.dataIndex].length > 3 ? '...' : '')
+        }}
+      }
+    }
+  });
+
+  // ── Donut 2: Time breakdown (F / G-F / H-G) ──────────────
+  const avgF = c.avgF, avgG = c.avgG, avgH = c.avgH;
+  // F = advance call (buffer before pickup)
+  // G - F = additional wait beyond advance call (up to pickup)
+  // H - G = courier ride (pickup → delivery)
+  const seg1 = Math.max(0, parseFloat(avgF.toFixed(1)));           // קריאה לוולט
+  const seg2 = Math.max(0, parseFloat((avgG - avgF).toFixed(1)));  // המתנה לאיסוף
+  const seg3 = Math.max(0, parseFloat((avgH - avgG).toFixed(1)));  // נסיעת שליח
+  const totalSeg = seg1 + seg2 + seg3;
+
+  const breakdownSubEl = document.getElementById('tmDonutBreakdownSub');
+  if (breakdownSubEl) breakdownSubEl.textContent = `סה"כ: ${fmtTime(avgH)} מקריאה עד מסירה`;
+
+  const brkLabels = [tmColF, 'המתנה לאיסוף (G−F)', 'נסיעת שליח (H−G)'];
+  const brkData   = [seg1, seg2, seg3];
+  const brkColors = ['rgba(0,157,224,.85)', 'rgba(227,179,65,.85)', 'rgba(137,87,229,.85)'];
+
+  const brkStatsEl = document.getElementById('tmBreakdownStats');
+  if (brkStatsEl) {
+    brkStatsEl.innerHTML = brkLabels.map((lbl, i) => {
+      const pct = totalSeg ? ((brkData[i]/totalSeg)*100).toFixed(0) : 0;
+      return `
+        <div style="background:var(--card2);border-radius:8px;padding:8px 10px;border-right:3px solid ${brkColors[i]}">
+          <div style="font-size:10px;color:var(--text2);margin-bottom:2px">${lbl}</div>
+          <div style="font-size:18px;font-weight:900;color:var(--text);line-height:1.2">${fmtTime(brkData[i])}</div>
+          <div style="font-size:10px;color:var(--text3)">${pct}% מהסה"כ</div>
+        </div>`;
+    }).join('');
+  }
+
+  tmMkChart('tmChartBreakdownDonut', {
+    type: 'doughnut',
+    data: {
+      labels: brkLabels,
+      datasets: [{ data: brkData, backgroundColor: brkColors, borderWidth: 0, hoverOffset: 10 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '62%',
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#8B949E', font: { size: 10 }, boxWidth: 12, padding: 10 } },
+        tooltip: { callbacks: {
+          label: ctx => ` ${ctx.label}: ${fmtTime(ctx.raw)}`,
+          afterLabel: ctx => `${totalSeg ? ((ctx.raw/totalSeg)*100).toFixed(1) : 0}% מהסה"כ`
+        }}
+      }
+    }
+  });
+
+  // ── Line 1: Daily + 7-day rolling average ─────────────────
   const sortedDates = Object.keys(c.byDate).sort((a, b) => dateToSortKey(a) - dateToSortKey(b));
+  tmBuildRollingLine(c, sortedDates);
+
+  // ── Line 2: Top-5 branches by orders, trend over time ─────
+  tmBuildBranchLine(c, sortedDates);
+
+  // Trend over time (all 3 metrics)
   tmMkChart('tmChartTrend', {
     type: 'line',
     data: {
@@ -2845,6 +3315,141 @@ function tmBuildCharts(c) {
       ]
     },
     options: TM_CHART_DEFAULTS
+  });
+}
+
+// ── Line metric state ─────────────────────────────────────
+let tmLineMetric = 'avgF';
+function tmSetLineMetric(m) {
+  tmLineMetric = m;
+  ['tmLineMetF','tmLineMetG','tmLineMetH'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+  const map = { avgF:'tmLineMetF', avgG:'tmLineMetG', avgH:'tmLineMetH' };
+  document.getElementById(map[m])?.classList.add('active');
+  // Rebuild rolling line with cached data
+  const viewData = tmGetViewData();
+  const c = tmCompute(viewData);
+  const sortedDates = Object.keys(c.byDate).sort((a,b) => dateToSortKey(a)-dateToSortKey(b));
+  tmBuildRollingLine(c, sortedDates);
+}
+
+function tmBuildRollingLine(c, sortedDates) {
+  if (!sortedDates.length) return;
+  const rawVals = sortedDates.map(d => parseFloat((c.byDate[d][tmLineMetric] || 0).toFixed(1)));
+
+  // 7-day rolling average
+  const rollingAvg = rawVals.map((_, i) => {
+    const window = rawVals.slice(Math.max(0, i - 6), i + 1);
+    const valid  = window.filter(v => v > 0);
+    return valid.length ? parseFloat((valid.reduce((a,b) => a+b,0) / valid.length).toFixed(1)) : null;
+  });
+
+  // Target line (30 min for H, 10 for G, 8 for F)
+  const targets = { avgF: 8, avgG: 10, avgH: 30 };
+  const target  = targets[tmLineMetric];
+  const metricColors = { avgF:'rgba(0,157,224,1)', avgG:'rgba(227,179,65,1)', avgH:'rgba(137,87,229,1)' };
+  const metricColorsDim = { avgF:'rgba(0,157,224,.25)', avgG:'rgba(227,179,65,.25)', avgH:'rgba(137,87,229,.25)' };
+  const metricNames = { avgF: tmColF, avgG: tmColG, avgH: tmColH };
+
+  tmMkChart('tmChartRollingLine', {
+    type: 'line',
+    data: {
+      labels: sortedDates,
+      datasets: [
+        {
+          label: 'ערך יומי',
+          data: rawVals,
+          borderColor: metricColorsDim[tmLineMetric].replace('.25','1'),
+          backgroundColor: 'transparent',
+          tension: 0.1, borderWidth: 1.5,
+          pointRadius: 3, pointBackgroundColor: metricColors[tmLineMetric],
+          borderDash: []
+        },
+        {
+          label: 'ממוצע נע 7 ימים',
+          data: rollingAvg,
+          borderColor: metricColors[tmLineMetric],
+          backgroundColor: metricColorsDim[tmLineMetric],
+          tension: 0.4, borderWidth: 3,
+          pointRadius: 0, fill: true
+        },
+        {
+          label: `יעד (${target} דק)`,
+          data: sortedDates.map(() => target),
+          borderColor: 'rgba(218,54,51,.6)',
+          backgroundColor: 'transparent',
+          tension: 0, borderWidth: 1.5, borderDash: [6,3],
+          pointRadius: 0
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#8B949E', font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtTime(ctx.raw) } }
+      },
+      scales: {
+        x: { ticks: { color: '#8B949E', maxRotation: 45 }, grid: { color: 'rgba(48,54,61,.5)' } },
+        y: {
+          ticks: { color: '#8B949E', callback: v => fmtTime(v) },
+          grid: { color: 'rgba(48,54,61,.5)' }
+        }
+      }
+    }
+  });
+}
+
+function tmBuildBranchLine(c, sortedDates) {
+  if (!sortedDates.length || !c.branches.length) return;
+
+  // Top 5 branches by total orders
+  const top5 = [...c.branches].sort((a,b) => b.orders - a.orders).slice(0,5).map(b => b.branch);
+  const branchColors = [
+    'rgba(0,157,224,1)','rgba(46,160,67,1)','rgba(227,179,65,1)',
+    'rgba(137,87,229,1)','rgba(218,54,51,1)'
+  ];
+
+  // Build per-branch per-date data from raw tmAllData (filtered same as view)
+  const viewData = tmGetViewData();
+  const branchDateMap = {};
+  viewData.forEach(r => {
+    if (!top5.includes(r.branch)) return;
+    const key = r.branch + '||' + r.dateStr;
+    if (!branchDateMap[key]) branchDateMap[key] = { hVals: [] };
+    if (r.avgH > 0) branchDateMap[key].hVals.push(r.avgH);
+  });
+
+  const datasets = top5.map((branch, i) => ({
+    label: branch,
+    data: sortedDates.map(d => {
+      const entry = branchDateMap[branch + '||' + d];
+      if (!entry || !entry.hVals.length) return null;
+      return parseFloat((entry.hVals.reduce((a,b)=>a+b,0) / entry.hVals.length).toFixed(1));
+    }),
+    borderColor: branchColors[i],
+    backgroundColor: 'transparent',
+    tension: 0.3, borderWidth: 2,
+    pointRadius: 4, pointHoverRadius: 6,
+    spanGaps: true
+  }));
+
+  const top5Sub = document.getElementById('tmTop5Sub');
+  if (top5Sub) top5Sub.textContent = `קריאה עד מסירה (${tmColH})`;
+
+  tmMkChart('tmChartBranchLine', {
+    type: 'line',
+    data: { labels: sortedDates, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#8B949E', font: { size: 10 }, boxWidth: 12 } },
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtTime(ctx.raw) } }
+      },
+      scales: {
+        x: { ticks: { color: '#8B949E', maxRotation: 45 }, grid: { color: 'rgba(48,54,61,.5)' } },
+        y: { ticks: { color: '#8B949E', callback: v => fmtTime(v) }, grid: { color: 'rgba(48,54,61,.5)' } }
+      }
+    }
   });
 }
 
@@ -3299,14 +3904,29 @@ tmInit();
       </div>
     </div>
 
-    <!-- BRANCH FILTER (times) -->
+    <!-- BRANCH FILTER (times) — enhanced -->
     <div class="filter-bar" id="tmFilterBar">
-      <span class="fb-label">🔍 סניף:</span>
-      <select class="fb-select" id="tmFbBranch" onchange="tmApplyFilters()" style="min-width:180px">
-        <option value="">כל הסניפים</option>
-      </select>
-      <button class="fb-reset" onclick="tmResetFilters()">✕ אפס</button>
-      <span class="fb-count" id="tmFbCount"></span>
+      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;width:100%">
+        <span class="fb-label">🔍 סניף:</span>
+        <select class="fb-select" id="tmFbBranch" onchange="tmApplyFilters()" style="min-width:180px">
+          <option value="">כל הסניפים</option>
+        </select>
+        <div class="mf-range" title="סנן לפי זמן מסירה (H) דקות">
+          <span class="metric-filter-label">⏱️ זמן מסירה:</span>
+          <input type="number" id="tmMinH" min="0" max="120" step="1" placeholder="min" onchange="tmApplyFilters()">
+          <span>—</span>
+          <input type="number" id="tmMaxH" min="0" max="120" step="1" placeholder="max" onchange="tmApplyFilters()">
+          <span style="color:var(--text3);margin-right:2px">דקות</span>
+        </div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+          <button class="preset-btn" onclick="tmQuickFilter('fast')">🟢 מהירים</button>
+          <button class="preset-btn" onclick="tmQuickFilter('warn')">🟡 בינוני</button>
+          <button class="preset-btn" onclick="tmQuickFilter('slow')">🔴 איטיים</button>
+        </div>
+        <button class="fb-reset" onclick="tmResetFilters()">✕ אפס הכל</button>
+        <span class="fb-count" id="tmFbCount"></span>
+      </div>
+      <div class="tm-active-filters" id="tmActiveFilters"></div>
     </div>
 
     <!-- KPI CARDS (times) -->
@@ -3371,6 +3991,59 @@ tmInit();
       </div>
     </div>
 
+    <!-- ══ GOOD vs BAD TABLE ══ -->
+    <div class="gb-section mb16" id="tmGoodBadSection">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+        <div class="tm-chart-title" style="margin-bottom:0">🏆 השוואה טובים מול גרועים — ביצועי זמנים</div>
+        <div style="display:flex;gap:6px;">
+          <button class="preset-btn active" id="gbMetF" onclick="gbSetMetric('avgF')">קריאה לוולט</button>
+          <button class="preset-btn" id="gbMetG" onclick="gbSetMetric('avgG')">עד איסוף</button>
+          <button class="preset-btn" id="gbMetH" onclick="gbSetMetric('avgH')">עד מסירה</button>
+        </div>
+      </div>
+      <div id="gbMetricLabel" style="font-size:11px;color:var(--text2);margin-bottom:10px;"></div>
+      <div class="gb-grid">
+        <div>
+          <div class="gb-half-title">🥇 Top 5 — הכי מהירים</div>
+          <table class="gb-table">
+            <thead><tr><th>#</th><th>סניף</th><th>ממוצע</th><th>הזמנות</th><th>ויזואל</th></tr></thead>
+            <tbody id="gbBestTbody"><tr><td colspan="5" class="nodata-msg">טוען…</td></tr></tbody>
+          </table>
+        </div>
+        <div>
+          <div class="gb-half-title">⚠️ Bottom 5 — הכי איטיים</div>
+          <table class="gb-table">
+            <thead><tr><th>#</th><th>סניף</th><th>ממוצע</th><th>הזמנות</th><th>ויזואל</th></tr></thead>
+            <tbody id="gbWorstTbody"><tr><td colspan="5" class="nodata-msg">טוען…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div style="margin-top:12px;font-size:11px;color:var(--text3);">
+        * ממוצע מחושב כממוצע של ממוצעים (average of averages) לפי יום וסניף. מוצגים רק סניפים עם לפחות 5 הזמנות.
+      </div>
+    </div>
+
+    <!-- ══ WEEKLY PERFORMANCE CHART (א–ש) ══ -->
+    <div class="weekly-perf-section mb16" id="tmWeeklyPerfSection">
+      <div class="weekly-ctrl-row">
+        <div>
+          <div class="tm-chart-title" style="margin-bottom:4px">📅 ביצועים יומיים — השוואה שבוע מול שבוע</div>
+          <div class="weekly-sub" id="tmWeeklyPerfSub">שבוע נוכחי vs שבוע קודם (א–ש)</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="preset-btn active" id="wpMetF" onclick="wpSetMetric('avgF')">קריאה לוולט</button>
+          <button class="preset-btn" id="wpMetG" onclick="wpSetMetric('avgG')">עד איסוף</button>
+          <button class="preset-btn" id="wpMetH" onclick="wpSetMetric('avgH')">עד מסירה</button>
+          <button class="preset-btn" id="wpMetOrders" onclick="wpSetMetric('orders')">הזמנות</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px" id="tmWeeklyKpiRow"></div>
+      <div class="tm-chart-wrap tall"><canvas id="tmChartWeeklyPerf"></canvas></div>
+      <div style="margin-top:8px;font-size:11px;color:var(--text3);">
+        * שבוע מוגדר ממוצאי (א׳) עד שבת (ש׳). ימים ללא נתונים מוצגים כריקים.
+      </div>
+    </div>
+
     <!-- CHARTS (times) -->
     <div class="tm-charts-grid mb16">
       <div class="tm-chart-section" style="grid-column:1/-1">
@@ -3379,9 +4052,60 @@ tmInit();
       </div>
     </div>
 
+    <!-- ══ ROW 2: Donut charts ══ -->
+    <div class="tm-charts-grid mb16">
+      <!-- Donut 1: Speed-tier distribution -->
+      <div class="tm-chart-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+          <div class="tm-chart-title" style="margin-bottom:0">🍩 התפלגות סניפים לפי מהירות מסירה</div>
+          <div id="tmDonutTierLegend" style="font-size:11px;color:var(--text2);"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center">
+          <div style="position:relative;height:240px"><canvas id="tmChartTierDonut"></canvas></div>
+          <div id="tmTierStats" style="min-width:130px;display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+      </div>
+      <!-- Donut 2: Time breakdown F/G/courier -->
+      <div class="tm-chart-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+          <div class="tm-chart-title" style="margin-bottom:0">🥧 פירוק זמן מסירה ממוצע</div>
+          <div id="tmDonutBreakdownSub" style="font-size:11px;color:var(--text2);"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center">
+          <div style="position:relative;height:240px"><canvas id="tmChartBreakdownDonut"></canvas></div>
+          <div id="tmBreakdownStats" style="min-width:130px;display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ROW 3: Line charts ══ -->
+    <div class="tm-charts-grid mb16">
+      <!-- Line 1: Daily + 7-day rolling avg -->
+      <div class="tm-chart-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+          <div class="tm-chart-title" style="margin-bottom:0">📈 מגמת זמנים + ממוצע נע 7 ימים</div>
+          <div style="display:flex;gap:5px">
+            <button class="preset-btn active" id="tmLineMetF"    onclick="tmSetLineMetric('avgF')">קריאה לוולט</button>
+            <button class="preset-btn"        id="tmLineMetG"    onclick="tmSetLineMetric('avgG')">עד איסוף</button>
+            <button class="preset-btn"        id="tmLineMetH"    onclick="tmSetLineMetric('avgH')">עד מסירה</button>
+          </div>
+        </div>
+        <div class="tm-chart-wrap tall"><canvas id="tmChartRollingLine"></canvas></div>
+      </div>
+      <!-- Line 2: Top-5 branches trend -->
+      <div class="tm-chart-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+          <div class="tm-chart-title" style="margin-bottom:0">🏪 טרנד זמן מסירה — Top 5 סניפים</div>
+          <span id="tmTop5Sub" style="font-size:11px;color:var(--text2)"></span>
+        </div>
+        <div class="tm-chart-wrap tall"><canvas id="tmChartBranchLine"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ══ ROW 4: original trend + orders ══ -->
     <div class="tm-charts-grid mb16">
       <div class="tm-chart-section">
-        <div class="tm-chart-title">📈 מגמת זמנים לאורך זמן</div>
+        <div class="tm-chart-title">📈 מגמת כל הזמנים לאורך זמן</div>
         <div class="tm-chart-wrap"><canvas id="tmChartTrend"></canvas></div>
       </div>
       <div class="tm-chart-section">
