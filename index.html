@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>דשבורד הזמנות Wolt o| דומינו'ס</title>
+<title>דשבורד הזמנות Wolt o1| דומינו'ס</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -4086,6 +4086,7 @@ tmInit();
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, isSignInWithEmailLink, sendSignInLinkToEmail, signInWithEmailLink, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+    // ה-Config שלך
     const firebaseConfig = {
         apiKey: "AIzaSyDghWn4gmG43WNKwWuvQ6sPT58IZr2Gfts",
         authDomain: "dominoswolt.firebaseapp.com",
@@ -4097,45 +4098,86 @@ tmInit();
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const allowed = ["edo@dominos.co.il", "yossi@dominos.co.il", "arie@dominos.co.il", "ifat@dominos.co.il", "yaniv@dominos.co.il", liron@dominos.co.il", ];
 
-    // זיהוי משתמש מחובר
-    // זיהוי משתמש מחובר ובדיקה מול Firebase
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            // במקום לבדוק במערך allowed, אנחנו בודקים אם המשתמש מחובר ומאומת
-            document.getElementById('authOverlay').style.display = 'none';
-            document.getElementById('mainAppWrapper').style.display = 'block';
+    // 1. האזנה לכפתור השליחה (במקום onclick ב-HTML)
+    const sendBtn = document.getElementById('sendLinkBtn');
+    if (sendBtn) {
+        sendBtn.addEventListener('click', async () => {
+            const email = document.getElementById('userEmail').value.trim().toLowerCase();
+            const msg = document.getElementById('authMsg');
             
-            // קריאה לפונקציות המקוריות שלך
-            if(window.init) window.init();
+            if (!email) {
+                alert("אנא הזן מייל");
+                return;
+            }
+
+            msg.style.display = "block";
+            msg.style.color = "white";
+            msg.textContent = "שולח בקשה לאימות... אנא המתן";
+
+            const actionCodeSettings = {
+                url: window.location.href, // הכתובת אליה המשתמש יחזור מהמייל
+                handleCodeInApp: true
+            };
+
+            try {
+                await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+                window.localStorage.setItem('emailForSignIn', email);
+                msg.style.color = "#2EA043"; 
+                msg.textContent = "נשלח! בדוק את המייל (גם בספאם).";
+                console.log("Email link sent successfully to:", email);
+            } catch (error) {
+                console.error("Firebase Error:", error);
+                msg.style.color = "#DA3633";
+                msg.textContent = "שגיאה: " + error.message;
+            }
+        });
+    }
+
+    // 2. בדיקת סטטוס חיבור והצגת התוכן
+    onAuthStateChanged(auth, (user) => {
+        const overlay = document.getElementById('authOverlay');
+        const wrapper = document.getElementById('mainAppWrapper');
+
+        if (user) {
+            console.log("User is signed in:", user.email);
+            if (overlay) overlay.style.display = 'none';
+            if (wrapper) wrapper.style.display = 'block';
+            
+            // הפעלת הפונקציות המקוריות של האתר שלך (אם הן קיימות ב-Global scope)
+            if (typeof window.init === 'function') window.init();
         } else {
-            // אם המשתמש לא מחובר, מוודאים שהדף חסום
-            document.getElementById('authOverlay').style.display = 'flex';
-            document.getElementById('mainAppWrapper').style.display = 'none';
+            if (overlay) overlay.style.display = 'flex';
+            if (wrapper) wrapper.style.display = 'none';
         }
     });
 
-    // עדכון כפתור השליחה לבדיקה מול המיילים ב-Firebase (אופציונלי)
-    document.getElementById('sendLinkBtn').onclick = async () => {
-        const email = document.getElementById('userEmail').value.trim().toLowerCase();
-        const msg = document.getElementById('authMsg');
-        
-        const actionCodeSettings = {
-            url: window.location.href,
-            handleCodeInApp: true
-        };
-
-        try {
-            await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-            window.localStorage.setItem('emailForSignIn', email);
-            msg.style.color = "#2EA043"; 
-            msg.textContent = "קישור נשלח! אם המייל קיים במערכת, תקבל הודעה תוך שניות.";
-        } catch (err) { 
-            msg.style.color = "#DA3633";
-            msg.textContent = "שגיאה בשליחה: " + err.message; 
+    // 3. טיפול בחזרה מהקישור במייל
+    if (isSignInWithEmailLink(auth, window.location.href)) {
+        let email = window.localStorage.getItem('emailForSignIn');
+        if (!email) {
+            email = window.prompt('אנא הזן את המייל שלך שוב לאימות סופי:');
         }
+        if (email) {
+            signInWithEmailLink(auth, email, window.location.href)
+                .then(() => {
+                    window.localStorage.removeItem('emailForSignIn');
+                    window.location.hash = ''; // ניקוי ה-URL
+                })
+                .catch((err) => {
+                    console.error("Sign in error:", err);
+                    alert("הקישור פג תוקף או שאינו תקין.");
+                });
+        }
+    }
+
+    // הפיכת פונקציית ה-logout לזמינה מכל מקום
+    window.logout = () => {
+        signOut(auth).then(() => {
+            window.location.reload();
+        });
     };
+</script>
 </script>
 </body>
 </html>
