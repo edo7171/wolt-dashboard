@@ -4075,15 +4075,7 @@ tmInit();
   </div><!-- /main -->
 </div><!-- /timesApp -->
 </div> ```
-
----
-
-### שלב 3: להדביק את הלוגיקה (JavaScript)
-לפני תגית ה-`</body>` (אחרי ה-div שסגרת בשלב הקודם), הדבק את קוד ה-Firebase:
-
-```html
 <script type="module">
- <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, isSignInWithEmailLink, sendSignInLinkToEmail, signInWithEmailLink, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
@@ -4100,10 +4092,11 @@ tmInit();
     const auth = getAuth(app);
     const allowedEmails = ["edo@dominos.co.il", "yossi@dominos.co.il"];
 
-    // 1. כפתור השליחה
+    // טיפול בלחיצה על כפתור
     const sendBtn = document.getElementById('sendLinkBtn');
     if (sendBtn) {
-        sendBtn.onclick = async () => {
+        sendBtn.onclick = async (e) => {
+            e.preventDefault();
             const email = document.getElementById('userEmail').value.trim().toLowerCase();
             const msg = document.getElementById('authMsg');
             
@@ -4124,6 +4117,8 @@ tmInit();
                     handleCodeInApp: true
                 });
                 window.localStorage.setItem('emailForSignIn', email);
+                msg.style.color = "#2EA043";
+                msg.textContent = "נשלח בהצלחה! בדוק את תיבת המייל שלך.";
             } catch (err) {
                 msg.style.color = "#DA3633";
                 msg.textContent = "שגיאה: " + err.message;
@@ -4131,30 +4126,34 @@ tmInit();
         };
     }
 
-    // 2. בדיקת חיבור
+    // בדיקת סטטוס חיבור
     onAuthStateChanged(auth, (user) => {
+        const overlay = document.getElementById('authOverlay');
+        const wrapper = document.getElementById('mainAppWrapper');
         if (user && allowedEmails.includes(user.email)) {
-            document.getElementById('authOverlay').style.display = 'none';
-            document.getElementById('mainAppWrapper').style.display = 'block';
+            if (overlay) overlay.style.display = 'none';
+            if (wrapper) wrapper.style.display = 'block';
+            // קריאה לפונקציות המקוריות של הדשבורד שלך
             if (typeof window.init === "function") window.init();
         } else {
-            document.getElementById('authOverlay').style.display = 'flex';
-            document.getElementById('mainAppWrapper').style.display = 'none';
+            if (overlay) overlay.style.display = 'flex';
+            if (wrapper) wrapper.style.display = 'none';
         }
     });
 
-    // 3. אימות חוזר מהמייל
+    // אימות חוזר מהמייל
     if (isSignInWithEmailLink(auth, window.location.href)) {
         let email = window.localStorage.getItem('emailForSignIn');
-        if (!email) email = window.prompt('הזן מייל לאימות:');
-        signInWithEmailLink(auth, email, window.location.href)
-            .then(() => window.localStorage.removeItem('emailForSignIn'))
-            .catch(err => alert("שגיאה: " + err.message));
+        if (!email) email = window.prompt('הזן מייל שוב לאימות:');
+        if (email) {
+            signInWithEmailLink(auth, email, window.location.href)
+                .then(() => window.localStorage.removeItem('emailForSignIn'))
+                .catch(err => alert("שגיאה: " + err.message));
+        }
     }
 
     window.logout = () => signOut(auth).then(() => location.reload());
 </script>
-</script>
-</script>
+
 </body>
 </html>
