@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>דשבורד הזמנות Wolt o| דומינו'ס</title>
+<title>דשבורד הזמנות Wolt | דומינו'ס</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -507,41 +507,11 @@ tr.refunded-row td{background:rgba(137,87,229,.04)}
 
 /* nodata */
 .nodata-msg{padding:40px;text-align:center;color:var(--text2);font-size:14px;}
-/* --- קוד אבטחה: עיצוב מסך כניסה --- */
-#authOverlay {
-    position: fixed; inset: 0; z-index: 99999; background: #0D1117;
-    display: flex; align-items: center; justify-content: center; font-family: 'Heebo', sans-serif;
-}
-.auth-card {
-    background: #161B22; border: 1px solid #30363D; padding: 40px;
-    border-radius: 20px; width: 100%; max-width: 400px; text-align: center; color: #E6EDF3;
-}
-.auth-input {
-    width: 100%; padding: 12px; margin: 20px 0; background: #1C2128;
-    border: 1px solid #30363D; color: #E6EDF3; border-radius: 8px; text-align: center; font-size: 16px;
-}
-.auth-btn {
-    width: 100%; padding: 12px; background: #009DE0; color: white;
-    border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s;
-}
-.auth-btn:hover { background: #007bb0; }
-.auth-status { margin-top: 15px; font-size: 14px; }
-#mainAppWrapper { display: none; } /* מסתיר את הדשבורד עד האישור */
 
 </style>
 </head>
 <body>
-<div id="authOverlay">
-    <div class="auth-card">
-        <div style="font-size: 50px; margin-bottom: 10px;">🍕</div>
-        <h2>כניסת מורשים</h2>
-        <p style="color: #8B949E;">הזן מייל לקבלת קישור כניסה</p>
-        <input type="email" id="userEmail" class="auth-input" placeholder="name@dominos.co.il">
-        <button id="sendLinkBtn" class="auth-btn">שלח קישור למייל</button>
-        <div id="authMsg" class="auth-status"></div>
-    </div>
-</div>
-<div id="mainAppWrapper">
+
 <!-- ═══════════════════════════════════════════════════
      LANDING SCREEN
 ════════════════════════════════════════════════════ -->
@@ -4074,86 +4044,6 @@ tmInit();
 
   </div><!-- /main -->
 </div><!-- /timesApp -->
-</div> ```
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, isSignInWithEmailLink, sendSignInLinkToEmail, signInWithEmailLink, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyDghWn4gmG43WNKwWuvQ6sPT58IZr2Gfts",
-        authDomain: "dominoswolt.firebaseapp.com",
-        projectId: "dominoswolt",
-        storageBucket: "dominoswolt.firebasestorage.app",
-        messagingSenderId: "58824143071",
-        appId: "1:58824143071:web:0577a263ad1e6c30d8f96a"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const allowedEmails = ["edo@dominos.co.il", "yossi@dominos.co.il"];
-
-    // טיפול בלחיצה על כפתור
-    const sendBtn = document.getElementById('sendLinkBtn');
-    if (sendBtn) {
-        sendBtn.onclick = async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('userEmail').value.trim().toLowerCase();
-            const msg = document.getElementById('authMsg');
-            
-            if (!allowedEmails.includes(email)) {
-                msg.style.display = "block";
-                msg.style.color = "#DA3633";
-                msg.textContent = "מייל לא מורשה במערכת.";
-                return;
-            }
-
-            msg.style.display = "block";
-            msg.style.color = "white";
-            msg.textContent = "שולח קישור... בדוק את המייל בעוד רגע";
-
-            try {
-                await sendSignInLinkToEmail(auth, email, {
-                    url: window.location.href,
-                    handleCodeInApp: true
-                });
-                window.localStorage.setItem('emailForSignIn', email);
-                msg.style.color = "#2EA043";
-                msg.textContent = "נשלח בהצלחה! בדוק את תיבת המייל שלך.";
-            } catch (err) {
-                msg.style.color = "#DA3633";
-                msg.textContent = "שגיאה: " + err.message;
-            }
-        };
-    }
-
-    // בדיקת סטטוס חיבור
-    onAuthStateChanged(auth, (user) => {
-        const overlay = document.getElementById('authOverlay');
-        const wrapper = document.getElementById('mainAppWrapper');
-        if (user && allowedEmails.includes(user.email)) {
-            if (overlay) overlay.style.display = 'none';
-            if (wrapper) wrapper.style.display = 'block';
-            // קריאה לפונקציות המקוריות של הדשבורד שלך
-            if (typeof window.init === "function") window.init();
-        } else {
-            if (overlay) overlay.style.display = 'flex';
-            if (wrapper) wrapper.style.display = 'none';
-        }
-    });
-
-    // אימות חוזר מהמייל
-    if (isSignInWithEmailLink(auth, window.location.href)) {
-        let email = window.localStorage.getItem('emailForSignIn');
-        if (!email) email = window.prompt('הזן מייל שוב לאימות:');
-        if (email) {
-            signInWithEmailLink(auth, email, window.location.href)
-                .then(() => window.localStorage.removeItem('emailForSignIn'))
-                .catch(err => alert("שגיאה: " + err.message));
-        }
-    }
-
-    window.logout = () => signOut(auth).then(() => location.reload());
-</script>
 
 </body>
 </html>
