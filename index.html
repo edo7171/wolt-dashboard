@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>דשבורד הזמנות Wolt o1| דומינו'ס</title>
+<title>דשבורד הזמנות Wolt o| דומינו'ס</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -4121,15 +4121,17 @@ tmInit();
             };
 
             try {
-                await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-                window.localStorage.setItem('emailForSignIn', email);
-                msg.style.color = "#2EA043"; 
-                msg.textContent = "נשלח! בדוק את המייל (גם בספאם).";
-                console.log("Email link sent successfully to:", email);
-            } catch (error) {
-                console.error("Firebase Error:", error);
-                msg.style.color = "#DA3633";
-                msg.textContent = "שגיאה: " + error.message;
+               console.log("מנסה לשלוח מייל לכתובת:", email); // הודעת בדיקה
+    await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+    console.log("Firebase אישר שהמייל נשלח בהצלחה!"); // אם זה מופיע, הבעיה בתיבת המייל
+    window.localStorage.setItem('emailForSignIn', email);
+    msg.style.color = "#2EA043"; 
+    msg.textContent = "נשלח! בדוק את המייל (גם בספאם).";
+} catch (error) {
+    console.error("שגיאת Firebase מפורטת:", error.code, error.message);
+    msg.style.color = "#DA3633";
+    msg.textContent = "שגיאה: " + error.message;
+}
             }
         });
     }
