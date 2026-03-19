@@ -4083,10 +4083,10 @@ tmInit();
 
 ```html
 <script type="module">
+ <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, isSignInWithEmailLink, sendSignInLinkToEmail, signInWithEmailLink, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-    // ה-Config שלך
     const firebaseConfig = {
         apiKey: "AIzaSyDghWn4gmG43WNKwWuvQ6sPT58IZr2Gfts",
         authDomain: "dominoswolt.firebaseapp.com",
@@ -4098,87 +4098,62 @@ tmInit();
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const allowedEmails = ["edo@dominos.co.il", "yossi@dominos.co.il"];
 
-    // 1. האזנה לכפתור השליחה (במקום onclick ב-HTML)
+    // 1. כפתור השליחה
     const sendBtn = document.getElementById('sendLinkBtn');
     if (sendBtn) {
-        sendBtn.addEventListener('click', async () => {
+        sendBtn.onclick = async () => {
             const email = document.getElementById('userEmail').value.trim().toLowerCase();
             const msg = document.getElementById('authMsg');
             
-            if (!email) {
-                alert("אנא הזן מייל");
+            if (!allowedEmails.includes(email)) {
+                msg.style.display = "block";
+                msg.style.color = "#DA3633";
+                msg.textContent = "מייל לא מורשה במערכת.";
                 return;
             }
 
             msg.style.display = "block";
             msg.style.color = "white";
-            msg.textContent = "שולח בקשה לאימות... אנא המתן";
-
-            const actionCodeSettings = {
-                url: window.location.href, // הכתובת אליה המשתמש יחזור מהמייל
-                handleCodeInApp: true
-            };
+            msg.textContent = "שולח קישור... בדוק את המייל בעוד רגע";
 
             try {
-               console.log("מנסה לשלוח מייל לכתובת:", email); // הודעת בדיקה
-    await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-    console.log("Firebase אישר שהמייל נשלח בהצלחה!"); // אם זה מופיע, הבעיה בתיבת המייל
-    window.localStorage.setItem('emailForSignIn', email);
-    msg.style.color = "#2EA043"; 
-    msg.textContent = "נשלח! בדוק את המייל (גם בספאם).";
-} catch (error) {
-    console.error("שגיאת Firebase מפורטת:", error.code, error.message);
-    msg.style.color = "#DA3633";
-    msg.textContent = "שגיאה: " + error.message;
-}
+                await sendSignInLinkToEmail(auth, email, {
+                    url: window.location.href,
+                    handleCodeInApp: true
+                });
+                window.localStorage.setItem('emailForSignIn', email);
+            } catch (err) {
+                msg.style.color = "#DA3633";
+                msg.textContent = "שגיאה: " + err.message;
             }
-        });
+        };
     }
 
-    // 2. בדיקת סטטוס חיבור והצגת התוכן
+    // 2. בדיקת חיבור
     onAuthStateChanged(auth, (user) => {
-        const overlay = document.getElementById('authOverlay');
-        const wrapper = document.getElementById('mainAppWrapper');
-
-        if (user) {
-            console.log("User is signed in:", user.email);
-            if (overlay) overlay.style.display = 'none';
-            if (wrapper) wrapper.style.display = 'block';
-            
-            // הפעלת הפונקציות המקוריות של האתר שלך (אם הן קיימות ב-Global scope)
-            if (typeof window.init === 'function') window.init();
+        if (user && allowedEmails.includes(user.email)) {
+            document.getElementById('authOverlay').style.display = 'none';
+            document.getElementById('mainAppWrapper').style.display = 'block';
+            if (typeof window.init === "function") window.init();
         } else {
-            if (overlay) overlay.style.display = 'flex';
-            if (wrapper) wrapper.style.display = 'none';
+            document.getElementById('authOverlay').style.display = 'flex';
+            document.getElementById('mainAppWrapper').style.display = 'none';
         }
     });
 
-    // 3. טיפול בחזרה מהקישור במייל
+    // 3. אימות חוזר מהמייל
     if (isSignInWithEmailLink(auth, window.location.href)) {
         let email = window.localStorage.getItem('emailForSignIn');
-        if (!email) {
-            email = window.prompt('אנא הזן את המייל שלך שוב לאימות סופי:');
-        }
-        if (email) {
-            signInWithEmailLink(auth, email, window.location.href)
-                .then(() => {
-                    window.localStorage.removeItem('emailForSignIn');
-                    window.location.hash = ''; // ניקוי ה-URL
-                })
-                .catch((err) => {
-                    console.error("Sign in error:", err);
-                    alert("הקישור פג תוקף או שאינו תקין.");
-                });
-        }
+        if (!email) email = window.prompt('הזן מייל לאימות:');
+        signInWithEmailLink(auth, email, window.location.href)
+            .then(() => window.localStorage.removeItem('emailForSignIn'))
+            .catch(err => alert("שגיאה: " + err.message));
     }
 
-    // הפיכת פונקציית ה-logout לזמינה מכל מקום
-    window.logout = () => {
-        signOut(auth).then(() => {
-            window.location.reload();
-        });
-    };
+    window.logout = () => signOut(auth).then(() => location.reload());
+</script>
 </script>
 </script>
 </body>
