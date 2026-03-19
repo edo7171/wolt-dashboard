@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title> V דשבורד הזמנות Wolt | דומינו'ס</title>
+<title>דשבורד הזמנות Wolt o| דומינו'ס</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -507,11 +507,41 @@ tr.refunded-row td{background:rgba(137,87,229,.04)}
 
 /* nodata */
 .nodata-msg{padding:40px;text-align:center;color:var(--text2);font-size:14px;}
+/* --- קוד אבטחה: עיצוב מסך כניסה --- */
+#authOverlay {
+    position: fixed; inset: 0; z-index: 99999; background: #0D1117;
+    display: flex; align-items: center; justify-content: center; font-family: 'Heebo', sans-serif;
+}
+.auth-card {
+    background: #161B22; border: 1px solid #30363D; padding: 40px;
+    border-radius: 20px; width: 100%; max-width: 400px; text-align: center; color: #E6EDF3;
+}
+.auth-input {
+    width: 100%; padding: 12px; margin: 20px 0; background: #1C2128;
+    border: 1px solid #30363D; color: #E6EDF3; border-radius: 8px; text-align: center; font-size: 16px;
+}
+.auth-btn {
+    width: 100%; padding: 12px; background: #009DE0; color: white;
+    border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s;
+}
+.auth-btn:hover { background: #007bb0; }
+.auth-status { margin-top: 15px; font-size: 14px; }
+#mainAppWrapper { display: none; } /* מסתיר את הדשבורד עד האישור */
 
 </style>
 </head>
 <body>
-
+<div id="authOverlay">
+    <div class="auth-card">
+        <div style="font-size: 50px; margin-bottom: 10px;">🍕</div>
+        <h2>כניסת מורשים</h2>
+        <p style="color: #8B949E;">הזן מייל לקבלת קישור כניסה</p>
+        <input type="email" id="userEmail" class="auth-input" placeholder="name@dominos.co.il">
+        <button id="sendLinkBtn" class="auth-btn">שלח קישור למייל</button>
+        <div id="authMsg" class="auth-status"></div>
+    </div>
+</div>
+<div id="mainAppWrapper">
 <!-- ═══════════════════════════════════════════════════
      LANDING SCREEN
 ════════════════════════════════════════════════════ -->
@@ -4044,6 +4074,68 @@ tmInit();
 
   </div><!-- /main -->
 </div><!-- /timesApp -->
+</div> ```
 
+---
+
+### שלב 3: להדביק את הלוגיקה (JavaScript)
+לפני תגית ה-`</body>` (אחרי ה-div שסגרת בשלב הקודם), הדבק את קוד ה-Firebase:
+
+```html
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, isSignInWithEmailLink, sendSignInLinkToEmail, signInWithEmailLink, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDghWn4gmG43WNKwWuvQ6sPT58IZr2Gfts",
+        authDomain: "dominoswolt.firebaseapp.com",
+        projectId: "dominoswolt",
+        storageBucket: "dominoswolt.firebasestorage.app",
+        messagingSenderId: "58824143071",
+        appId: "1:58824143071:web:0577a263ad1e6c30d8f96a"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const allowed = ["edo@dominos.co.il", "yossi@dominos.co.il", "arie@dominos.co.il", "ifat@dominos.co.il", "yaniv@dominos.co.il", liron@dominos.co.il", ];
+
+    // זיהוי משתמש מחובר
+    // זיהוי משתמש מחובר ובדיקה מול Firebase
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            // במקום לבדוק במערך allowed, אנחנו בודקים אם המשתמש מחובר ומאומת
+            document.getElementById('authOverlay').style.display = 'none';
+            document.getElementById('mainAppWrapper').style.display = 'block';
+            
+            // קריאה לפונקציות המקוריות שלך
+            if(window.init) window.init();
+        } else {
+            // אם המשתמש לא מחובר, מוודאים שהדף חסום
+            document.getElementById('authOverlay').style.display = 'flex';
+            document.getElementById('mainAppWrapper').style.display = 'none';
+        }
+    });
+
+    // עדכון כפתור השליחה לבדיקה מול המיילים ב-Firebase (אופציונלי)
+    document.getElementById('sendLinkBtn').onclick = async () => {
+        const email = document.getElementById('userEmail').value.trim().toLowerCase();
+        const msg = document.getElementById('authMsg');
+        
+        const actionCodeSettings = {
+            url: window.location.href,
+            handleCodeInApp: true
+        };
+
+        try {
+            await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+            window.localStorage.setItem('emailForSignIn', email);
+            msg.style.color = "#2EA043"; 
+            msg.textContent = "קישור נשלח! אם המייל קיים במערכת, תקבל הודעה תוך שניות.";
+        } catch (err) { 
+            msg.style.color = "#DA3633";
+            msg.textContent = "שגיאה בשליחה: " + err.message; 
+        }
+    };
+</script>
 </body>
 </html>
