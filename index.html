@@ -508,9 +508,118 @@ tr.refunded-row td{background:rgba(137,87,229,.04)}
 /* nodata */
 .nodata-msg{padding:40px;text-align:center;color:var(--text2);font-size:14px;}
 
+
+
+/* ═════════ FIREBASE AUTH ═════════ */
+body.auth-locked{overflow:hidden;}
+body.auth-locked #landingScreen,
+body.auth-locked #ordersApp,
+body.auth-locked #timesApp{
+  visibility:hidden;
+}
+
+.auth-overlay{
+  position:fixed;inset:0;z-index:5000;
+  display:flex;align-items:center;justify-content:center;
+  padding:24px;background:radial-gradient(circle at top, rgba(0,157,224,.12), transparent 35%), rgba(13,17,23,.96);
+}
+.auth-overlay.hidden{display:none;}
+.auth-card{
+  width:min(460px,100%);background:linear-gradient(180deg, rgba(28,33,40,.98), rgba(22,27,34,.98));
+  border:1px solid var(--border);border-radius:20px;padding:28px;box-shadow:0 24px 80px rgba(0,0,0,.45);
+}
+.auth-logo{width:68px;height:68px;border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;
+  background:linear-gradient(135deg, rgba(0,157,224,.22), rgba(137,87,229,.22));font-size:32px;border:1px solid var(--border)}
+.auth-title{text-align:center;font-size:26px;font-weight:900;margin-bottom:8px}
+.auth-subtitle{text-align:center;color:var(--text2);font-size:13px;line-height:1.6;margin-bottom:18px}
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+.auth-tab{border:1px solid var(--border);background:var(--card2);color:var(--text2);padding:11px 14px;border-radius:12px;font-weight:700;cursor:pointer;transition:.2s}
+.auth-tab.active{background:var(--blue-dim);border-color:var(--blue);color:var(--text)}
+.auth-form{display:none;gap:12px}
+.auth-form.active{display:grid}
+.auth-field{display:grid;gap:6px}
+.auth-field label{font-size:12px;color:var(--text2);font-weight:700}
+.auth-input{
+  width:100%;background:#0D1117;border:1px solid var(--border);color:var(--text);
+  border-radius:12px;padding:13px 14px;font-family:inherit;font-size:14px;outline:none;transition:.2s
+}
+.auth-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,157,224,.12)}
+.auth-submit,.auth-google-btn,.auth-link-btn{
+  border:none;border-radius:12px;padding:13px 14px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;transition:.2s
+}
+.auth-submit{background:linear-gradient(135deg, var(--blue), #3ab8ef);color:white}
+.auth-submit:hover,.auth-google-btn:hover,.auth-link-btn:hover{transform:translateY(-1px)}
+.auth-google-btn{background:white;color:#111827;display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid #d1d5db}
+.auth-google-icon{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:900}
+.auth-divider{display:flex;align-items:center;gap:10px;color:var(--text3);font-size:12px;margin:2px 0}
+.auth-divider:before,.auth-divider:after{content:'';height:1px;background:var(--border);flex:1}
+.auth-message{min-height:22px;font-size:12px;font-weight:700;line-height:1.5;color:var(--text2);margin-top:6px}
+.auth-message.error{color:#ff8a8a}
+.auth-message.success{color:#7ee787}
+.auth-note{margin-top:16px;background:rgba(0,157,224,.08);border:1px solid rgba(0,157,224,.18);border-radius:12px;padding:12px;color:var(--text2);font-size:12px;line-height:1.6}
+.auth-userbar{
+  position:fixed;top:14px;left:14px;z-index:4500;display:none;align-items:center;gap:10px;
+  background:rgba(22,27,34,.92);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:999px;padding:8px 10px;box-shadow:0 12px 30px rgba(0,0,0,.25)
+}
+.auth-userbar.visible{display:flex}
+.auth-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;overflow:hidden}
+.auth-avatar img{width:100%;height:100%;object-fit:cover}
+.auth-user-meta{display:flex;flex-direction:column;gap:1px;min-width:0}
+.auth-user-name{font-size:12px;font-weight:800;color:var(--text);white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis}
+.auth-user-email{font-size:11px;color:var(--text2);white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis}
+.auth-link-btn{background:transparent;border:1px solid var(--border);color:var(--text2);padding:10px 12px}
+.auth-link-btn.danger{color:#ffb4b4;border-color:rgba(218,54,51,.5)}
+.auth-config-warning{margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(227,179,65,.12);border:1px solid rgba(227,179,65,.25);color:#ffd580;font-size:12px;line-height:1.5;display:none}
+.auth-config-warning.visible{display:block}
+@media (max-width: 640px){
+  .auth-card{padding:22px 18px;border-radius:16px}
+  .auth-userbar{left:10px;right:10px;top:10px;border-radius:16px;justify-content:space-between}
+  .auth-user-name,.auth-user-email{max-width:120px}
+}
+
 </style>
 </head>
-<body>
+<body class="auth-locked">
+
+<div id="authOverlay" class="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo">🔐</div>
+    <div class="auth-title">כניסה מאובטחת לדשבורד</div>
+    <div class="auth-subtitle">הגישה לדשבורד מיועדת רק למשתמשים מורשים. התחבר עם אימייל וסיסמה שקיבלת ממנהל המערכת.</div>
+
+    <div style="margin-bottom:18px"></div>
+
+    <form id="loginForm" class="auth-form active">
+      <div class="auth-field">
+        <label for="loginEmail">אימייל</label>
+        <input id="loginEmail" class="auth-input" type="email" autocomplete="email" placeholder="name@example.com" required>
+      </div>
+      <div class="auth-field">
+        <label for="loginPassword">סיסמה</label>
+        <input id="loginPassword" class="auth-input" type="password" autocomplete="current-password" placeholder="הכנס סיסמה" required>
+      </div>
+      <button type="submit" class="auth-submit">התחבר</button>
+    </form>
+
+
+    <div id="authMessage" class="auth-message">בדיקת התחברות...</div>
+    <div id="authConfigWarning" class="auth-config-warning"></div>
+
+    <div class="auth-note">
+      הגישה למערכת ניתנת רק למשתמשים שאתה יוצר ידנית ב-Firebase Authentication. אין הרשמה עצמאית ואין התחברות עם Google.
+    </div>
+  </div>
+</div>
+
+<div id="authUserbar" class="auth-userbar">
+  <div class="auth-avatar" id="authAvatar">U</div>
+  <div class="auth-user-meta">
+    <div class="auth-user-name" id="authUserName">לא מחובר</div>
+    <div class="auth-user-email" id="authUserEmail">—</div>
+  </div>
+  <button type="button" class="auth-link-btn danger" id="logoutBtn">התנתק</button>
+</div>
+
 
 <!-- ═══════════════════════════════════════════════════
      LANDING SCREEN
@@ -2234,7 +2343,7 @@ function init(){
   }
 }
 
-init();
+window.dashboardInit = init;
 
 // ═══════════════════════════════════════════════════════════
 //  LANDING / APP NAVIGATION
@@ -2265,14 +2374,21 @@ function showApp(app) {
 // Open your Google Sheet → click Sheet 2 tab → look at URL: ...gid=XXXXXXXX
 // Replace the gid=0 in the line below with your Sheet 2 gid
 const GOOGLE_SHEET2_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTAtc0vyPuariz_HuCrOWuZmjDc2CbUpvZxWemBbNfjvYNMLFXG1nBRWZQSQwu1Cl5Yi2ZY8nuL2s52/pub?gid=453940881&single=true&output=csv';
+// גיליון 3 אומת ופורסם: gid=1921370050
+const GOOGLE_SHEET3_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTAtc0vyPuariz_HuCrOWuZmjDc2CbUpvZxWemBbNfjvYNMLFXG1nBRWZQSQwu1Cl5Yi2ZY8nuL2s52/pub?gid=1921370050&single=true&output=csv';
 
 let tmAllData   = [];   // all times rows
+let tmManagerData = []; // sheet 3 rows
+let tmManagerBranchMap = {};
 let tmColF = 'קריאה לוולט (לפני יציאה)', tmColG = 'קריאה עד איסוף', tmColH = 'קריאה עד מסירה'; // dynamic column names
 
 // View state
 let tmViewFrom = '', tmViewTo = '', tmViewPreset = 'yesterday';
 let tmCmpFrom  = '', tmCmpTo  = '', tmCmpPreset  = '';
 let tmFbBranch = '';
+let tmFbBranchManager = '';
+let tmFbOpsManager = '';
+let tmFbAreaManager = '';
 let tmSortCol  = 'orders', tmSortDir = -1;
 
 // Trend state
@@ -2283,6 +2399,13 @@ let tmTrendMetric = 'avgF';
 let tmSelectedMonth = '';     // 'MM/YYYY'
 
 let tmCharts = {};
+
+const TM_MANAGER_COL_MAP = {
+  branch: ['סניף','Branch','Venue Name','venue_name','מסעדה','Restaurant','store','חנות','שם סניף','מיקום'],
+  branchManager: ['מנהל ענף','מנהל סניף','מנהל/ת ענף','מנהל/ת סניף','Branch Manager','Store Manager'],
+  opsManager: ['מנהל תפעול','מנהלת תפעול','מנהל/ת תפעול','Operations Manager','Operation Manager'],
+  areaManager: ['מנהל אזור','מנהלת אזור','מנהל/ת אזור','Area Manager','Regional Manager','District Manager']
+};
 
 // ── Column detection ──────────────────────────────────────
 // Sheet 2 expected columns (very flexible auto-detection):
@@ -2367,6 +2490,21 @@ function tmLogColumnDetection(headers, dateCol, branchCol, ordersCol, colFH, col
   console.groupEnd();
 }
 
+function tmNormalizeBranchName(value) {
+  let branch = String(value || '').trim();
+  if (!branch) return '';
+  if (branch.includes(' | ')) {
+    const parts = branch.split(' | ').map(p => p.trim()).filter(Boolean);
+    branch = parts[parts.length - 1] || parts[0] || branch;
+  }
+  branch = branch
+    .replace(/^domino'?s\s*[-–—|:]?\s*/i, '')
+    .replace(/^דומינו'?ס\s*[-–—|:]?\s*/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return branch;
+}
+
 function tmParseRows(raw) {
   if (!raw.length) return [];
   const headers = Object.keys(raw[0]);
@@ -2420,12 +2558,7 @@ function tmParseRows(raw) {
 
     // ── Branch ──
     const rawBranch = branchCol ? String(r[branchCol] || '') : '';
-    let branch = rawBranch.trim();
-    // Handle "Brand | Branch |" format
-    if (branch.includes(' | ')) {
-      const parts = branch.split(' | ').map(p => p.trim()).filter(Boolean);
-      branch = parts[parts.length - 1] || parts[0] || branch;
-    }
+    let branch = tmNormalizeBranchName(rawBranch);
     if (!branch) branch = 'לא ידוע';
 
     // ── Orders ── (if no dedicated column, each row = 1 order)
@@ -2549,6 +2682,111 @@ function tmParseDate(v) {
   return null;
 }
 
+function tmCanLoadManagerSheet() {
+  return GOOGLE_SHEET3_CSV_URL && !GOOGLE_SHEET3_CSV_URL.includes('SET_SHEET3_GID_HERE');
+}
+
+function tmParseManagerRows(raw) {
+  if (!raw || !raw.length) return [];
+  const headers = Object.keys(raw[0] || {});
+  const branchCol = tmFindCol(headers, TM_MANAGER_COL_MAP.branch) || headers[0] || null;
+  const branchManagerCol = tmFindCol(headers, TM_MANAGER_COL_MAP.branchManager);
+  const opsManagerCol = tmFindCol(headers, TM_MANAGER_COL_MAP.opsManager);
+  const areaManagerCol = tmFindCol(headers, TM_MANAGER_COL_MAP.areaManager);
+
+  const rows = raw.map(r => ({
+    branch: tmNormalizeBranchName(branchCol ? r[branchCol] : ''),
+    branchManager: String(branchManagerCol ? (r[branchManagerCol] || '') : '').trim(),
+    opsManager: String(opsManagerCol ? (r[opsManagerCol] || '') : '').trim(),
+    areaManager: String(areaManagerCol ? (r[areaManagerCol] || '') : '').trim(),
+  })).filter(r => r.branch);
+
+  window._tmManagerDebug = {
+    headers,
+    branchCol,
+    branchManagerCol,
+    opsManagerCol,
+    areaManagerCol,
+    totalRaw: raw.length,
+    totalParsed: rows.length
+  };
+
+  return rows;
+}
+
+function tmBuildManagerIndex(rows) {
+  tmManagerData = Array.isArray(rows) ? rows : [];
+  tmManagerBranchMap = {};
+  tmManagerData.forEach(r => {
+    if (r.branch) tmManagerBranchMap[r.branch] = r;
+  });
+}
+
+function tmMetaMatchesScope(meta, scope = {}) {
+  const bm = scope.branchManager || '';
+  const om = scope.opsManager || '';
+  const am = scope.areaManager || '';
+  const hasRoleScope = !!(bm || om || am);
+  if (!meta) return !hasRoleScope;
+  if (bm && meta.branchManager !== bm) return false;
+  if (om && meta.opsManager !== om) return false;
+  if (am && meta.areaManager !== am) return false;
+  return true;
+}
+
+function tmGetFilterScope(excludeKey = '') {
+  return {
+    branchManager: excludeKey === 'branchManager' ? '' : tmFbBranchManager,
+    opsManager: excludeKey === 'opsManager' ? '' : tmFbOpsManager,
+    areaManager: excludeKey === 'areaManager' ? '' : tmFbAreaManager,
+  };
+}
+
+function tmApplyActiveFilters(rows, options = {}) {
+  const includeBranch = options.includeBranch !== false;
+  let data = Array.isArray(rows) ? [...rows] : [];
+  data = data.filter(r => tmMetaMatchesScope(tmManagerBranchMap[r.branch], tmGetFilterScope()));
+  if (includeBranch && tmFbBranch) data = data.filter(r => r.branch === tmFbBranch);
+  return data;
+}
+
+function tmGetScopedManagerRows(scope = {}, includeSelectedBranch = false) {
+  let rows = [...tmManagerData].filter(r => tmMetaMatchesScope(r, scope));
+  if (includeSelectedBranch && tmFbBranch) rows = rows.filter(r => r.branch === tmFbBranch);
+  return rows;
+}
+
+function tmFillSelectOptions(selectId, options, allLabel, selectedValue) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return '';
+  sel.innerHTML = `<option value="">${allLabel}</option>` + options.map(v => `<option value="${v}">${v}</option>`).join('');
+  if (selectedValue && options.includes(selectedValue)) sel.value = selectedValue;
+  else sel.value = '';
+  return sel.value || '';
+}
+
+async function tmTryLoadManagerSheet() {
+  if (!tmCanLoadManagerSheet()) {
+    tmBuildManagerIndex([]);
+    return { loaded: false, reason: 'sheet3_not_configured' };
+  }
+  try {
+    const response = await fetch(GOOGLE_SHEET3_CSV_URL);
+    if (!response.ok) throw new Error('Network error');
+    const csvText = await response.text();
+    const wb = XLSX.read(csvText, { type: 'string' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    const rows = tmParseManagerRows(raw);
+    tmBuildManagerIndex(rows);
+    return { loaded: true, rows };
+  } catch (error) {
+    console.warn('[TM] Sheet 3 load failed:', error);
+    tmBuildManagerIndex([]);
+    return { loaded: false, reason: error.message || 'sheet3_load_failed' };
+  }
+}
+
 // ── Loading ───────────────────────────────────────────────
 function tmShowColInfo() {
   if (!tmAllData.length) { alert('אין נתונים טעונים עדיין.'); return; }
@@ -2626,7 +2864,6 @@ async function tmLoadFromSheets() {
     const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
     const rows = tmParseRows(raw);
     if (!rows.length) {
-      // Show detailed diagnostic
       const hdrs = raw.length ? Object.keys(raw[0]).join(' | ') : 'אין שורות';
       const sample = raw.length ? JSON.stringify(raw[0]).substring(0, 200) : '';
       const msg = `⚠️ לא נמצאו נתוני זמנים תקינים.\n\nכותרות עמודות שנמצאו:\n${hdrs}\n\nשורה ראשונה (דוגמה):\n${sample}\n\nוודא שגיליון 2 מכיל:\n• עמודת תאריך (תאריך / Date)\n• עמודת סניף (סניף / Venue Name / Branch)\n• עמודות זמנים (F, G, H)`;
@@ -2636,15 +2873,16 @@ async function tmLoadFromSheets() {
     }
     else {
       tmAllData = rows;
+      const managerResult = await tmTryLoadManagerSheet();
       tmSaveLs();
       tmAutoSetView();
       tmRefreshAll();
-      // Brief toast notification
       const toastEl = document.getElementById('tmToast');
       if (toastEl) {
-        toastEl.textContent = `✅ נטענו ${rows.length} רשומות | ${tmColF} | ${tmColG} | ${tmColH}`;
+        const managerTxt = managerResult.loaded ? ` | שיוכי מנהלים: ${tmManagerData.length}` : ' | גיליון 3 לא נטען';
+        toastEl.textContent = `✅ נטענו ${rows.length} רשומות${managerTxt} | ${tmColF} | ${tmColG} | ${tmColH}`;
         toastEl.style.display = 'block';
-        setTimeout(() => toastEl.style.display = 'none', 4000);
+        setTimeout(() => toastEl.style.display = 'none', 5000);
         const cb = document.getElementById('tmColInfoBtn'); if (cb) cb.style.display = '';
         const pb = document.getElementById('tmPreviewBtn'); if (pb) pb.style.display = '';
       }
@@ -2664,7 +2902,6 @@ function tmLoadFile(input) {
   reader.onload = (e) => {
     try {
       const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
-      // Try sheet 2 first, fallback to sheet 1
       const sheetIdx = wb.SheetNames.length > 1 ? 1 : 0;
       const ws = wb.Sheets[wb.SheetNames[sheetIdx]];
       const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
@@ -2675,6 +2912,14 @@ function tmLoadFile(input) {
       }
       else {
         tmAllData = rows;
+        const managerSheetIdx = wb.SheetNames.length > 2 ? 2 : -1;
+        if (managerSheetIdx >= 0) {
+          const ws3 = wb.Sheets[wb.SheetNames[managerSheetIdx]];
+          const raw3 = XLSX.utils.sheet_to_json(ws3, { defval: '' });
+          tmBuildManagerIndex(tmParseManagerRows(raw3));
+        } else {
+          tmBuildManagerIndex([]);
+        }
         tmSaveLs();
         tmAutoSetView();
         tmRefreshAll();
@@ -2708,15 +2953,32 @@ function tmAutoSetView() {
 }
 
 // ── LocalStorage ──────────────────────────────────────────
-const TM_LS_KEY = 'wolt_times_v3';  // bumped version → clears stale cache
+const TM_LS_KEY = 'wolt_times_v4';
 function tmSaveLs() {
-  try { localStorage.setItem(TM_LS_KEY, JSON.stringify(tmAllData)); } catch (e) {}
+  try {
+    localStorage.setItem(TM_LS_KEY, JSON.stringify({
+      times: tmAllData,
+      managers: tmManagerData,
+      colF: tmColF,
+      colG: tmColG,
+      colH: tmColH
+    }));
+  } catch (e) {}
 }
 function tmLoadLs() {
   try {
     const raw = localStorage.getItem(TM_LS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) { return []; }
+    if (!raw) return { times: [], managers: [] };
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return { times: parsed, managers: [] };
+    return {
+      times: parsed.times || [],
+      managers: parsed.managers || [],
+      colF: parsed.colF || '',
+      colG: parsed.colG || '',
+      colH: parsed.colH || ''
+    };
+  } catch (e) { return { times: [], managers: [] }; }
 }
 
 // ── Date helpers (shared) ─────────────────────────────────
@@ -2731,8 +2993,7 @@ function tmGetViewData() {
   if (!tmViewFrom && !tmViewTo) data = tmAllData;
   else if (tmViewFrom === tmViewTo && tmViewFrom) data = tmAllData.filter(r => r.dateStr === tmViewFrom);
   else data = tmAllData.filter(r => inRange(r.dateStr, tmViewFrom, tmViewTo));
-  if (tmFbBranch) data = data.filter(r => r.branch === tmFbBranch);
-  return data;
+  return tmApplyActiveFilters(data);
 }
 
 function tmGetCmpData() {
@@ -2740,28 +3001,38 @@ function tmGetCmpData() {
   let data;
   if (tmCmpFrom === tmCmpTo && tmCmpFrom) data = tmAllData.filter(r => r.dateStr === tmCmpFrom);
   else data = tmAllData.filter(r => inRange(r.dateStr, tmCmpFrom, tmCmpTo));
-  if (tmFbBranch) data = data.filter(r => r.branch === tmFbBranch);
-  return data;
+  return tmApplyActiveFilters(data);
+}
+
+function tmGetAllFilteredData() {
+  return tmApplyActiveFilters(tmAllData);
 }
 
 // ── Stats computation ─────────────────────────────────────
 function tmCompute(data) {
-  if (!data || !data.length) return { totalOrders: 0, avgF: 0, avgG: 0, avgH: 0, branches: [], byDate: {} };
+  if (!data || !data.length) return { totalOrders: 0, avgF: 0, avgG: 0, avgH: 0, stdF: 0, stdG: 0, stdH: 0, branches: [], byDate: {} };
+
+  const avg = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+  const std = (arr) => {
+    if (!arr.length) return 0;
+    const mean = avg(arr);
+    const variance = arr.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / arr.length;
+    return Math.sqrt(variance);
+  };
 
   let totalOrders = data.reduce((s, r) => s + r.orders, 0);
-  // If no orders column was found, every row has orders=1, but for pre-aggregated
-  // sheets orders was stored correctly. If all rows show 0 orders, fallback to row count.
   if (totalOrders === 0) totalOrders = data.length;
 
-  // Average of averages for global
   const vF = data.filter(r => r.avgF > 0).map(r => r.avgF);
   const vG = data.filter(r => r.avgG > 0).map(r => r.avgG);
   const vH = data.filter(r => r.avgH > 0).map(r => r.avgH);
-  const avgF = vF.length ? vF.reduce((a, b) => a + b, 0) / vF.length : 0;
-  const avgG = vG.length ? vG.reduce((a, b) => a + b, 0) / vG.length : 0;
-  const avgH = vH.length ? vH.reduce((a, b) => a + b, 0) / vH.length : 0;
+  const avgF = avg(vF);
+  const avgG = avg(vG);
+  const avgH = avg(vH);
+  const stdF = std(vF);
+  const stdG = std(vG);
+  const stdH = std(vH);
 
-  // By branch
   const bMap = {};
   data.forEach(r => {
     if (!bMap[r.branch]) bMap[r.branch] = { branch: r.branch, orders: 0, fVals: [], gVals: [], hVals: [] };
@@ -2774,12 +3045,14 @@ function tmCompute(data) {
   const branches = Object.values(bMap).map(b => ({
     branch: b.branch,
     orders: b.orders,
-    avgF: b.fVals.length ? b.fVals.reduce((a, c) => a + c, 0) / b.fVals.length : 0,
-    avgG: b.gVals.length ? b.gVals.reduce((a, c) => a + c, 0) / b.gVals.length : 0,
-    avgH: b.hVals.length ? b.hVals.reduce((a, c) => a + c, 0) / b.hVals.length : 0,
+    avgF: avg(b.fVals),
+    stdF: std(b.fVals),
+    avgG: avg(b.gVals),
+    stdG: std(b.gVals),
+    avgH: avg(b.hVals),
+    stdH: std(b.hVals),
   }));
 
-  // By date (for trend charts)
   const byDate = {};
   data.forEach(r => {
     if (!byDate[r.dateStr]) byDate[r.dateStr] = { orders: 0, fVals: [], gVals: [], hVals: [] };
@@ -2790,12 +3063,12 @@ function tmCompute(data) {
     if (r.avgH > 0) d.hVals.push(r.avgH);
   });
   Object.values(byDate).forEach(d => {
-    d.avgF = d.fVals.length ? d.fVals.reduce((a, b) => a + b, 0) / d.fVals.length : 0;
-    d.avgG = d.gVals.length ? d.gVals.reduce((a, b) => a + b, 0) / d.gVals.length : 0;
-    d.avgH = d.hVals.length ? d.hVals.reduce((a, b) => a + b, 0) / d.hVals.length : 0;
+    d.avgF = avg(d.fVals);
+    d.avgG = avg(d.gVals);
+    d.avgH = avg(d.hVals);
   });
 
-  return { totalOrders, avgF, avgG, avgH, branches, byDate };
+  return { totalOrders, avgF, avgG, avgH, stdF, stdG, stdH, branches, byDate };
 }
 
 // ── Refresh ───────────────────────────────────────────────
@@ -2813,6 +3086,7 @@ function tmUpdateAll() {
 
   tmUpdateKpis(c, p);
   tmBuildBranchTable(c, p);
+  tmBuildComparisonTable(c);
   tmBuildCharts(c);
   tmBuildTrendChart();
   tmBuildInsights(c, p);
@@ -2899,27 +3173,73 @@ function tmOnCompareDate() {
 
 // ── Filter bar ────────────────────────────────────────────
 function tmBuildFilterBar() {
-  const branches = [...new Set(tmAllData.map(r => r.branch).filter(Boolean))].sort();
-  const sel = document.getElementById('tmFbBranch');
-  const prev = sel.value;
-  sel.innerHTML = '<option value="">כל הסניפים (' + branches.length + ')</option>';
-  branches.forEach(b => sel.innerHTML += `<option value="${b}">${b}</option>`);
-  if (branches.includes(prev)) sel.value = prev;
+  const managerRows = tmFbBranch
+    ? tmManagerData.filter(r => r.branch === tmFbBranch)
+    : [...tmManagerData];
+
+  const areaRows = managerRows;
+  const areaManagers = [...new Set(areaRows.map(r => r.areaManager).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'he'));
+  tmFbAreaManager = tmFillSelectOptions(
+    'tmFbAreaManager',
+    areaManagers,
+    tmManagerData.length ? `כל מנהלי האזור (${areaManagers.length})` : 'מנהל אזור — אין נתונים',
+    tmFbAreaManager
+  );
+
+  const opsRows = areaRows.filter(r => !tmFbAreaManager || r.areaManager === tmFbAreaManager);
+  const opsManagers = [...new Set(opsRows.map(r => r.opsManager).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'he'));
+  tmFbOpsManager = tmFillSelectOptions(
+    'tmFbOpsManager',
+    opsManagers,
+    tmManagerData.length ? `כל מנהלי התפעול (${opsManagers.length})` : 'מנהל תפעול — אין נתונים',
+    tmFbOpsManager
+  );
+
+  const branchManagerRows = opsRows.filter(r => !tmFbOpsManager || r.opsManager === tmFbOpsManager);
+  const branchManagers = [...new Set(branchManagerRows.map(r => r.branchManager).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'he'));
+  tmFbBranchManager = tmFillSelectOptions(
+    'tmFbBranchManager',
+    branchManagers,
+    tmManagerData.length ? `כל מנהלי הענף (${branchManagers.length})` : 'מנהל ענף — אין נתונים',
+    tmFbBranchManager
+  );
+
+  const scopedBranches = [...new Set(
+    tmApplyActiveFilters(tmAllData, { includeBranch: false }).map(r => r.branch).filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b, 'he'));
+  tmFbBranch = tmFillSelectOptions('tmFbBranch', scopedBranches, `כל הסניפים (${scopedBranches.length})`, tmFbBranch);
+
+  const disableManagers = !tmManagerData.length;
+  ['tmFbAreaManager', 'tmFbOpsManager', 'tmFbBranchManager'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = disableManagers;
+  });
 }
 
 function tmApplyFilters() {
-  tmFbBranch = document.getElementById('tmFbBranch').value;
-  tmUpdateAll();
+  tmFbBranch = document.getElementById('tmFbBranch')?.value || '';
+  tmFbBranchManager = document.getElementById('tmFbBranchManager')?.value || '';
+  tmFbOpsManager = document.getElementById('tmFbOpsManager')?.value || '';
+  tmFbAreaManager = document.getElementById('tmFbAreaManager')?.value || '';
+  tmRefreshAll();
 }
 
 function tmResetFilters() {
   tmFbBranch = '';
-  document.getElementById('tmFbBranch').value = '';
-  tmUpdateAll();
+  tmFbBranchManager = '';
+  tmFbOpsManager = '';
+  tmFbAreaManager = '';
+  ['tmFbBranch', 'tmFbBranchManager', 'tmFbOpsManager', 'tmFbAreaManager'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  tmRefreshAll();
 }
 
 function tmUpdateFbCount(count) {
-  document.getElementById('tmFbCount').textContent = `מציג ${count.toLocaleString('he-IL')} רשומות`;
+  const active = [tmFbBranch, tmFbBranchManager, tmFbOpsManager, tmFbAreaManager].filter(Boolean).length;
+  const branchCount = new Set(tmGetViewData().map(r => r.branch)).size;
+  document.getElementById('tmFbCount').textContent = `מציג ${count.toLocaleString('he-IL')} רשומות | ${branchCount} סניפים${active ? ' | ' + active + ' פילטרים פעילים' : ''}`;
 }
 
 // ── KPIs ──────────────────────────────────────────────────
@@ -2928,6 +3248,13 @@ function fmtTime(v) {
   const m = Math.round(v);
   if (m < 60) return m + ' דקות';
   return Math.floor(m / 60) + ':' + (m % 60).toString().padStart(2, '0') + ' שעות';
+}
+function fmtTimePrecise(v) {
+  if (!v || v === 0) return '—';
+  if (v < 60) return v.toFixed(1) + ' דק׳';
+  const h = Math.floor(v / 60);
+  const rem = (v % 60).toFixed(1).padStart(4, '0');
+  return h + ':' + rem + ' ש׳';
 }
 function timeClass(v, threshGood = 30, threshWarn = 45) {
   if (!v) return 'neutral';
@@ -3032,6 +3359,35 @@ function tmSortBranch(col) {
   const c = tmCompute(viewData);
   const p = cmpData ? tmCompute(cmpData) : null;
   tmBuildBranchTable(c, p);
+}
+
+function tmBuildComparisonTable(c) {
+  const rows = [...c.branches].sort((a, b) => b.orders - a.orders);
+  let html = '';
+  rows.forEach(b => {
+    html += `<tr>
+      <td><strong>${b.branch}</strong></td>
+      <td>${b.orders.toLocaleString('he-IL')}</td>
+      <td>${fmtTimePrecise(b.avgF)}</td>
+      <td>${fmtTimePrecise(b.stdF)}</td>
+      <td>${fmtTimePrecise(b.avgG)}</td>
+      <td>${fmtTimePrecise(b.stdG)}</td>
+      <td>${fmtTimePrecise(b.avgH)}</td>
+      <td>${fmtTimePrecise(b.stdH)}</td>
+    </tr>`;
+  });
+  document.getElementById('tmCompareTbody').innerHTML = html || '<tr><td colspan="8" class="nodata-msg">אין נתונים להשוואה בטווח המסונן</td></tr>';
+  document.getElementById('tmCompareTfoot').innerHTML = `<tr class="total-row">
+    <td>🔢 ממוצע כללי</td>
+    <td>${c.totalOrders.toLocaleString('he-IL')}</td>
+    <td>${fmtTimePrecise(c.avgF)}</td>
+    <td>${fmtTimePrecise(c.stdF)}</td>
+    <td>${fmtTimePrecise(c.avgG)}</td>
+    <td>${fmtTimePrecise(c.stdG)}</td>
+    <td>${fmtTimePrecise(c.avgH)}</td>
+    <td>${fmtTimePrecise(c.stdH)}</td>
+  </tr>`;
+  document.getElementById('tmCompareSub').textContent = `${rows.length} סניפים מסוננים | ממוצעים וסטיות תקן לפי הטווח הנבחר`;
 }
 
 // ── Charts ────────────────────────────────────────────────
@@ -3394,8 +3750,9 @@ function tmBuildTrendChart() {
     const [cwFrom, cwTo] = presetRange('curweek');
     const [pwFrom, pwTo] = presetRange('prevweek');
 
-    const cwMap = getDayMap(tmAllData.filter(r => inRange(r.dateStr, cwFrom, cwTo)));
-    const pwMap = getDayMap(tmAllData.filter(r => inRange(r.dateStr, pwFrom, pwTo)));
+    const allFiltered = tmGetAllFilteredData();
+    const cwMap = getDayMap(allFiltered.filter(r => inRange(r.dateStr, cwFrom, cwTo)));
+    const pwMap = getDayMap(allFiltered.filter(r => inRange(r.dateStr, pwFrom, pwTo)));
 
     const cwDates = Object.keys(cwMap).sort((a, b) => dateToSortKey(a) - dateToSortKey(b));
     const pwDates = Object.keys(pwMap).sort((a, b) => dateToSortKey(a) - dateToSortKey(b));
@@ -3422,7 +3779,7 @@ function tmBuildTrendChart() {
     // Week vs Week — show per-week aggregated data
     // Group all data by week (week start date as label)
     const weekMap = {};
-    tmAllData.forEach(r => {
+    tmGetAllFilteredData().forEach(r => {
       const d = dmy2date(r.dateStr);
       if (!d) return;
       const ws = weekStart(d);
@@ -3493,17 +3850,15 @@ function tmInitMonthButtons() {
 
 function tmGetMonths() {
   const s = new Set();
-  tmAllData.forEach(r => {
+  tmGetAllFilteredData().forEach(r => {
     const p = r.dateStr.split('/');
-    // Include months that have data rows (allow orders=0 rows as they still represent time data)
     if (p.length === 3) s.add(p[1].padStart(2,'0') + '/' + p[2]);
   });
-  // Sort: most recent first — by year DESC, then by month DESC
   return [...s].sort((a, b) => {
     const [am, ay] = a.split('/').map(Number);
     const [bm, by] = b.split('/').map(Number);
-    if (ay !== by) return by - ay;   // year descending
-    return bm - am;                  // month descending (higher month = more recent)
+    if (ay !== by) return by - ay;
+    return bm - am;
   });
 }
 
@@ -3519,7 +3874,8 @@ function tmBuildMonthly() {
   const selMPad = selM.padStart(2,'0');
 
   // ✅ FIX: Filter by EXACT month+year match (padded months)
-  const currRows = tmAllData.filter(r => {
+  const allFiltered = tmGetAllFilteredData();
+  const currRows = allFiltered.filter(r => {
     const p = r.dateStr.split('/');
     return p.length === 3 && p[1].padStart(2,'0') === selMPad && p[2] === selY;
   });
@@ -3560,7 +3916,7 @@ function tmBuildMonthly() {
   const maxDay = currDays.length ? Math.max(...currDays) : 31;
 
   // ✅ FIX: Use actualPrevM/actualPrevY to find real previous month rows
-  const prevRows = tmAllData.filter(r => {
+  const prevRows = allFiltered.filter(r => {
     const p = r.dateStr.split('/');
     if (p.length !== 3) return false;
     if (p[1].padStart(2,'0') !== actualPrevM || p[2] !== actualPrevY) return false;
@@ -3751,10 +4107,14 @@ function tmShowLoading(v) { document.getElementById('tmLoadingOverlay')?.classLi
 
 // ── Init times ────────────────────────────────────────────
 function tmInit() {
-  tmAllData = tmLoadLs();
+  const stored = tmLoadLs();
+  tmAllData = stored.times || [];
+  tmBuildManagerIndex(stored.managers || []);
+  if (stored.colF) tmColF = stored.colF;
+  if (stored.colG) tmColG = stored.colG;
+  if (stored.colH) tmColH = stored.colH;
   if (tmAllData.length) {
     tmAutoSetView();
-    // labels already set in parse; restore them from stored data
   }
 }
 tmInit();
@@ -3789,7 +4149,7 @@ tmInit();
       <span id="tmColNames" style="font-size:11px;color:var(--text2);"></span>
       <button class="btn btn-primary" onclick="tmLoadFromSheets()"
         style="background:var(--green-dim);border-color:var(--green);color:var(--green)">
-        <span class="dot" id="tmSyncDot"></span>🔄 סנכרן גיליון 2
+        <span class="dot" id="tmSyncDot"></span>🔄 סנכרן גיליונות 2+3
       </button>
       <button class="btn btn-secondary" onclick="document.getElementById('tmFileInput').click()">
         📂 טען קובץ ידני
@@ -3843,13 +4203,22 @@ tmInit();
       </div>
     </div>
 
-    <!-- BRANCH FILTER (times) -->
+    <!-- FILTERS (times) -->
     <div class="filter-bar" id="tmFilterBar">
-      <span class="fb-label">🔍 סניף:</span>
+      <span class="fb-label">🔍 פילטרים:</span>
+      <select class="fb-select" id="tmFbAreaManager" onchange="tmApplyFilters()" style="min-width:170px">
+        <option value="">כל מנהלי האזור</option>
+      </select>
+      <select class="fb-select" id="tmFbOpsManager" onchange="tmApplyFilters()" style="min-width:170px">
+        <option value="">כל מנהלי התפעול</option>
+      </select>
+      <select class="fb-select" id="tmFbBranchManager" onchange="tmApplyFilters()" style="min-width:170px">
+        <option value="">כל מנהלי הענף</option>
+      </select>
       <select class="fb-select" id="tmFbBranch" onchange="tmApplyFilters()" style="min-width:180px">
         <option value="">כל הסניפים</option>
       </select>
-      <button class="fb-reset" onclick="tmResetFilters()">✕ אפס</button>
+      <button class="fb-reset" id="tmResetFiltersBtn" onclick="tmResetFilters()">🔄 איפוס פילטרים</button>
       <span class="fb-count" id="tmFbCount"></span>
     </div>
 
@@ -3908,9 +4277,39 @@ tmInit();
             </tr>
           </thead>
           <tbody id="tmBranchTbody">
-            <tr><td colspan="6" class="nodata-msg">⏳ טוען נתונים… לחץ על "סנכרן גיליון 2"</td></tr>
+            <tr><td colspan="6" class="nodata-msg">⏳ טוען נתונים… לחץ על "סנכרן גיליונות 2+3"</td></tr>
           </tbody>
           <tfoot id="tmBranchTfoot"></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- FILTERED BRANCH COMPARISON TABLE -->
+    <div class="chart-card mb16">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">📊 טבלת השוואה בין ביצועי הסניפים המסוננים</div>
+          <div class="chart-sub" id="tmCompareSub">ממוצעים וסטיות תקן לפי הפילטרים הפעילים</div>
+        </div>
+      </div>
+      <div class="tm-branch-wrap">
+        <table class="tm-table">
+          <thead>
+            <tr>
+              <th>סניף</th>
+              <th>הזמנות</th>
+              <th>ממוצע F</th>
+              <th>סטיית תקן F</th>
+              <th>ממוצע G</th>
+              <th>סטיית תקן G</th>
+              <th>ממוצע H</th>
+              <th>סטיית תקן H</th>
+            </tr>
+          </thead>
+          <tbody id="tmCompareTbody">
+            <tr><td colspan="8" class="nodata-msg">⏳ טוען נתוני השוואה…</td></tr>
+          </tbody>
+          <tfoot id="tmCompareTfoot"></tfoot>
         </table>
       </div>
     </div>
@@ -4044,6 +4443,121 @@ tmInit();
 
   </div><!-- /main -->
 </div><!-- /timesApp -->
+
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import {
+  getAuth,
+  setPersistence,
+  browserLocalPersistence,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDghWn4gmG43WNKwWuvQ6sPT58IZr2Gfts",
+  authDomain: "dominoswolt.firebaseapp.com",
+  projectId: "dominoswolt",
+  appId: "1:58824143071:web:0577a263ad1e6c30d8f96a"
+};
+
+const overlay = document.getElementById('authOverlay');
+const messageBox = document.getElementById('authMessage');
+const configWarning = document.getElementById('authConfigWarning');
+const userbar = document.getElementById('authUserbar');
+const avatar = document.getElementById('authAvatar');
+const userNameEl = document.getElementById('authUserName');
+const userEmailEl = document.getElementById('authUserEmail');
+const loginForm = document.getElementById('loginForm');
+const logoutBtn = document.getElementById('logoutBtn');
+
+const missingConfig = Object.values(firebaseConfig).some(v => String(v).startsWith('PASTE_YOUR_'));
+let auth = null;
+let appBooted = false;
+
+function setMessage(text, type = '') {
+  messageBox.textContent = text || '';
+  messageBox.className = 'auth-message' + (type ? ' ' + type : '');
+}
+
+function unlockApp(user) {
+  document.body.classList.remove('auth-locked');
+  overlay.classList.add('hidden');
+  userbar.classList.add('visible');
+  const fallbackName = user?.displayName || user?.email?.split('@')[0] || 'משתמש';
+  userNameEl.textContent = fallbackName;
+  userEmailEl.textContent = user?.email || 'מחובר';
+  if (user?.photoURL) {
+    avatar.innerHTML = `<img src="${user.photoURL}" alt="user">`;
+  } else {
+    avatar.textContent = fallbackName.trim().charAt(0).toUpperCase();
+  }
+  if (!appBooted && typeof window.dashboardInit === 'function') {
+    appBooted = true;
+    window.dashboardInit();
+  }
+}
+
+function lockApp() {
+  document.body.classList.add('auth-locked');
+  overlay.classList.remove('hidden');
+  userbar.classList.remove('visible');
+  avatar.textContent = 'U';
+  userNameEl.textContent = 'לא מחובר';
+  userEmailEl.textContent = '—';
+  if (typeof window.showApp === 'function') {
+    window.showApp('landing');
+  }
+}
+
+
+if (missingConfig) {
+  configWarning.classList.add('visible');
+  configWarning.innerHTML = 'חסרים פרטי Firebase. יש לעדכן את <b>firebaseConfig</b> בקובץ, ולהפעיל ב-Firebase רק <b>Email/Password</b> ללא הרשמה פתוחה דרך הממשק.';
+  setMessage('צריך להשלים את פרטי Firebase בקובץ.', 'error');
+  lockApp();
+} else {
+  const app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  setPersistence(auth, browserLocalPersistence).catch(() => {});
+
+  loginForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    try {
+      setMessage('מתחבר...', '');
+      await signInWithEmailAndPassword(auth, email, password);
+      setMessage('התחברת בהצלחה.', 'success');
+    } catch (error) {
+      console.error(error);
+      setMessage('ההתחברות נכשלה. בדוק אימייל וסיסמה.', 'error');
+    }
+  });
+
+  logoutBtn.addEventListener('click', async () => {
+    try {
+      await signOut(auth);
+      setMessage('התנתקת בהצלחה.');
+    } catch (error) {
+      console.error(error);
+      setMessage('לא ניתן היה להתנתק כרגע.', 'error');
+    }
+  });
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      unlockApp(user);
+      setMessage('מחובר בהצלחה.', 'success');
+    } else {
+      lockApp();
+      setMessage('התחבר כדי להמשיך.', '');
+    }
+  });
+}
+</script>
 
 </body>
 </html>
