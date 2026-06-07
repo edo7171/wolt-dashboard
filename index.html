@@ -558,24 +558,105 @@ body.auth-locked #timesApp{
 .auth-message.success{color:#7ee787}
 .auth-note{margin-top:16px;background:rgba(0,157,224,.08);border:1px solid rgba(0,157,224,.18);border-radius:12px;padding:12px;color:var(--text2);font-size:12px;line-height:1.6}
 .auth-userbar{
-  position:fixed;top:14px;left:14px;z-index:4500;display:none;align-items:center;gap:10px;
-  background:rgba(22,27,34,.92);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:999px;padding:8px 10px;box-shadow:0 12px 30px rgba(0,0,0,.25)
+  position:fixed;bottom:18px;left:18px;z-index:4500;display:none;align-items:center;gap:10px;
+  background:rgba(22,27,34,.95);backdrop-filter:blur(12px);border:1px solid var(--border);
+  border-radius:999px;padding:6px 8px 6px 6px;box-shadow:0 8px 24px rgba(0,0,0,.4);
+  max-width:52px;overflow:hidden;transition:max-width .3s ease, padding .3s ease;
+  cursor:pointer;
 }
+.auth-userbar:hover{max-width:360px;padding:6px 14px 6px 6px;}
 .auth-userbar.visible{display:flex}
-.auth-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;overflow:hidden}
+.auth-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));
+  display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;overflow:hidden;flex-shrink:0;}
 .auth-avatar img{width:100%;height:100%;object-fit:cover}
-.auth-user-meta{display:flex;flex-direction:column;gap:1px;min-width:0}
-.auth-user-name{font-size:12px;font-weight:800;color:var(--text);white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis}
-.auth-user-email{font-size:11px;color:var(--text2);white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis}
-.auth-link-btn{background:transparent;border:1px solid var(--border);color:var(--text2);padding:10px 12px}
+.auth-user-meta{display:flex;flex-direction:column;gap:1px;min-width:0;white-space:nowrap;}
+.auth-user-name{font-size:12px;font-weight:800;color:var(--text);white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+.auth-user-email{font-size:11px;color:var(--text2);white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+.auth-link-btn{background:transparent;border:1px solid rgba(218,54,51,.5);color:#ffb4b4;padding:6px 10px;
+  border-radius:20px;font-size:12px;font-family:'Heebo',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.auth-link-btn:hover{background:rgba(218,54,51,.15);}
 .auth-link-btn.danger{color:#ffb4b4;border-color:rgba(218,54,51,.5)}
 .auth-config-warning{margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(227,179,65,.12);border:1px solid rgba(227,179,65,.25);color:#ffd580;font-size:12px;line-height:1.5;display:none}
 .auth-config-warning.visible{display:block}
 @media (max-width: 640px){
   .auth-card{padding:22px 18px;border-radius:16px}
-  .auth-userbar{left:10px;right:10px;top:10px;border-radius:16px;justify-content:space-between}
+  .auth-userbar{left:10px;bottom:10px;top:auto;right:auto;border-radius:999px;}
   .auth-user-name,.auth-user-email{max-width:120px}
 }
+
+
+/* ── Hide global header when closures active ── */
+body.cl-active > header:first-of-type { display: none !important; }
+
+/* ── Closures card ── */
+.landing-card.closures::before{background:radial-gradient(circle at 50% 0%,rgba(218,54,51,.15),transparent 60%);}
+.landing-card.closures:hover{border-color:#DA3633;}
+.landing-card.closures .landing-card-badge{background:rgba(218,54,51,.15);color:#DA3633;border:1px solid rgba(218,54,51,.3);}
+
+/* ── Closures analytics page ── */
+#closuresApp{display:none;background:var(--bg);min-height:100vh;}
+#closuresApp.active{display:block;}
+body.auth-locked #closuresApp{visibility:hidden;}
+
+.cl-topbar{position:sticky;top:0;z-index:100;background:rgba(13,17,23,0.97);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);padding:0 20px;height:60px;display:flex;align-items:center;justify-content:space-between;}
+.cl-content{padding:20px;max-width:1600px;margin:0 auto;}
+/* Closures app: hide the global header (it's for ordersApp), show only cl-topbar */
+#closuresApp.active ~ * { display:none; }
+.cl-table td, .cl-table th { position: relative; z-index:1; }
+
+/* Reuse existing analytics styles with dark overrides */
+.cl-an-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px;}
+.cl-kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;}
+.cl-kpi .val{font-size:28px;font-weight:900;line-height:1;margin-bottom:4px;}
+.cl-kpi .lbl{font-size:11px;color:var(--text2);}
+.cl-kpi .sub{font-size:10px;color:var(--text3);margin-top:2px;}
+
+.cl-section{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px;}
+.cl-section h3{font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;
+  letter-spacing:.5px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+
+.cl-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12px;}
+.cl-bar-row .br-name{width:130px;flex-shrink:0;text-align:right;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cl-bar-row .br-bar-wrap{flex:1;background:var(--card2);border-radius:4px;height:18px;overflow:hidden;}
+.cl-bar-row .br-bar{height:100%;border-radius:4px;display:flex;align-items:center;padding-right:6px;font-size:10px;font-weight:700;color:#fff;justify-content:flex-end;}
+.cl-bar-row .br-val{width:70px;flex-shrink:0;color:var(--text2);text-align:left;font-size:11px;}
+
+.cl-two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+@media(max-width:800px){.cl-two-col{grid-template-columns:1fr;}}
+
+.cl-table{width:100%;border-collapse:collapse;font-size:12px;}
+.cl-table th{text-align:right;padding:8px 10px;border-bottom:2px solid var(--border);font-weight:700;font-size:11px;color:var(--text2);}
+.cl-table td{padding:8px 10px;border-bottom:1px solid rgba(48,54,61,.5);vertical-align:middle;}
+.cl-table tr:hover td{background:rgba(255,255,255,.02);}
+.cl-table tr:last-child td{border-bottom:none;}
+
+.cl-drill-row{cursor:pointer;}
+.cl-drill-row:hover td{background:rgba(0,157,224,.05) !important;}
+.cl-drill-detail{display:none;background:rgba(0,157,224,.04);}
+.cl-drill-inner{padding:8px 14px 12px;}
+.cl-drill-inner table{width:100%;border-collapse:collapse;font-size:11px;}
+.cl-drill-inner table th{padding:4px 8px;background:rgba(0,157,224,.1);color:var(--blue);font-weight:700;text-align:right;}
+.cl-drill-inner table td{padding:5px 8px;border-bottom:1px solid rgba(48,54,61,.3);}
+.cl-chevron{display:inline-block;transition:transform .2s;margin-left:5px;font-size:10px;color:var(--text3);}
+.cl-chevron.open{transform:rotate(90deg);}
+
+.cl-heatmap-grid{display:grid;grid-template-columns:repeat(24,1fr);gap:2px;margin-bottom:6px;}
+.cl-heatmap-cell{height:28px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;cursor:default;}
+.cl-heatmap-labels{display:grid;grid-template-columns:repeat(24,1fr);gap:2px;font-size:9px;color:var(--text3);text-align:center;margin-bottom:14px;}
+
+.cl-insight{background:linear-gradient(135deg,#1B4F72,#2E86C1);color:#fff;border-radius:10px;
+  padding:14px 16px;margin-bottom:10px;}
+.cl-insight .i-title{font-size:11px;opacity:.8;margin-bottom:4px;}
+.cl-insight .i-body{font-size:13px;font-weight:500;line-height:1.5;}
+
+.cl-period-toggle{display:flex;gap:6px;flex-wrap:wrap;}
+.cl-pbtn{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;
+  border:1px solid var(--border);background:var(--card2);color:var(--text2);transition:all .2s;}
+.cl-pbtn:hover{border-color:var(--blue);color:var(--blue);}
+.cl-pbtn.active{background:var(--blue-dim);border-color:var(--blue);color:var(--blue);}
+.dp-input.cl-dp{background:var(--card2);border:1px solid var(--border);color:var(--text);
+  border-radius:8px;padding:5px 10px;font-size:12px;font-family:'Heebo',sans-serif;}
 
 </style>
 </head>
@@ -644,6 +725,13 @@ body.auth-locked #timesApp{
       <div class="landing-card-title">זמנים</div>
       <div class="landing-card-desc">דשבורד זמני שילוח לפי סניף —<br>ממוצעים, טרנדים ומצטבר חודשי</div>
       <div class="landing-card-badge">Delivery Times</div>
+    </div>
+    <!-- Card: Closures Analytics -->
+    <div class="landing-card closures" onclick="showApp('closures')">
+      <div class="landing-card-icon">🏪</div>
+      <div class="landing-card-title">סגירות</div>
+      <div class="landing-card-desc">אנליטיקת סגירות סניפים —<br>טופ 10, פילוח סטטוסים, מפת חום</div>
+      <div class="landing-card-badge">Branch Closures</div>
     </div>
   </div>
 </div>
@@ -2352,18 +2440,19 @@ function showApp(app) {
   document.getElementById('landingScreen').classList.toggle('hidden', app !== 'landing');
   document.getElementById('ordersApp').classList.toggle('active', app === 'orders');
   document.getElementById('timesApp').classList.toggle('active', app === 'times');
+  document.getElementById('closuresApp').classList.toggle('active', app === 'closures');
 
   if (app === 'times') {
-    // Auto-sync if data is present; otherwise load
-    if (!tmAllData.length) {
-      tmLoadFromSheets();
-    } else {
-      tmRefreshAll();
-    }
+    if (!tmAllData.length) { tmLoadFromSheets(); } else { tmRefreshAll(); }
   }
   if (app === 'orders') {
-    // existing orders dashboard
     if (allData.length) refreshAll();
+  }
+  if (app === 'closures') {
+    document.body.classList.add('cl-active');
+    clLoadAndRender();
+  } else {
+    document.body.classList.remove('cl-active');
   }
 }
 
@@ -2374,21 +2463,14 @@ function showApp(app) {
 // Open your Google Sheet → click Sheet 2 tab → look at URL: ...gid=XXXXXXXX
 // Replace the gid=0 in the line below with your Sheet 2 gid
 const GOOGLE_SHEET2_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTAtc0vyPuariz_HuCrOWuZmjDc2CbUpvZxWemBbNfjvYNMLFXG1nBRWZQSQwu1Cl5Yi2ZY8nuL2s52/pub?gid=453940881&single=true&output=csv';
-// גיליון 3 אומת ופורסם: gid=1921370050
-const GOOGLE_SHEET3_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTAtc0vyPuariz_HuCrOWuZmjDc2CbUpvZxWemBbNfjvYNMLFXG1nBRWZQSQwu1Cl5Yi2ZY8nuL2s52/pub?gid=1921370050&single=true&output=csv';
 
 let tmAllData   = [];   // all times rows
-let tmManagerData = []; // sheet 3 rows
-let tmManagerBranchMap = {};
 let tmColF = 'קריאה לוולט (לפני יציאה)', tmColG = 'קריאה עד איסוף', tmColH = 'קריאה עד מסירה'; // dynamic column names
 
 // View state
 let tmViewFrom = '', tmViewTo = '', tmViewPreset = 'yesterday';
 let tmCmpFrom  = '', tmCmpTo  = '', tmCmpPreset  = '';
 let tmFbBranch = '';
-let tmFbBranchManager = '';
-let tmFbOpsManager = '';
-let tmFbAreaManager = '';
 let tmSortCol  = 'orders', tmSortDir = -1;
 
 // Trend state
@@ -2399,13 +2481,6 @@ let tmTrendMetric = 'avgF';
 let tmSelectedMonth = '';     // 'MM/YYYY'
 
 let tmCharts = {};
-
-const TM_MANAGER_COL_MAP = {
-  branch: ['סניף','Branch','Venue Name','venue_name','מסעדה','Restaurant','store','חנות','שם סניף','מיקום'],
-  branchManager: ['מנהל ענף','מנהל סניף','מנהל/ת ענף','מנהל/ת סניף','Branch Manager','Store Manager'],
-  opsManager: ['מנהל תפעול','מנהלת תפעול','מנהל/ת תפעול','Operations Manager','Operation Manager'],
-  areaManager: ['מנהל אזור','מנהלת אזור','מנהל/ת אזור','Area Manager','Regional Manager','District Manager']
-};
 
 // ── Column detection ──────────────────────────────────────
 // Sheet 2 expected columns (very flexible auto-detection):
@@ -2490,21 +2565,6 @@ function tmLogColumnDetection(headers, dateCol, branchCol, ordersCol, colFH, col
   console.groupEnd();
 }
 
-function tmNormalizeBranchName(value) {
-  let branch = String(value || '').trim();
-  if (!branch) return '';
-  if (branch.includes(' | ')) {
-    const parts = branch.split(' | ').map(p => p.trim()).filter(Boolean);
-    branch = parts[parts.length - 1] || parts[0] || branch;
-  }
-  branch = branch
-    .replace(/^domino'?s\s*[-–—|:]?\s*/i, '')
-    .replace(/^דומינו'?ס\s*[-–—|:]?\s*/i, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  return branch;
-}
-
 function tmParseRows(raw) {
   if (!raw.length) return [];
   const headers = Object.keys(raw[0]);
@@ -2558,7 +2618,12 @@ function tmParseRows(raw) {
 
     // ── Branch ──
     const rawBranch = branchCol ? String(r[branchCol] || '') : '';
-    let branch = tmNormalizeBranchName(rawBranch);
+    let branch = rawBranch.trim();
+    // Handle "Brand | Branch |" format
+    if (branch.includes(' | ')) {
+      const parts = branch.split(' | ').map(p => p.trim()).filter(Boolean);
+      branch = parts[parts.length - 1] || parts[0] || branch;
+    }
     if (!branch) branch = 'לא ידוע';
 
     // ── Orders ── (if no dedicated column, each row = 1 order)
@@ -2682,111 +2747,6 @@ function tmParseDate(v) {
   return null;
 }
 
-function tmCanLoadManagerSheet() {
-  return GOOGLE_SHEET3_CSV_URL && !GOOGLE_SHEET3_CSV_URL.includes('SET_SHEET3_GID_HERE');
-}
-
-function tmParseManagerRows(raw) {
-  if (!raw || !raw.length) return [];
-  const headers = Object.keys(raw[0] || {});
-  const branchCol = tmFindCol(headers, TM_MANAGER_COL_MAP.branch) || headers[0] || null;
-  const branchManagerCol = tmFindCol(headers, TM_MANAGER_COL_MAP.branchManager);
-  const opsManagerCol = tmFindCol(headers, TM_MANAGER_COL_MAP.opsManager);
-  const areaManagerCol = tmFindCol(headers, TM_MANAGER_COL_MAP.areaManager);
-
-  const rows = raw.map(r => ({
-    branch: tmNormalizeBranchName(branchCol ? r[branchCol] : ''),
-    branchManager: String(branchManagerCol ? (r[branchManagerCol] || '') : '').trim(),
-    opsManager: String(opsManagerCol ? (r[opsManagerCol] || '') : '').trim(),
-    areaManager: String(areaManagerCol ? (r[areaManagerCol] || '') : '').trim(),
-  })).filter(r => r.branch);
-
-  window._tmManagerDebug = {
-    headers,
-    branchCol,
-    branchManagerCol,
-    opsManagerCol,
-    areaManagerCol,
-    totalRaw: raw.length,
-    totalParsed: rows.length
-  };
-
-  return rows;
-}
-
-function tmBuildManagerIndex(rows) {
-  tmManagerData = Array.isArray(rows) ? rows : [];
-  tmManagerBranchMap = {};
-  tmManagerData.forEach(r => {
-    if (r.branch) tmManagerBranchMap[r.branch] = r;
-  });
-}
-
-function tmMetaMatchesScope(meta, scope = {}) {
-  const bm = scope.branchManager || '';
-  const om = scope.opsManager || '';
-  const am = scope.areaManager || '';
-  const hasRoleScope = !!(bm || om || am);
-  if (!meta) return !hasRoleScope;
-  if (bm && meta.branchManager !== bm) return false;
-  if (om && meta.opsManager !== om) return false;
-  if (am && meta.areaManager !== am) return false;
-  return true;
-}
-
-function tmGetFilterScope(excludeKey = '') {
-  return {
-    branchManager: excludeKey === 'branchManager' ? '' : tmFbBranchManager,
-    opsManager: excludeKey === 'opsManager' ? '' : tmFbOpsManager,
-    areaManager: excludeKey === 'areaManager' ? '' : tmFbAreaManager,
-  };
-}
-
-function tmApplyActiveFilters(rows, options = {}) {
-  const includeBranch = options.includeBranch !== false;
-  let data = Array.isArray(rows) ? [...rows] : [];
-  data = data.filter(r => tmMetaMatchesScope(tmManagerBranchMap[r.branch], tmGetFilterScope()));
-  if (includeBranch && tmFbBranch) data = data.filter(r => r.branch === tmFbBranch);
-  return data;
-}
-
-function tmGetScopedManagerRows(scope = {}, includeSelectedBranch = false) {
-  let rows = [...tmManagerData].filter(r => tmMetaMatchesScope(r, scope));
-  if (includeSelectedBranch && tmFbBranch) rows = rows.filter(r => r.branch === tmFbBranch);
-  return rows;
-}
-
-function tmFillSelectOptions(selectId, options, allLabel, selectedValue) {
-  const sel = document.getElementById(selectId);
-  if (!sel) return '';
-  sel.innerHTML = `<option value="">${allLabel}</option>` + options.map(v => `<option value="${v}">${v}</option>`).join('');
-  if (selectedValue && options.includes(selectedValue)) sel.value = selectedValue;
-  else sel.value = '';
-  return sel.value || '';
-}
-
-async function tmTryLoadManagerSheet() {
-  if (!tmCanLoadManagerSheet()) {
-    tmBuildManagerIndex([]);
-    return { loaded: false, reason: 'sheet3_not_configured' };
-  }
-  try {
-    const response = await fetch(GOOGLE_SHEET3_CSV_URL);
-    if (!response.ok) throw new Error('Network error');
-    const csvText = await response.text();
-    const wb = XLSX.read(csvText, { type: 'string' });
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
-    const rows = tmParseManagerRows(raw);
-    tmBuildManagerIndex(rows);
-    return { loaded: true, rows };
-  } catch (error) {
-    console.warn('[TM] Sheet 3 load failed:', error);
-    tmBuildManagerIndex([]);
-    return { loaded: false, reason: error.message || 'sheet3_load_failed' };
-  }
-}
-
 // ── Loading ───────────────────────────────────────────────
 function tmShowColInfo() {
   if (!tmAllData.length) { alert('אין נתונים טעונים עדיין.'); return; }
@@ -2864,6 +2824,7 @@ async function tmLoadFromSheets() {
     const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
     const rows = tmParseRows(raw);
     if (!rows.length) {
+      // Show detailed diagnostic
       const hdrs = raw.length ? Object.keys(raw[0]).join(' | ') : 'אין שורות';
       const sample = raw.length ? JSON.stringify(raw[0]).substring(0, 200) : '';
       const msg = `⚠️ לא נמצאו נתוני זמנים תקינים.\n\nכותרות עמודות שנמצאו:\n${hdrs}\n\nשורה ראשונה (דוגמה):\n${sample}\n\nוודא שגיליון 2 מכיל:\n• עמודת תאריך (תאריך / Date)\n• עמודת סניף (סניף / Venue Name / Branch)\n• עמודות זמנים (F, G, H)`;
@@ -2873,16 +2834,15 @@ async function tmLoadFromSheets() {
     }
     else {
       tmAllData = rows;
-      const managerResult = await tmTryLoadManagerSheet();
       tmSaveLs();
       tmAutoSetView();
       tmRefreshAll();
+      // Brief toast notification
       const toastEl = document.getElementById('tmToast');
       if (toastEl) {
-        const managerTxt = managerResult.loaded ? ` | שיוכי מנהלים: ${tmManagerData.length}` : ' | גיליון 3 לא נטען';
-        toastEl.textContent = `✅ נטענו ${rows.length} רשומות${managerTxt} | ${tmColF} | ${tmColG} | ${tmColH}`;
+        toastEl.textContent = `✅ נטענו ${rows.length} רשומות | ${tmColF} | ${tmColG} | ${tmColH}`;
         toastEl.style.display = 'block';
-        setTimeout(() => toastEl.style.display = 'none', 5000);
+        setTimeout(() => toastEl.style.display = 'none', 4000);
         const cb = document.getElementById('tmColInfoBtn'); if (cb) cb.style.display = '';
         const pb = document.getElementById('tmPreviewBtn'); if (pb) pb.style.display = '';
       }
@@ -2902,6 +2862,7 @@ function tmLoadFile(input) {
   reader.onload = (e) => {
     try {
       const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+      // Try sheet 2 first, fallback to sheet 1
       const sheetIdx = wb.SheetNames.length > 1 ? 1 : 0;
       const ws = wb.Sheets[wb.SheetNames[sheetIdx]];
       const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
@@ -2912,14 +2873,6 @@ function tmLoadFile(input) {
       }
       else {
         tmAllData = rows;
-        const managerSheetIdx = wb.SheetNames.length > 2 ? 2 : -1;
-        if (managerSheetIdx >= 0) {
-          const ws3 = wb.Sheets[wb.SheetNames[managerSheetIdx]];
-          const raw3 = XLSX.utils.sheet_to_json(ws3, { defval: '' });
-          tmBuildManagerIndex(tmParseManagerRows(raw3));
-        } else {
-          tmBuildManagerIndex([]);
-        }
         tmSaveLs();
         tmAutoSetView();
         tmRefreshAll();
@@ -2953,32 +2906,15 @@ function tmAutoSetView() {
 }
 
 // ── LocalStorage ──────────────────────────────────────────
-const TM_LS_KEY = 'wolt_times_v4';
+const TM_LS_KEY = 'wolt_times_v3';  // bumped version → clears stale cache
 function tmSaveLs() {
-  try {
-    localStorage.setItem(TM_LS_KEY, JSON.stringify({
-      times: tmAllData,
-      managers: tmManagerData,
-      colF: tmColF,
-      colG: tmColG,
-      colH: tmColH
-    }));
-  } catch (e) {}
+  try { localStorage.setItem(TM_LS_KEY, JSON.stringify(tmAllData)); } catch (e) {}
 }
 function tmLoadLs() {
   try {
     const raw = localStorage.getItem(TM_LS_KEY);
-    if (!raw) return { times: [], managers: [] };
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) return { times: parsed, managers: [] };
-    return {
-      times: parsed.times || [],
-      managers: parsed.managers || [],
-      colF: parsed.colF || '',
-      colG: parsed.colG || '',
-      colH: parsed.colH || ''
-    };
-  } catch (e) { return { times: [], managers: [] }; }
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) { return []; }
 }
 
 // ── Date helpers (shared) ─────────────────────────────────
@@ -2993,7 +2929,8 @@ function tmGetViewData() {
   if (!tmViewFrom && !tmViewTo) data = tmAllData;
   else if (tmViewFrom === tmViewTo && tmViewFrom) data = tmAllData.filter(r => r.dateStr === tmViewFrom);
   else data = tmAllData.filter(r => inRange(r.dateStr, tmViewFrom, tmViewTo));
-  return tmApplyActiveFilters(data);
+  if (tmFbBranch) data = data.filter(r => r.branch === tmFbBranch);
+  return data;
 }
 
 function tmGetCmpData() {
@@ -3001,38 +2938,28 @@ function tmGetCmpData() {
   let data;
   if (tmCmpFrom === tmCmpTo && tmCmpFrom) data = tmAllData.filter(r => r.dateStr === tmCmpFrom);
   else data = tmAllData.filter(r => inRange(r.dateStr, tmCmpFrom, tmCmpTo));
-  return tmApplyActiveFilters(data);
-}
-
-function tmGetAllFilteredData() {
-  return tmApplyActiveFilters(tmAllData);
+  if (tmFbBranch) data = data.filter(r => r.branch === tmFbBranch);
+  return data;
 }
 
 // ── Stats computation ─────────────────────────────────────
 function tmCompute(data) {
-  if (!data || !data.length) return { totalOrders: 0, avgF: 0, avgG: 0, avgH: 0, stdF: 0, stdG: 0, stdH: 0, branches: [], byDate: {} };
-
-  const avg = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
-  const std = (arr) => {
-    if (!arr.length) return 0;
-    const mean = avg(arr);
-    const variance = arr.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / arr.length;
-    return Math.sqrt(variance);
-  };
+  if (!data || !data.length) return { totalOrders: 0, avgF: 0, avgG: 0, avgH: 0, branches: [], byDate: {} };
 
   let totalOrders = data.reduce((s, r) => s + r.orders, 0);
+  // If no orders column was found, every row has orders=1, but for pre-aggregated
+  // sheets orders was stored correctly. If all rows show 0 orders, fallback to row count.
   if (totalOrders === 0) totalOrders = data.length;
 
+  // Average of averages for global
   const vF = data.filter(r => r.avgF > 0).map(r => r.avgF);
   const vG = data.filter(r => r.avgG > 0).map(r => r.avgG);
   const vH = data.filter(r => r.avgH > 0).map(r => r.avgH);
-  const avgF = avg(vF);
-  const avgG = avg(vG);
-  const avgH = avg(vH);
-  const stdF = std(vF);
-  const stdG = std(vG);
-  const stdH = std(vH);
+  const avgF = vF.length ? vF.reduce((a, b) => a + b, 0) / vF.length : 0;
+  const avgG = vG.length ? vG.reduce((a, b) => a + b, 0) / vG.length : 0;
+  const avgH = vH.length ? vH.reduce((a, b) => a + b, 0) / vH.length : 0;
 
+  // By branch
   const bMap = {};
   data.forEach(r => {
     if (!bMap[r.branch]) bMap[r.branch] = { branch: r.branch, orders: 0, fVals: [], gVals: [], hVals: [] };
@@ -3045,14 +2972,12 @@ function tmCompute(data) {
   const branches = Object.values(bMap).map(b => ({
     branch: b.branch,
     orders: b.orders,
-    avgF: avg(b.fVals),
-    stdF: std(b.fVals),
-    avgG: avg(b.gVals),
-    stdG: std(b.gVals),
-    avgH: avg(b.hVals),
-    stdH: std(b.hVals),
+    avgF: b.fVals.length ? b.fVals.reduce((a, c) => a + c, 0) / b.fVals.length : 0,
+    avgG: b.gVals.length ? b.gVals.reduce((a, c) => a + c, 0) / b.gVals.length : 0,
+    avgH: b.hVals.length ? b.hVals.reduce((a, c) => a + c, 0) / b.hVals.length : 0,
   }));
 
+  // By date (for trend charts)
   const byDate = {};
   data.forEach(r => {
     if (!byDate[r.dateStr]) byDate[r.dateStr] = { orders: 0, fVals: [], gVals: [], hVals: [] };
@@ -3063,12 +2988,12 @@ function tmCompute(data) {
     if (r.avgH > 0) d.hVals.push(r.avgH);
   });
   Object.values(byDate).forEach(d => {
-    d.avgF = avg(d.fVals);
-    d.avgG = avg(d.gVals);
-    d.avgH = avg(d.hVals);
+    d.avgF = d.fVals.length ? d.fVals.reduce((a, b) => a + b, 0) / d.fVals.length : 0;
+    d.avgG = d.gVals.length ? d.gVals.reduce((a, b) => a + b, 0) / d.gVals.length : 0;
+    d.avgH = d.hVals.length ? d.hVals.reduce((a, b) => a + b, 0) / d.hVals.length : 0;
   });
 
-  return { totalOrders, avgF, avgG, avgH, stdF, stdG, stdH, branches, byDate };
+  return { totalOrders, avgF, avgG, avgH, branches, byDate };
 }
 
 // ── Refresh ───────────────────────────────────────────────
@@ -3086,7 +3011,6 @@ function tmUpdateAll() {
 
   tmUpdateKpis(c, p);
   tmBuildBranchTable(c, p);
-  tmBuildComparisonTable(c);
   tmBuildCharts(c);
   tmBuildTrendChart();
   tmBuildInsights(c, p);
@@ -3173,73 +3097,27 @@ function tmOnCompareDate() {
 
 // ── Filter bar ────────────────────────────────────────────
 function tmBuildFilterBar() {
-  const managerRows = tmFbBranch
-    ? tmManagerData.filter(r => r.branch === tmFbBranch)
-    : [...tmManagerData];
-
-  const areaRows = managerRows;
-  const areaManagers = [...new Set(areaRows.map(r => r.areaManager).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'he'));
-  tmFbAreaManager = tmFillSelectOptions(
-    'tmFbAreaManager',
-    areaManagers,
-    tmManagerData.length ? `כל מנהלי האזור (${areaManagers.length})` : 'מנהל אזור — אין נתונים',
-    tmFbAreaManager
-  );
-
-  const opsRows = areaRows.filter(r => !tmFbAreaManager || r.areaManager === tmFbAreaManager);
-  const opsManagers = [...new Set(opsRows.map(r => r.opsManager).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'he'));
-  tmFbOpsManager = tmFillSelectOptions(
-    'tmFbOpsManager',
-    opsManagers,
-    tmManagerData.length ? `כל מנהלי התפעול (${opsManagers.length})` : 'מנהל תפעול — אין נתונים',
-    tmFbOpsManager
-  );
-
-  const branchManagerRows = opsRows.filter(r => !tmFbOpsManager || r.opsManager === tmFbOpsManager);
-  const branchManagers = [...new Set(branchManagerRows.map(r => r.branchManager).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'he'));
-  tmFbBranchManager = tmFillSelectOptions(
-    'tmFbBranchManager',
-    branchManagers,
-    tmManagerData.length ? `כל מנהלי הענף (${branchManagers.length})` : 'מנהל ענף — אין נתונים',
-    tmFbBranchManager
-  );
-
-  const scopedBranches = [...new Set(
-    tmApplyActiveFilters(tmAllData, { includeBranch: false }).map(r => r.branch).filter(Boolean)
-  )].sort((a, b) => a.localeCompare(b, 'he'));
-  tmFbBranch = tmFillSelectOptions('tmFbBranch', scopedBranches, `כל הסניפים (${scopedBranches.length})`, tmFbBranch);
-
-  const disableManagers = !tmManagerData.length;
-  ['tmFbAreaManager', 'tmFbOpsManager', 'tmFbBranchManager'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.disabled = disableManagers;
-  });
+  const branches = [...new Set(tmAllData.map(r => r.branch).filter(Boolean))].sort();
+  const sel = document.getElementById('tmFbBranch');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">כל הסניפים (' + branches.length + ')</option>';
+  branches.forEach(b => sel.innerHTML += `<option value="${b}">${b}</option>`);
+  if (branches.includes(prev)) sel.value = prev;
 }
 
 function tmApplyFilters() {
-  tmFbBranch = document.getElementById('tmFbBranch')?.value || '';
-  tmFbBranchManager = document.getElementById('tmFbBranchManager')?.value || '';
-  tmFbOpsManager = document.getElementById('tmFbOpsManager')?.value || '';
-  tmFbAreaManager = document.getElementById('tmFbAreaManager')?.value || '';
-  tmRefreshAll();
+  tmFbBranch = document.getElementById('tmFbBranch').value;
+  tmUpdateAll();
 }
 
 function tmResetFilters() {
   tmFbBranch = '';
-  tmFbBranchManager = '';
-  tmFbOpsManager = '';
-  tmFbAreaManager = '';
-  ['tmFbBranch', 'tmFbBranchManager', 'tmFbOpsManager', 'tmFbAreaManager'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  tmRefreshAll();
+  document.getElementById('tmFbBranch').value = '';
+  tmUpdateAll();
 }
 
 function tmUpdateFbCount(count) {
-  const active = [tmFbBranch, tmFbBranchManager, tmFbOpsManager, tmFbAreaManager].filter(Boolean).length;
-  const branchCount = new Set(tmGetViewData().map(r => r.branch)).size;
-  document.getElementById('tmFbCount').textContent = `מציג ${count.toLocaleString('he-IL')} רשומות | ${branchCount} סניפים${active ? ' | ' + active + ' פילטרים פעילים' : ''}`;
+  document.getElementById('tmFbCount').textContent = `מציג ${count.toLocaleString('he-IL')} רשומות`;
 }
 
 // ── KPIs ──────────────────────────────────────────────────
@@ -3248,13 +3126,6 @@ function fmtTime(v) {
   const m = Math.round(v);
   if (m < 60) return m + ' דקות';
   return Math.floor(m / 60) + ':' + (m % 60).toString().padStart(2, '0') + ' שעות';
-}
-function fmtTimePrecise(v) {
-  if (!v || v === 0) return '—';
-  if (v < 60) return v.toFixed(1) + ' דק׳';
-  const h = Math.floor(v / 60);
-  const rem = (v % 60).toFixed(1).padStart(4, '0');
-  return h + ':' + rem + ' ש׳';
 }
 function timeClass(v, threshGood = 30, threshWarn = 45) {
   if (!v) return 'neutral';
@@ -3359,35 +3230,6 @@ function tmSortBranch(col) {
   const c = tmCompute(viewData);
   const p = cmpData ? tmCompute(cmpData) : null;
   tmBuildBranchTable(c, p);
-}
-
-function tmBuildComparisonTable(c) {
-  const rows = [...c.branches].sort((a, b) => b.orders - a.orders);
-  let html = '';
-  rows.forEach(b => {
-    html += `<tr>
-      <td><strong>${b.branch}</strong></td>
-      <td>${b.orders.toLocaleString('he-IL')}</td>
-      <td>${fmtTimePrecise(b.avgF)}</td>
-      <td>${fmtTimePrecise(b.stdF)}</td>
-      <td>${fmtTimePrecise(b.avgG)}</td>
-      <td>${fmtTimePrecise(b.stdG)}</td>
-      <td>${fmtTimePrecise(b.avgH)}</td>
-      <td>${fmtTimePrecise(b.stdH)}</td>
-    </tr>`;
-  });
-  document.getElementById('tmCompareTbody').innerHTML = html || '<tr><td colspan="8" class="nodata-msg">אין נתונים להשוואה בטווח המסונן</td></tr>';
-  document.getElementById('tmCompareTfoot').innerHTML = `<tr class="total-row">
-    <td>🔢 ממוצע כללי</td>
-    <td>${c.totalOrders.toLocaleString('he-IL')}</td>
-    <td>${fmtTimePrecise(c.avgF)}</td>
-    <td>${fmtTimePrecise(c.stdF)}</td>
-    <td>${fmtTimePrecise(c.avgG)}</td>
-    <td>${fmtTimePrecise(c.stdG)}</td>
-    <td>${fmtTimePrecise(c.avgH)}</td>
-    <td>${fmtTimePrecise(c.stdH)}</td>
-  </tr>`;
-  document.getElementById('tmCompareSub').textContent = `${rows.length} סניפים מסוננים | ממוצעים וסטיות תקן לפי הטווח הנבחר`;
 }
 
 // ── Charts ────────────────────────────────────────────────
@@ -3750,9 +3592,8 @@ function tmBuildTrendChart() {
     const [cwFrom, cwTo] = presetRange('curweek');
     const [pwFrom, pwTo] = presetRange('prevweek');
 
-    const allFiltered = tmGetAllFilteredData();
-    const cwMap = getDayMap(allFiltered.filter(r => inRange(r.dateStr, cwFrom, cwTo)));
-    const pwMap = getDayMap(allFiltered.filter(r => inRange(r.dateStr, pwFrom, pwTo)));
+    const cwMap = getDayMap(tmAllData.filter(r => inRange(r.dateStr, cwFrom, cwTo)));
+    const pwMap = getDayMap(tmAllData.filter(r => inRange(r.dateStr, pwFrom, pwTo)));
 
     const cwDates = Object.keys(cwMap).sort((a, b) => dateToSortKey(a) - dateToSortKey(b));
     const pwDates = Object.keys(pwMap).sort((a, b) => dateToSortKey(a) - dateToSortKey(b));
@@ -3779,7 +3620,7 @@ function tmBuildTrendChart() {
     // Week vs Week — show per-week aggregated data
     // Group all data by week (week start date as label)
     const weekMap = {};
-    tmGetAllFilteredData().forEach(r => {
+    tmAllData.forEach(r => {
       const d = dmy2date(r.dateStr);
       if (!d) return;
       const ws = weekStart(d);
@@ -3850,15 +3691,17 @@ function tmInitMonthButtons() {
 
 function tmGetMonths() {
   const s = new Set();
-  tmGetAllFilteredData().forEach(r => {
+  tmAllData.forEach(r => {
     const p = r.dateStr.split('/');
+    // Include months that have data rows (allow orders=0 rows as they still represent time data)
     if (p.length === 3) s.add(p[1].padStart(2,'0') + '/' + p[2]);
   });
+  // Sort: most recent first — by year DESC, then by month DESC
   return [...s].sort((a, b) => {
     const [am, ay] = a.split('/').map(Number);
     const [bm, by] = b.split('/').map(Number);
-    if (ay !== by) return by - ay;
-    return bm - am;
+    if (ay !== by) return by - ay;   // year descending
+    return bm - am;                  // month descending (higher month = more recent)
   });
 }
 
@@ -3874,8 +3717,7 @@ function tmBuildMonthly() {
   const selMPad = selM.padStart(2,'0');
 
   // ✅ FIX: Filter by EXACT month+year match (padded months)
-  const allFiltered = tmGetAllFilteredData();
-  const currRows = allFiltered.filter(r => {
+  const currRows = tmAllData.filter(r => {
     const p = r.dateStr.split('/');
     return p.length === 3 && p[1].padStart(2,'0') === selMPad && p[2] === selY;
   });
@@ -3916,7 +3758,7 @@ function tmBuildMonthly() {
   const maxDay = currDays.length ? Math.max(...currDays) : 31;
 
   // ✅ FIX: Use actualPrevM/actualPrevY to find real previous month rows
-  const prevRows = allFiltered.filter(r => {
+  const prevRows = tmAllData.filter(r => {
     const p = r.dateStr.split('/');
     if (p.length !== 3) return false;
     if (p[1].padStart(2,'0') !== actualPrevM || p[2] !== actualPrevY) return false;
@@ -4107,14 +3949,10 @@ function tmShowLoading(v) { document.getElementById('tmLoadingOverlay')?.classLi
 
 // ── Init times ────────────────────────────────────────────
 function tmInit() {
-  const stored = tmLoadLs();
-  tmAllData = stored.times || [];
-  tmBuildManagerIndex(stored.managers || []);
-  if (stored.colF) tmColF = stored.colF;
-  if (stored.colG) tmColG = stored.colG;
-  if (stored.colH) tmColH = stored.colH;
+  tmAllData = tmLoadLs();
   if (tmAllData.length) {
     tmAutoSetView();
+    // labels already set in parse; restore them from stored data
   }
 }
 tmInit();
@@ -4149,7 +3987,7 @@ tmInit();
       <span id="tmColNames" style="font-size:11px;color:var(--text2);"></span>
       <button class="btn btn-primary" onclick="tmLoadFromSheets()"
         style="background:var(--green-dim);border-color:var(--green);color:var(--green)">
-        <span class="dot" id="tmSyncDot"></span>🔄 סנכרן גיליונות 2+3
+        <span class="dot" id="tmSyncDot"></span>🔄 סנכרן גיליון 2
       </button>
       <button class="btn btn-secondary" onclick="document.getElementById('tmFileInput').click()">
         📂 טען קובץ ידני
@@ -4203,22 +4041,13 @@ tmInit();
       </div>
     </div>
 
-    <!-- FILTERS (times) -->
+    <!-- BRANCH FILTER (times) -->
     <div class="filter-bar" id="tmFilterBar">
-      <span class="fb-label">🔍 פילטרים:</span>
-      <select class="fb-select" id="tmFbAreaManager" onchange="tmApplyFilters()" style="min-width:170px">
-        <option value="">כל מנהלי האזור</option>
-      </select>
-      <select class="fb-select" id="tmFbOpsManager" onchange="tmApplyFilters()" style="min-width:170px">
-        <option value="">כל מנהלי התפעול</option>
-      </select>
-      <select class="fb-select" id="tmFbBranchManager" onchange="tmApplyFilters()" style="min-width:170px">
-        <option value="">כל מנהלי הענף</option>
-      </select>
+      <span class="fb-label">🔍 סניף:</span>
       <select class="fb-select" id="tmFbBranch" onchange="tmApplyFilters()" style="min-width:180px">
         <option value="">כל הסניפים</option>
       </select>
-      <button class="fb-reset" id="tmResetFiltersBtn" onclick="tmResetFilters()">🔄 איפוס פילטרים</button>
+      <button class="fb-reset" onclick="tmResetFilters()">✕ אפס</button>
       <span class="fb-count" id="tmFbCount"></span>
     </div>
 
@@ -4277,39 +4106,9 @@ tmInit();
             </tr>
           </thead>
           <tbody id="tmBranchTbody">
-            <tr><td colspan="6" class="nodata-msg">⏳ טוען נתונים… לחץ על "סנכרן גיליונות 2+3"</td></tr>
+            <tr><td colspan="6" class="nodata-msg">⏳ טוען נתונים… לחץ על "סנכרן גיליון 2"</td></tr>
           </tbody>
           <tfoot id="tmBranchTfoot"></tfoot>
-        </table>
-      </div>
-    </div>
-
-    <!-- FILTERED BRANCH COMPARISON TABLE -->
-    <div class="chart-card mb16">
-      <div class="chart-header">
-        <div>
-          <div class="chart-title">📊 טבלת השוואה בין ביצועי הסניפים המסוננים</div>
-          <div class="chart-sub" id="tmCompareSub">ממוצעים וסטיות תקן לפי הפילטרים הפעילים</div>
-        </div>
-      </div>
-      <div class="tm-branch-wrap">
-        <table class="tm-table">
-          <thead>
-            <tr>
-              <th>סניף</th>
-              <th>הזמנות</th>
-              <th>ממוצע F</th>
-              <th>סטיית תקן F</th>
-              <th>ממוצע G</th>
-              <th>סטיית תקן G</th>
-              <th>ממוצע H</th>
-              <th>סטיית תקן H</th>
-            </tr>
-          </thead>
-          <tbody id="tmCompareTbody">
-            <tr><td colspan="8" class="nodata-msg">⏳ טוען נתוני השוואה…</td></tr>
-          </tbody>
-          <tfoot id="tmCompareTfoot"></tfoot>
         </table>
       </div>
     </div>
@@ -4556,6 +4355,369 @@ if (missingConfig) {
       setMessage('התחבר כדי להמשיך.', '');
     }
   });
+}
+</script>
+
+
+<!-- ══════════════════════════════════
+     CLOSURES ANALYTICS APP
+══════════════════════════════════ -->
+<div id="closuresApp">
+  <!-- Topbar -->
+  <div class="cl-topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="btn btn-secondary" onclick="showApp('landing')">← חזור</button>
+      <div>
+        <div style="font-size:16px;font-weight:700">🏪 דשבורד סגירות סניפים</div>
+        <div style="font-size:11px;color:var(--text2)" id="cl-sub">טוען נתונים...</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <!-- Period -->
+      <div class="cl-period-toggle" id="cl-period-btns">
+        <button class="cl-pbtn active" onclick="clSetPeriod('yesterday')">אתמול</button>
+        <button class="cl-pbtn" onclick="clSetPeriod('week')">7 ימים</button>
+        <button class="cl-pbtn" onclick="clSetPeriod('month')">30 ימים</button>
+        <button class="cl-pbtn" onclick="clSetPeriod('custom')">מותאם</button>
+      </div>
+      <div id="cl-custom-wrap" style="display:none;gap:6px;align-items:center">
+        <input type="date" id="cl-from" class="dp-input cl-dp">
+        <span style="color:var(--text3)">עד</span>
+        <input type="date" id="cl-to" class="dp-input cl-dp">
+        <button class="btn btn-primary" onclick="clRenderAll()" style="padding:5px 12px;font-size:12px">הצג</button>
+      </div>
+      <!-- Type filter -->
+      <select id="cl-type-filter" onchange="clRenderAll()"
+        style="background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:5px 10px;font-size:12px;font-family:'Heebo',sans-serif;">
+        <option value="all">כולם</option>
+        <option value="temporary">זמניים בלבד</option>
+        <option value="permanent">קבועים בלבד</option>
+        <option value="no-permanent">ללא קבועים</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="cl-content" id="cl-content">
+    <div style="text-align:center;padding:60px;color:var(--text2)">⏳ מתחבר ל-Firebase...</div>
+  </div>
+</div>
+
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, getDocs, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const fbConfig = {
+  apiKey:"AIzaSyDCSXxl8reiSWAVuue9PUPIS9Px2nu5p9g",
+  authDomain:"branch-status.firebaseapp.com",
+  projectId:"branch-status",
+  storageBucket:"branch-status.firebasestorage.app",
+  messagingSenderId:"437287525021",
+  appId:"1:437287525021:web:c344cb7d654b59a3589274"
+};
+
+let clApp, clDb, clStatuses=[], clLogs=[], clLoaded=false;
+
+async function clLoadData() {
+  if(!clApp) {
+    clApp = initializeApp(fbConfig, 'closures-ro');
+    clDb  = getFirestore(clApp);
+  }
+  const [sSnap, lSnap] = await Promise.all([
+    getDocs(query(collection(clDb,'statuses'), orderBy('sortOrder'))),
+    getDocs(query(collection(clDb,'status_logs'), orderBy('startedAt','desc')))
+  ]);
+  clStatuses = sSnap.docs.map(d=>({id:d.id,...d.data()}));
+  clLogs     = lSnap.docs.map(d=>({id:d.id,...d.data()}));
+  clLoaded   = true;
+}
+
+window.clLoadAndRender = async function() {
+  document.getElementById('cl-content').innerHTML =
+    '<div style="text-align:center;padding:60px;color:var(--text2)">⏳ טוען נתונים מ-Firebase...</div>';
+  try {
+    await clLoadData();
+    clRenderAll();
+    document.getElementById('cl-sub').textContent =
+      clLogs.length + ' רשומות · עודכן ' + new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+  } catch(e) {
+    document.getElementById('cl-content').innerHTML =
+      '<div style="text-align:center;padding:60px;color:var(--red)">שגיאת חיבור: '+e.message+'</div>';
+  }
+};
+
+let clPeriod = 'yesterday';
+
+window.clSetPeriod = function(p) {
+  clPeriod = p;
+  document.querySelectorAll('.cl-pbtn').forEach((b,i)=>{
+    b.classList.toggle('active', ['yesterday','week','month','custom'][i]===p);
+  });
+  const cw = document.getElementById('cl-custom-wrap');
+  if(cw) cw.style.display = p==='custom' ? 'flex' : 'none';
+  if(p !== 'custom') clRenderAll();
+};
+
+function clGetRange() {
+  const now = new Date();
+  let from, to;
+  if(clPeriod==='yesterday') {
+    from=new Date(now); from.setDate(from.getDate()-1); from.setHours(0,0,0,0);
+    to=new Date(from); to.setHours(23,59,59,999);
+  } else if(clPeriod==='week') {
+    from=new Date(now); from.setDate(from.getDate()-7); from.setHours(0,0,0,0);
+    to=new Date(now); to.setHours(23,59,59,999);
+  } else if(clPeriod==='month') {
+    from=new Date(now); from.setDate(from.getDate()-30); from.setHours(0,0,0,0);
+    to=new Date(now); to.setHours(23,59,59,999);
+  } else {
+    from=document.getElementById('cl-from').value ? new Date(document.getElementById('cl-from').value) : new Date(now.getTime()-86400000);
+    to=document.getElementById('cl-to').value ? new Date(document.getElementById('cl-to').value+'T23:59:59') : new Date();
+  }
+  return {from,to};
+}
+
+function clFmt(min) {
+  if(!min||min<1) return "0 דק'";
+  if(min<60) return Math.round(min)+"דק'";
+  const h=Math.floor(min/60),m=Math.round(min%60);
+  return h+"ש'"+(m?'+'+m+"דק'":'');
+}
+function clFmtTs(ts) {
+  if(!ts) return '—';
+  const d=ts.toDate?ts.toDate():new Date(ts);
+  return d.toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit'})+' '+
+    d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+}
+function clStById(id) { return clStatuses.find(s=>s.id===id)||{label:id,color:'#888'}; }
+
+window.clRenderAll = function() {
+  if(!clLoaded) return;
+  const {from,to} = clGetRange();
+  const typeF = document.getElementById('cl-type-filter')?.value||'all';
+
+  const logs = clLogs.filter(l=>{
+    const ts=l.startedAt?.toDate?.()||new Date(0);
+    if(ts<from||ts>to) return false;
+    if(typeF==='temporary'&&l.isPermanent) return false;
+    if(typeF==='permanent'&&!l.isPermanent) return false;
+    if(typeF==='no-permanent'&&l.isPermanent) return false;
+    return true;
+  });
+
+  if(!logs.length) {
+    document.getElementById('cl-content').innerHTML =
+      '<div style="text-align:center;padding:60px;color:var(--text2)">אין נתונים לתקופה הנבחרת</div>';
+    return;
+  }
+
+  const total=logs.length;
+  const totalMin=logs.reduce((a,l)=>a+(l.durationMinutes||0),0);
+  const uniqBr=new Set(logs.map(l=>l.branchName)).size;
+  const avgMin=total?totalMin/total:0;
+  const permCount=logs.filter(l=>l.isPermanent).length;
+  const longest=logs.reduce((mx,l)=>(l.durationMinutes||0)>(mx.durationMinutes||0)?l:mx,logs[0]);
+
+  const byBr={};
+  logs.forEach(l=>{
+    if(!byBr[l.branchName]) byBr[l.branchName]={count:0,min:0,bySt:{}};
+    byBr[l.branchName].count++; byBr[l.branchName].min+=l.durationMinutes||0;
+    if(!byBr[l.branchName].bySt[l.statusId]) byBr[l.branchName].bySt[l.statusId]={count:0,min:0,events:[]};
+    byBr[l.branchName].bySt[l.statusId].count++;
+    byBr[l.branchName].bySt[l.statusId].min+=l.durationMinutes||0;
+    byBr[l.branchName].bySt[l.statusId].events.push(l);
+  });
+  const top10=Object.entries(byBr).sort((a,b)=>b[1].count-a[1].count).slice(0,10);
+
+  const bySt={};
+  logs.forEach(l=>{
+    if(!bySt[l.statusId]) bySt[l.statusId]={count:0,min:0,branches:{}};
+    bySt[l.statusId].count++; bySt[l.statusId].min+=l.durationMinutes||0;
+    if(!bySt[l.statusId].branches[l.branchName]) bySt[l.statusId].branches[l.branchName]={count:0,min:0,events:[]};
+    bySt[l.statusId].branches[l.branchName].count++;
+    bySt[l.statusId].branches[l.branchName].min+=l.durationMinutes||0;
+    bySt[l.statusId].branches[l.branchName].events.push(l);
+  });
+  const topSt=Object.entries(bySt).sort((a,b)=>b[1].count-a[1].count);
+
+  const hourly=Array(24).fill(0);
+  logs.forEach(l=>{ const h=l.startedAt?.toDate?.()?.getHours(); if(h!==undefined) hourly[h]++; });
+  const maxH=Math.max(...hourly,1);
+
+  const byDay={};
+  logs.forEach(l=>{
+    const d=l.startedAt?.toDate?.()?.toLocaleDateString('he-IL')||'?';
+    if(!byDay[d]) byDay[d]={count:0,min:0,branches:{}};
+    byDay[d].count++; byDay[d].min+=l.durationMinutes||0;
+    if(!byDay[d].branches[l.branchName]) byDay[d].branches[l.branchName]={events:[]};
+    byDay[d].branches[l.branchName].events.push(l);
+  });
+  const dayRows=Object.entries(byDay).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,14);
+
+  const ins=[];
+  if(top10[0]) ins.push({t:'סניף הכי תכוף',b:`${top10[0][0]} — ${top10[0][1].count} פעמים (${clFmt(top10[0][1].min)})`});
+  const peakH=hourly.indexOf(Math.max(...hourly));
+  ins.push({t:'שעת שיא',b:`${peakH}:00–${peakH+1}:00 — ${hourly[peakH]} אירועים`});
+  if(avgMin>60) ins.push({t:'⚠️ זמן ממוצע גבוה',b:`${clFmt(avgMin)} בממוצע לאירוע`});
+  if(permCount>total*0.3) ins.push({t:'📌 שיעור קבועים גבוה',b:`${Math.round(permCount/total*100)}% מסומנים קבועים`});
+  if(longest?.durationMinutes>120) ins.push({t:'🕐 האירוע הארוך ביותר',b:`${longest.branchName} — ${clFmt(longest.durationMinutes)}`});
+
+  const colors=['#DA3633','#E3B341','#8957E5','#2EA043','#009DE0','#6A1B9A','#00838F','#37474F','#5D4037','#AD1457'];
+
+  // ── Daily: card-based drill (no tables) ──
+  const dailyHTML = dayRows.map((entry,di) => {
+    const date = entry[0], d = entry[1];
+    const brCount = Object.keys(d.branches).length;
+    const brDetail = Object.entries(d.branches).map(([bname,bd])=>{
+      const evRows = bd.events.map(ev=>{
+        const st=clStById(ev.statusId);
+        const t1=clFmtTs(ev.startedAt);
+        const t2=ev.endedAt ? clFmtTs(ev.endedAt) : '<span style="color:#DA3633">טרם נסגר</span>';
+        return `<div style="display:flex;gap:12px;align-items:center;padding:4px 8px;font-size:11px;border-bottom:1px solid rgba(48,54,61,.3)">
+          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${st.color};flex-shrink:0"></span>
+          <span style="flex:1">${st.label}</span>
+          <span style="color:var(--text2)">${t1}</span>
+          <span style="color:var(--text3)">→</span>
+          <span style="color:var(--text2)">${t2}</span>
+          <span style="font-weight:600;min-width:45px;text-align:left">${clFmt(ev.durationMinutes||0)}</span>
+        </div>`;
+      }).join('');
+      const bMin=bd.events.reduce((a,e)=>a+(e.durationMinutes||0),0);
+      return `<div style="margin:4px 0;border:1px solid rgba(0,157,224,.2);border-radius:6px;overflow:hidden">
+        <div style="background:rgba(0,157,224,.08);padding:6px 10px;font-size:12px;font-weight:700;color:var(--blue)">
+          📍 ${bname} · ${bd.events.length} אירועים · ${clFmt(bMin)}
+        </div>
+        <div style="background:rgba(13,17,23,.5)">
+          <div style="display:flex;gap:12px;padding:3px 8px;font-size:10px;color:var(--text3);font-weight:600;border-bottom:1px solid rgba(48,54,61,.3)">
+            <span style="flex:1">סטטוס</span><span style="min-width:80px">כניסה</span><span style="min-width:10px"></span><span style="min-width:80px">יציאה</span><span style="min-width:45px">משך</span>
+          </div>
+          ${evRows}
+        </div>
+      </div>`;
+    }).join('');
+    return `<div style="border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden">
+      <div class="cl-drill-header" data-di="${di}"
+        style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:var(--card);user-select:none"
+        onclick="clToggleDay(${di})">
+        <span id="clchd${di}" style="font-size:10px;color:var(--text3);transition:transform .2s">▶</span>
+        <span style="font-weight:600;flex:1">${date}</span>
+        <span style="font-size:12px;color:var(--text2)">${d.count} אירועים</span>
+        <span style="font-size:12px;color:var(--text2)">${brCount} סניפים</span>
+        <span style="font-size:12px;color:var(--text2)">${clFmt(d.min)}</span>
+        <span style="font-size:12px;color:var(--text3)">${clFmt(d.min/Math.max(d.count,1))} ממוצע</span>
+      </div>
+      <div id="cld${di}" style="display:none;padding:10px;background:rgba(13,17,23,.3)">
+        ${brDetail}
+      </div>
+    </div>`;
+  }).join('');
+
+  // ── Top 10: card-based ──
+  const top10HTML = top10.map(([name,d],i)=>{
+    const stDetail = Object.entries(d.bySt).sort((a,b)=>b[1].count-a[1].count).map(([sid,sd])=>{
+      const st=clStById(sid);
+      const evRows=sd.events.map(ev=>`<div style="display:flex;gap:10px;font-size:11px;padding:3px 8px;border-bottom:1px solid rgba(48,54,61,.3);color:var(--text2)">
+        <span>${clFmtTs(ev.startedAt)}</span><span style="font-weight:600">${clFmt(ev.durationMinutes||0)}</span><span style="color:var(--text3)">${ev.note||''}</span>
+      </div>`).join('');
+      return `<div style="margin:3px 0;border:1px solid rgba(255,255,255,.06);border-radius:5px;overflow:hidden">
+        <div style="background:rgba(255,255,255,.04);padding:5px 10px;font-size:12px;font-weight:600">
+          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${st.color};margin-left:5px"></span>${st.label} · ${sd.count} · ${clFmt(sd.min)}
+        </div>${evRows}</div>`;
+    }).join('');
+    return `<div style="border:1px solid var(--border);border-radius:8px;margin-bottom:6px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;background:var(--card)"
+        onclick="clToggleEl('clb${i}','clchb${i}')">
+        <span id="clchb${i}" style="font-size:10px;color:var(--text3);transition:transform .2s">▶</span>
+        <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${colors[i]}"></span>
+        <span style="font-weight:600;flex:1">${i+1}. ${name}</span>
+        <span style="font-size:12px;color:var(--text2)">${d.count} · ${clFmt(d.min)}</span>
+      </div>
+      <div id="clb${i}" style="display:none;padding:8px;background:rgba(13,17,23,.3)">${stDetail}</div>
+    </div>`;
+  }).join('');
+
+  // ── Status drill: card-based ──
+  const stHTML = topSt.map(([sid,data],si)=>{
+    const st=clStById(sid); const pct=Math.round(data.count/total*100);
+    const brDetail=Object.entries(data.branches).sort((a,b)=>b[1].count-a[1].count).map(([bname,bd])=>{
+      const evRows=bd.events.map(ev=>`<div style="display:flex;gap:10px;font-size:11px;padding:3px 8px;border-bottom:1px solid rgba(48,54,61,.3);color:var(--text2)">
+        <span>${clFmtTs(ev.startedAt)}</span><span style="font-weight:600">${clFmt(ev.durationMinutes||0)}</span><span>${ev.isPermanent?'📌':'⏱'}</span>
+      </div>`).join('');
+      return `<div style="margin:3px 0;border:1px solid rgba(255,255,255,.06);border-radius:5px;overflow:hidden">
+        <div style="background:rgba(255,255,255,.04);padding:5px 10px;font-size:12px;font-weight:600">📍 ${bname} · ${bd.count} · ${clFmt(bd.min)}</div>${evRows}</div>`;
+    }).join('');
+    return `<div style="border:1px solid var(--border);border-radius:8px;margin-bottom:6px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;background:var(--card)"
+        onclick="clToggleEl('cls${si}','clchs${si}')">
+        <span id="clchs${si}" style="font-size:10px;color:var(--text3);transition:transform .2s">▶</span>
+        <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${st.color}"></span>
+        <span style="font-weight:600;flex:1">${st.label}</span>
+        <span style="font-size:12px;color:var(--text2)">${data.count} · ${pct}% · ${clFmt(data.min)}</span>
+      </div>
+      <div id="cls${si}" style="display:none;padding:8px;background:rgba(13,17,23,.3)">${brDetail}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('cl-content').innerHTML = `
+    <div class="cl-an-grid">
+      <div class="cl-kpi"><div class="val" style="color:var(--blue)">${total}</div><div class="lbl">סה"כ אירועים</div></div>
+      <div class="cl-kpi"><div class="val" style="color:var(--green)">${uniqBr}</div><div class="lbl">סניפים שונים</div></div>
+      <div class="cl-kpi"><div class="val" style="color:var(--purple)">${clFmt(totalMin)}</div><div class="lbl">סה"כ זמן</div></div>
+      <div class="cl-kpi"><div class="val" style="color:var(--orange)">${clFmt(avgMin)}</div><div class="lbl">ממוצע לאירוע</div></div>
+      <div class="cl-kpi"><div class="val" style="color:var(--blue)">${permCount}</div><div class="lbl">קבועים</div><div class="sub">${total-permCount} זמניים</div></div>
+    </div>
+
+    <div class="cl-section">
+      <h3>📅 סיכום יומי — לחץ לפירוט</h3>
+      ${dailyHTML}
+    </div>
+
+    <div class="cl-two-col">
+      <div class="cl-section">
+        <h3>🏆 טופ 10 סניפים</h3>
+        ${top10HTML}
+      </div>
+      <div class="cl-section">
+        <h3>📊 פילוח לפי סטטוס</h3>
+        ${stHTML}
+      </div>
+    </div>
+
+    <div class="cl-section">
+      <h3>🕐 פעילות לפי שעה</h3>
+      <div class="cl-heatmap-grid">
+        ${hourly.map((v,h)=>{
+          const int=v/maxH;
+          const bg=int===0?'rgba(48,54,61,.3)':`rgba(218,54,51,${0.15+int*0.85})`;
+          const col=int>0.5?'#fff':'#8B949E';
+          return `<div class="cl-heatmap-cell" style="background:${bg};color:${col}" title="${h}:00 — ${v}">${v||''}</div>`;
+        }).join('')}
+      </div>
+      <div class="cl-heatmap-labels">${Array.from({length:24},(_,h)=>`<span>${h}</span>`).join('')}</div>
+    </div>
+
+    <div class="cl-section">
+      <h3>💡 תובנות</h3>
+      ${ins.map(i=>`<div class="cl-insight"><div class="i-title">${i.t}</div><div class="i-body">${i.b}</div></div>`).join('')}
+    </div>
+  `;
+};
+
+</script>
+
+<script>
+// Simple direct onclick functions — no delegation needed
+function clToggleEl(elId, chId) {
+  var el = document.getElementById(elId);
+  if (!el) return;
+  var open = el.style.display === 'none' || el.style.display === '';
+  el.style.display = open ? 'block' : 'none';
+  var ch = document.getElementById(chId);
+  if (ch) ch.style.transform = open ? 'rotate(90deg)' : '';
+}
+function clToggleDay(di) {
+  clToggleEl('cld' + di, 'clchd' + di);
 }
 </script>
 
