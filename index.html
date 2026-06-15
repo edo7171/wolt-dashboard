@@ -3121,7 +3121,7 @@ function tmUpdateFbCount(count) {
 }
 
 // ── KPIs ──────────────────────────────────────────────────
-function fmtTime(v) {
+function fmtDuration(v) {
   if (!v || v === 0) return '—';
   const m = Math.round(v);
   if (m < 60) return m + ' דקות';
@@ -3136,7 +3136,7 @@ function timeClass(v, threshGood = 30, threshWarn = 45) {
 function timePill(v) {
   if (!v || v === 0) return '<span class="time-pill neutral">—</span>';
   const cls = timeClass(v);
-  return `<span class="time-pill ${cls}">${fmtTime(v)}</span>`;
+  return `<span class="time-pill ${cls}">${fmtDuration(v)}</span>`;
 }
 function cmpTimeChg(curr, prev) {
   // For time: lower is better → decrease = good
@@ -3159,11 +3159,11 @@ function tmUpdateKpis(c, p) {
   s('tmKpiOrdersChg', p ? cmpOrdersChg(c.totalOrders, p.totalOrders) : '<span class="kpi-change flat">—</span>');
 
   const fEl = document.getElementById('tmKpiF');
-  if (fEl) { fEl.textContent = fmtTime(c.avgF); fEl.className = 'tm-time-val ' + timeClass(c.avgF); }
+  if (fEl) { fEl.textContent = fmtDuration(c.avgF); fEl.className = 'tm-time-val ' + timeClass(c.avgF); }
   const gEl = document.getElementById('tmKpiG');
-  if (gEl) { gEl.textContent = fmtTime(c.avgG); gEl.className = 'tm-time-val ' + timeClass(c.avgG); }
+  if (gEl) { gEl.textContent = fmtDuration(c.avgG); gEl.className = 'tm-time-val ' + timeClass(c.avgG); }
   const hEl = document.getElementById('tmKpiH');
-  if (hEl) { hEl.textContent = fmtTime(c.avgH); hEl.className = 'tm-time-val ' + timeClass(c.avgH); }
+  if (hEl) { hEl.textContent = fmtDuration(c.avgH); hEl.className = 'tm-time-val ' + timeClass(c.avgH); }
 
   s('tmKpiFChg', p ? cmpTimeChg(c.avgF, p.avgF) : '<span class="kpi-change flat">—</span>');
   s('tmKpiGChg', p ? cmpTimeChg(c.avgG, p.avgG) : '<span class="kpi-change flat">—</span>');
@@ -3268,7 +3268,7 @@ function tmBuildCharts(c) {
       indexAxis: 'y',
       plugins: {
         legend: { labels: { color: '#8B949E', font: { size: 11 } } },
-        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtTime(ctx.raw) } }
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtDuration(ctx.raw) } }
       }
     }
   });
@@ -3328,7 +3328,7 @@ function tmBuildCharts(c) {
   const totalSeg = seg1 + seg2 + seg3;
 
   const breakdownSubEl = document.getElementById('tmDonutBreakdownSub');
-  if (breakdownSubEl) breakdownSubEl.textContent = `סה"כ: ${fmtTime(avgH)} מקריאה עד מסירה`;
+  if (breakdownSubEl) breakdownSubEl.textContent = `סה"כ: ${fmtDuration(avgH)} מקריאה עד מסירה`;
 
   const brkLabels = [tmColF, 'המתנה לאיסוף (G−F)', 'נסיעת שליח (H−G)'];
   const brkData   = [seg1, seg2, seg3];
@@ -3341,7 +3341,7 @@ function tmBuildCharts(c) {
       return `
         <div style="background:var(--card2);border-radius:8px;padding:8px 10px;border-right:3px solid ${brkColors[i]}">
           <div style="font-size:10px;color:var(--text2);margin-bottom:2px">${lbl}</div>
-          <div style="font-size:18px;font-weight:900;color:var(--text);line-height:1.2">${fmtTime(brkData[i])}</div>
+          <div style="font-size:18px;font-weight:900;color:var(--text);line-height:1.2">${fmtDuration(brkData[i])}</div>
           <div style="font-size:10px;color:var(--text3)">${pct}% מהסה"כ</div>
         </div>`;
     }).join('');
@@ -3359,7 +3359,7 @@ function tmBuildCharts(c) {
       plugins: {
         legend: { position: 'bottom', labels: { color: '#8B949E', font: { size: 10 }, boxWidth: 12, padding: 10 } },
         tooltip: { callbacks: {
-          label: ctx => ` ${ctx.label}: ${fmtTime(ctx.raw)}`,
+          label: ctx => ` ${ctx.label}: ${fmtDuration(ctx.raw)}`,
           afterLabel: ctx => `${totalSeg ? ((ctx.raw/totalSeg)*100).toFixed(1) : 0}% מהסה"כ`
         }}
       }
@@ -3388,7 +3388,7 @@ function tmBuildCharts(c) {
       ...TM_CHART_DEFAULTS,
       plugins: {
         legend: { labels: { color: '#8B949E', font: { size: 11 } } },
-        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtTime(ctx.raw) } }
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtDuration(ctx.raw) } }
       }
     }
   });
@@ -3474,12 +3474,12 @@ function tmBuildRollingLine(c, sortedDates) {
       responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { labels: { color: '#8B949E', font: { size: 11 } } },
-        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtTime(ctx.raw) } }
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtDuration(ctx.raw) } }
       },
       scales: {
         x: { ticks: { color: '#8B949E', maxRotation: 45 }, grid: { color: 'rgba(48,54,61,.5)' } },
         y: {
-          ticks: { color: '#8B949E', callback: v => fmtTime(v) },
+          ticks: { color: '#8B949E', callback: v => fmtDuration(v) },
           grid: { color: 'rgba(48,54,61,.5)' }
         }
       }
@@ -3531,11 +3531,11 @@ function tmBuildBranchLine(c, sortedDates) {
       responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { labels: { color: '#8B949E', font: { size: 10 }, boxWidth: 12 } },
-        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtTime(ctx.raw) } }
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtDuration(ctx.raw) } }
       },
       scales: {
         x: { ticks: { color: '#8B949E', maxRotation: 45 }, grid: { color: 'rgba(48,54,61,.5)' } },
-        y: { ticks: { color: '#8B949E', callback: v => fmtTime(v) }, grid: { color: 'rgba(48,54,61,.5)' } }
+        y: { ticks: { color: '#8B949E', callback: v => fmtDuration(v) }, grid: { color: 'rgba(48,54,61,.5)' } }
       }
     }
   });
@@ -3560,7 +3560,7 @@ function tmSetTrendMetric(metric) {
 function tmBuildTrendChart() {
   const metricLabel = { avgF: tmColF, avgG: tmColG, avgH: tmColH, orders: 'הזמנות' };
   const isTimeMetric = tmTrendMetric !== 'orders';
-  const tooltipLabel = isTimeMetric ? ctx => metricLabel[tmTrendMetric] + ': ' + fmtTime(ctx.raw) : ctx => metricLabel[tmTrendMetric] + ': ' + ctx.raw;
+  const tooltipLabel = isTimeMetric ? ctx => metricLabel[tmTrendMetric] + ': ' + fmtDuration(ctx.raw) : ctx => metricLabel[tmTrendMetric] + ': ' + ctx.raw;
 
   // Build daily aggregated data for any date range
   function getDayMap(data) {
@@ -3781,11 +3781,11 @@ function tmBuildMonthly() {
     infoEl.innerHTML = `
       <strong>📅 ${tmSelectedMonth}</strong> — 
       ימים: ${currDays.length} | הזמנות: ${curr.totalOrders.toLocaleString('he-IL')} | 
-      ממוצע ${tmColF}: ${fmtTime(curr.avgF)} 
+      ממוצע ${tmColF}: ${fmtDuration(curr.avgF)} 
       &nbsp;|&nbsp;
       <strong>📅 ${prevLabel} (עד יום ${maxDay})</strong> — 
       ${prevHasData 
-        ? `הזמנות: ${prev.totalOrders.toLocaleString('he-IL')} | ממוצע ${tmColF}: ${fmtTime(prev.avgF)}`
+        ? `הזמנות: ${prev.totalOrders.toLocaleString('he-IL')} | ממוצע ${tmColF}: ${fmtDuration(prev.avgF)}`
         : '<span style="color:var(--orange)">⚠️ אין נתוני השוואה לחודש הקודם</span>'
       }
     `;
@@ -3808,9 +3808,9 @@ function tmBuildMonthly() {
     }
     kpiEl.innerHTML =
       mkKpi('סה"כ הזמנות', curr.totalOrders, prev.totalOrders, v => v.toLocaleString('he-IL')) +
-      mkKpi(tmColF, curr.avgF, prev.avgF, fmtTime, true) +
-      mkKpi(tmColG, curr.avgG, prev.avgG, fmtTime, true) +
-      mkKpi(tmColH, curr.avgH, prev.avgH, fmtTime, true);
+      mkKpi(tmColF, curr.avgF, prev.avgF, fmtDuration, true) +
+      mkKpi(tmColG, curr.avgG, prev.avgG, fmtDuration, true) +
+      mkKpi(tmColH, curr.avgH, prev.avgH, fmtDuration, true);
   }
 
   // Monthly table
@@ -3868,7 +3868,7 @@ function tmBuildMonthly() {
       ...TM_CHART_DEFAULTS,
       plugins: {
         legend: { labels: { color: '#8B949E', font: { size: 11 } } },
-        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtTime(ctx.raw) } }
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtDuration(ctx.raw) } }
       }
     }
   });
@@ -3900,7 +3900,7 @@ function tmBuildInsights(c, p) {
   const targetInsight = {
     icon: overallF <= 30 ? '🟢' : overallF <= 45 ? '🟡' : '🔴',
     title: `ממוצע כולל ${tmColF}`,
-    text: `${fmtTime(overallF)} — ${overallF <= 30 ? 'מצוין' : overallF <= 45 ? 'בסדר' : 'דרוש שיפור'} (יעד: עד 30 דקות)`
+    text: `${fmtDuration(overallF)} — ${overallF <= 30 ? 'מצוין' : overallF <= 45 ? 'בסדר' : 'דרוש שיפור'} (יעד: עד 30 דקות)`
   };
 
   // Branches above threshold
@@ -3914,8 +3914,8 @@ function tmBuildInsights(c, p) {
   };
 
   const insights = [
-    bestBranch  ? { icon: '🏆', title: 'מהיר ביותר', text: `${bestBranch.branch}: ${fmtTime(bestBranch.avgF)}` } : null,
-    worstBranch ? { icon: '🐢', title: 'איטי ביותר', text: `${worstBranch.branch}: ${fmtTime(worstBranch.avgF)}` } : null,
+    bestBranch  ? { icon: '🏆', title: 'מהיר ביותר', text: `${bestBranch.branch}: ${fmtDuration(bestBranch.avgF)}` } : null,
+    worstBranch ? { icon: '🐢', title: 'איטי ביותר', text: `${worstBranch.branch}: ${fmtDuration(worstBranch.avgF)}` } : null,
     targetInsight,
     trendInsight,
     slowInsight,
