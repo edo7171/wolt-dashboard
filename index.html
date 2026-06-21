@@ -514,7 +514,8 @@ tr.refunded-row td{background:rgba(137,87,229,.04)}
 body.auth-locked{overflow:hidden;}
 body.auth-locked #landingScreen,
 body.auth-locked #ordersApp,
-body.auth-locked #timesApp{
+body.auth-locked #timesApp,
+body.auth-locked #sandyTimesApp{
   visibility:hidden;
 }
 
@@ -587,6 +588,118 @@ body.auth-locked #timesApp{
 
 /* ── Hide global header when closures active ── */
 body.cl-active > header:first-of-type { display: none !important; }
+
+/* ══════════════════════════════════
+   SANDY TIMES DASHBOARD
+═══════════════════════════════════ */
+#sandyTimesApp{display:none;background:var(--bg);min-height:100vh;}
+#sandyTimesApp.active{display:block;}
+body.auth-locked #sandyTimesApp{visibility:hidden;}
+
+:root{
+  --sandy:#F97316;
+  --sandy-dim:rgba(249,115,22,0.15);
+  --teal:#14B8A6;
+  --teal-dim:rgba(20,184,166,0.15);
+}
+
+.landing-card.sandy-times::before{background:radial-gradient(circle at 50% 0%,rgba(249,115,22,.18),transparent 60%);}
+.landing-card.sandy-times:hover{border-color:var(--sandy);}
+.landing-card.sandy-times .landing-card-badge{background:var(--sandy-dim);color:var(--sandy);border:1px solid rgba(249,115,22,.3);}
+
+#sandyTimesApp header{position:sticky;top:0;z-index:200;background:rgba(13,17,23,0.97);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--border);
+  padding:0 20px;height:60px;display:flex;align-items:center;justify-content:space-between;}
+
+.st-kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px;}
+@media(max-width:1200px){.st-kpi-grid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:700px){.st-kpi-grid{grid-template-columns:repeat(2,1fr);}}
+
+.st-kpi-card{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:14px;transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden;}
+.st-kpi-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.3);}
+.st-kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0;}
+.st-kpi-card.sandy::before{background:var(--sandy);}
+.st-kpi-card.teal::before{background:var(--teal);}
+.st-kpi-card.blue::before{background:var(--blue);}
+.st-kpi-card.green::before{background:var(--green);}
+.st-kpi-card.purple::before{background:var(--purple);}
+.st-kpi-card.red::before{background:var(--red);}
+.st-kpi-card.orange::before{background:var(--orange);}
+
+.st-time-val{font-size:24px;font-weight:900;line-height:1;}
+.st-time-val.good{color:var(--green);}
+.st-time-val.warn{color:var(--orange);}
+.st-time-val.bad{color:var(--red);}
+.st-time-val.sandy{color:var(--sandy);}
+.st-time-val.teal{color:var(--teal);}
+
+.st-branch-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px;border:1px solid var(--border);}
+.st-table{width:100%;border-collapse:collapse;font-size:12px;min-width:600px;}
+.st-table thead{background:var(--card2);}
+.st-table th{padding:9px 11px;text-align:right;font-weight:600;color:var(--text2);
+  border-bottom:1px solid var(--border);cursor:pointer;white-space:nowrap;user-select:none;}
+.st-table th:hover{color:var(--text);}
+.st-table td{padding:8px 11px;text-align:right;border-bottom:1px solid rgba(48,54,61,.5);vertical-align:middle;}
+.st-table tr:last-child td{border-bottom:none;}
+.st-table tr:hover td{background:rgba(255,255,255,.02);}
+.st-table tr.st-total-row td{background:rgba(249,115,22,.06);font-weight:700;border-top:2px solid rgba(249,115,22,.25);}
+
+.st-pill{display:inline-flex;align-items:center;justify-content:center;
+  min-width:58px;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;}
+.st-pill.good{background:var(--green-dim);color:var(--green);}
+.st-pill.warn{background:var(--orange-dim);color:var(--orange);}
+.st-pill.bad{background:var(--red-dim);color:var(--red);}
+.st-pill.neutral{background:var(--sandy-dim);color:var(--sandy);}
+.st-pill.teal{background:var(--teal-dim);color:var(--teal);}
+
+.st-chart-section{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:18px;margin-bottom:14px;}
+.st-chart-title{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.st-charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:900px){.st-charts-grid{grid-template-columns:1fr;}}
+.st-chart-wrap{position:relative;height:260px;}
+.st-chart-wrap.tall{height:320px;}
+
+.st-insights-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:14px;}
+@media(max-width:1100px){.st-insights-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:600px){.st-insights-grid{grid-template-columns:1fr;}}
+.st-insight-card{background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:12px;display:flex;gap:9px;align-items:flex-start;}
+.st-insight-icon{font-size:22px;flex-shrink:0;}
+.st-insight-title{font-size:11px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.st-insight-text{font-size:11px;color:var(--text2);line-height:1.5;}
+
+.st-trend-mode-btn{padding:6px 16px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;
+  border:1px solid var(--border);background:var(--card2);color:var(--text2);transition:all .2s;}
+.st-trend-mode-btn:hover{border-color:var(--sandy);color:var(--sandy);}
+.st-trend-mode-btn.active{background:var(--sandy-dim);border-color:var(--sandy);color:var(--sandy);}
+
+.st-monthly-section{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:18px;margin-bottom:14px;}
+.st-month-btn{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;
+  border:1px solid var(--border);background:var(--card2);color:var(--text2);transition:all .2s;}
+.st-month-btn:hover{border-color:var(--sandy);color:var(--sandy);}
+.st-month-btn.active{background:var(--sandy-dim);border-color:var(--sandy);color:var(--sandy);}
+
+.st-badge-pos{background:var(--green-dim);color:var(--green);border:1px solid rgba(46,160,67,.3);
+  font-size:11px;padding:2px 8px;border-radius:12px;font-weight:700;}
+.st-badge-neg{background:var(--red-dim);color:var(--red);border:1px solid rgba(218,54,51,.3);
+  font-size:11px;padding:2px 8px;border-radius:12px;font-weight:700;}
+.st-badge-flat{background:var(--card2);color:var(--text3);border:1px solid var(--border);
+  font-size:11px;padding:2px 8px;border-radius:12px;font-weight:700;}
+
+@media(max-width:700px){
+  #sandyTimesApp .main{padding:12px;}
+  .st-kpi-grid{gap:8px;}
+  .st-kpi-card{padding:10px;}
+  .st-time-val{font-size:20px;}
+  .st-chart-wrap{height:200px;}
+  .st-chart-wrap.tall{height:250px;}
+  .st-chart-section{padding:12px;}
+  #sandyTimesApp header{height:auto;padding:10px 14px;flex-wrap:wrap;gap:8px;}
+  #sandyTimesApp header .hdr-right{flex-wrap:wrap;gap:6px;}
+}
 
 /* ── Closures card ── */
 .landing-card.closures::before{background:radial-gradient(circle at 50% 0%,rgba(218,54,51,.15),transparent 60%);}
@@ -726,6 +839,15 @@ body.auth-locked #closuresApp{visibility:hidden;}
       <div class="landing-card-desc">דשבורד זמני שילוח לפי סניף —<br>ממוצעים, טרנדים ומצטבר חודשי</div>
       <div class="landing-card-badge">Delivery Times</div>
     </div>
+
+    <!-- Card: Sandy Times (3rd) -->
+    <div class="landing-card sandy-times" onclick="showApp('sandyTimes')">
+      <div class="landing-card-icon">🥪</div>
+      <div class="landing-card-title">זמנים סנדי</div>
+      <div class="landing-card-desc">דשבורד זמני שילוח Sandy —<br>ממוצעים לפי סניף, טרנדים ומצטבר חודשי</div>
+      <div class="landing-card-badge">Sandy Delivery Times</div>
+    </div>
+
     <!-- Card: Closures Analytics -->
     <div class="landing-card closures" onclick="showApp('closures')">
       <div class="landing-card-icon">🏪</div>
@@ -2441,9 +2563,13 @@ function showApp(app) {
   document.getElementById('ordersApp').classList.toggle('active', app === 'orders');
   document.getElementById('timesApp').classList.toggle('active', app === 'times');
   document.getElementById('closuresApp').classList.toggle('active', app === 'closures');
+  document.getElementById('sandyTimesApp').classList.toggle('active', app === 'sandyTimes');
 
   if (app === 'times') {
     if (!tmAllData.length) { tmLoadFromSheets(); } else { tmRefreshAll(); }
+  }
+  if (app === 'sandyTimes') {
+    if (!stAllData.length) { stLoadFromSheets(); } else { stRefreshAll(); }
   }
   if (app === 'orders') {
     if (allData.length) refreshAll();
@@ -4360,6 +4486,275 @@ if (missingConfig) {
 
 
 <!-- ══════════════════════════════════
+     SANDY TIMES APP
+══════════════════════════════════ -->
+<div id="sandyTimesApp">
+
+  <div class="loading-overlay" id="stLoadingOverlay">
+    <div class="spinner"></div>
+    <div style="color:var(--text2);font-size:13px">טוען נתוני זמנים סנדי...</div>
+  </div>
+
+  <header>
+    <div class="hdr-brand">
+      <button class="back-btn" onclick="showApp('landing')">← חזור</button>
+      &nbsp;
+      <span class="logo">🥪</span>
+      <div>
+        <h1>דשבורד זמני שילוח — Sandy</h1>
+        <small id="stHdrSub">Sandy — Delivery Times</small>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <span id="stColNames" style="font-size:11px;color:var(--text2);"></span>
+      <button class="btn btn-primary" onclick="stLoadFromSheets()"
+        style="background:var(--sandy-dim);border-color:var(--sandy);color:var(--sandy)">
+        <span class="dot" id="stSyncDot"></span>🔄 סנכרן גיליון 5
+      </button>
+      <button class="btn btn-secondary" onclick="document.getElementById('stFileInput').click()">
+        📂 טען קובץ ידני
+      </button>
+      <input type="file" id="stFileInput" accept=".xlsx,.xls,.csv" hidden onchange="stLoadFile(this)">
+    </div>
+  </header>
+
+  <div id="stToast" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:#1a2a3a;border:1px solid var(--sandy);color:var(--sandy);
+    padding:10px 20px;border-radius:8px;font-size:13px;z-index:9999;
+    max-width:90%;text-align:center"></div>
+
+  <div class="main">
+
+    <!-- DATE NAV -->
+    <div class="date-nav" id="stDateNav">
+      <span class="date-nav-title">📅 הצג:</span>
+      <div class="preset-btns">
+        <button class="preset-btn" id="stPreYesterday" onclick="stApplyPreset('yesterday')">📆 אתמול</button>
+        <button class="preset-btn" id="stPreCurWeek"   onclick="stApplyPreset('curweek')">📅 שבוע נוכחי</button>
+        <button class="preset-btn" id="stPrePrevWeek"  onclick="stApplyPreset('prevweek')">⏪ שבוע קודם</button>
+        <button class="preset-btn" id="stPreAll"       onclick="stApplyPreset('all')">🗂️ כל הנתונים</button>
+        <button class="preset-btn" id="stPreCustom"    onclick="stApplyPreset('custom')">🗓️ בחירה ידנית</button>
+      </div>
+      <div class="date-picker-wrap" id="stCustomPickers" style="display:none">
+        <span style="font-size:11px;color:var(--text2)">מ-</span>
+        <input type="date" class="dp-input" id="stDpFrom" onchange="stOnCustomRange()">
+        <span class="date-picker-sep">—</span>
+        <span style="font-size:11px;color:var(--text2)">עד</span>
+        <input type="date" class="dp-input" id="stDpTo" onchange="stOnCustomRange()">
+      </div>
+      <span class="range-badge" id="stRangeBadge" style="display:none"></span>
+      <div style="flex:1"></div>
+      <div class="date-nav-sep"></div>
+      <div class="compare-section">
+        <span class="compare-label">📊 השווה:</span>
+        <button class="compare-preset" id="stCmpNone"     onclick="stApplyCompare('')">ללא</button>
+        <button class="compare-preset" id="stCmpYest"     onclick="stApplyCompare('yesterday')">אתמול</button>
+        <button class="compare-preset" id="stCmpPrevWeek" onclick="stApplyCompare('prevweek')">שבוע קודם</button>
+        <button class="compare-preset" id="stCmpCustom"   onclick="stApplyCompare('custom')">בחירה…</button>
+        <input type="date" class="dp-input" id="stDpCompare" style="display:none" onchange="stOnCompareDate()">
+      </div>
+    </div>
+
+    <!-- BRANCH FILTER -->
+    <div class="filter-bar" id="stFilterBar">
+      <span class="fb-label">🔍 סניף:</span>
+      <select class="fb-select" id="stFbBranch" onchange="stApplyFilters()" style="min-width:180px">
+        <option value="">כל הסניפים</option>
+      </select>
+      <button class="fb-reset" onclick="stResetFilters()">✕ אפס</button>
+      <span class="fb-count" id="stFbCount"></span>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div class="st-kpi-grid mb16" id="stKpiGrid">
+      <div class="st-kpi-card blue">
+        <div class="kpi-top"><span class="kpi-label">סה"כ הזמנות</span><span class="kpi-icon">📦</span></div>
+        <div class="kpi-value" id="stKpiOrders">—</div>
+        <div class="kpi-sub">הזמנות בטווח</div>
+        <span class="kpi-change flat" id="stKpiOrdersChg">—</span>
+      </div>
+      <div class="st-kpi-card sandy">
+        <div class="kpi-top"><span class="kpi-label" id="stLblF">זמן ממוצע F</span><span class="kpi-icon">⏱️</span></div>
+        <div class="st-time-val" id="stKpiF">—</div>
+        <div class="kpi-sub">ממוצע כלל הסניפים</div>
+        <span class="kpi-change flat" id="stKpiFChg">—</span>
+      </div>
+      <div class="st-kpi-card teal">
+        <div class="kpi-top"><span class="kpi-label" id="stLblG">זמן ממוצע G</span><span class="kpi-icon">🕐</span></div>
+        <div class="st-time-val" id="stKpiG">—</div>
+        <div class="kpi-sub">ממוצע כלל הסניפים</div>
+        <span class="kpi-change flat" id="stKpiGChg">—</span>
+      </div>
+      <div class="st-kpi-card purple">
+        <div class="kpi-top"><span class="kpi-label" id="stLblH">זמן ממוצע H</span><span class="kpi-icon">🚴</span></div>
+        <div class="st-time-val" id="stKpiH">—</div>
+        <div class="kpi-sub">ממוצע כלל הסניפים</div>
+        <span class="kpi-change flat" id="stKpiHChg">—</span>
+      </div>
+      <div class="st-kpi-card green">
+        <div class="kpi-top"><span class="kpi-label" id="stLblI">זמן ממוצע I</span><span class="kpi-icon">📍</span></div>
+        <div class="st-time-val" id="stKpiI">—</div>
+        <div class="kpi-sub">ממוצע כלל הסניפים</div>
+        <span class="kpi-change flat" id="stKpiIChg">—</span>
+      </div>
+    </div>
+
+    <!-- INSIGHTS -->
+    <div class="st-insights-grid mb16" id="stInsightsGrid"></div>
+
+    <!-- BRANCH TABLE -->
+    <div class="st-chart-section mb16">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+        <div>
+          <div class="st-chart-title" style="margin-bottom:0">📋 ביצועי זמנים לפי סניף</div>
+          <div style="font-size:11px;color:var(--text2)" id="stTableSub">סה"כ לפי טווח הנבחר</div>
+        </div>
+        <button class="export-btn" onclick="stExportCSV()">⬇️ ייצא CSV</button>
+      </div>
+      <div class="st-branch-wrap">
+        <table class="st-table">
+          <thead>
+            <tr>
+              <th onclick="stSortBranch('branch')">סניף ↕</th>
+              <th onclick="stSortBranch('orders')">הזמנות ↕</th>
+              <th id="stThF" onclick="stSortBranch('avgF')">זמן F ↕</th>
+              <th id="stThG" onclick="stSortBranch('avgG')">זמן G ↕</th>
+              <th id="stThH" onclick="stSortBranch('avgH')">זמן H ↕</th>
+              <th id="stThI" onclick="stSortBranch('avgI')">זמן I ↕</th>
+              <th>השוואה F</th>
+            </tr>
+          </thead>
+          <tbody id="stBranchTbody">
+            <tr><td colspan="7" class="nodata-msg">⏳ טוען נתונים… לחץ על "סנכרן גיליון 5"</td></tr>
+          </tbody>
+          <tfoot id="stBranchTfoot"></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW 1: Branch bar -->
+    <div class="st-charts-grid mb16">
+      <div class="st-chart-section" style="grid-column:1/-1">
+        <div class="st-chart-title">📊 ממוצע זמנים לפי סניף (Top 15)</div>
+        <div class="st-chart-wrap tall"><canvas id="stChartBranch"></canvas></div>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW 2: Donut + tier -->
+    <div class="st-charts-grid mb16">
+      <div class="st-chart-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+          <div class="st-chart-title" style="margin-bottom:0">🍩 התפלגות סניפים לפי מהירות</div>
+          <div id="stDonutTierLegend" style="font-size:11px;color:var(--text2);"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center">
+          <div style="position:relative;height:240px"><canvas id="stChartTierDonut"></canvas></div>
+          <div id="stTierStats" style="min-width:130px;display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+      </div>
+      <div class="st-chart-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+          <div class="st-chart-title" style="margin-bottom:0">🥧 פירוק זמן מסירה ממוצע</div>
+          <div id="stDonutBreakdownSub" style="font-size:11px;color:var(--text2);"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center">
+          <div style="position:relative;height:240px"><canvas id="stChartBreakdownDonut"></canvas></div>
+          <div id="stBreakdownStats" style="min-width:130px;display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW 3: Line trend + top branches -->
+    <div class="st-charts-grid mb16">
+      <div class="st-chart-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+          <div class="st-chart-title" style="margin-bottom:0">📈 מגמת זמנים + ממוצע נע 7 ימים</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap">
+            <button class="preset-btn active" id="stLineMetF" onclick="stSetLineMetric('avgF')">זמן F</button>
+            <button class="preset-btn"        id="stLineMetG" onclick="stSetLineMetric('avgG')">זמן G</button>
+            <button class="preset-btn"        id="stLineMetH" onclick="stSetLineMetric('avgH')">זמן H</button>
+            <button class="preset-btn"        id="stLineMetI" onclick="stSetLineMetric('avgI')">זמן I</button>
+          </div>
+        </div>
+        <div class="st-chart-wrap tall"><canvas id="stChartRollingLine"></canvas></div>
+      </div>
+      <div class="st-chart-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+          <div class="st-chart-title" style="margin-bottom:0">🏪 טרנד זמן — Top 5 סניפים</div>
+          <span id="stTop5Sub" style="font-size:11px;color:var(--text2)"></span>
+        </div>
+        <div class="st-chart-wrap tall"><canvas id="stChartBranchLine"></canvas></div>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW 4: Trend + orders -->
+    <div class="st-charts-grid mb16">
+      <div class="st-chart-section">
+        <div class="st-chart-title">📈 מגמת כל הזמנים לאורך זמן</div>
+        <div class="st-chart-wrap"><canvas id="stChartTrend"></canvas></div>
+      </div>
+      <div class="st-chart-section">
+        <div class="st-chart-title">📦 הזמנות לפי יום</div>
+        <div class="st-chart-wrap"><canvas id="stChartOrders"></canvas></div>
+      </div>
+    </div>
+
+    <!-- TRENDS COMPARISON -->
+    <div class="st-chart-section mb16" id="stTrendsSection">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+        <div class="st-chart-title" style="margin-bottom:0">📉 טרנדים והשוואות</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="st-trend-mode-btn active" id="stTrendDvD" onclick="stSetTrendMode('dvd')">יום מול יום שבוע שעבר</button>
+          <button class="st-trend-mode-btn" id="stTrendWvW" onclick="stSetTrendMode('wvw')">שבוע מול שבוע</button>
+        </div>
+      </div>
+      <div id="stTrendRangeLabel" style="font-size:11px;color:var(--text2);margin-bottom:12px;"></div>
+      <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+        <button class="preset-btn active" id="stTrMetF" onclick="stSetTrendMetric('avgF')">זמן F</button>
+        <button class="preset-btn" id="stTrMetG" onclick="stSetTrendMetric('avgG')">זמן G</button>
+        <button class="preset-btn" id="stTrMetH" onclick="stSetTrendMetric('avgH')">זמן H</button>
+        <button class="preset-btn" id="stTrMetI" onclick="stSetTrendMetric('avgI')">זמן I</button>
+        <button class="preset-btn" id="stTrMetOrders" onclick="stSetTrendMetric('orders')">הזמנות</button>
+      </div>
+      <div class="st-chart-wrap tall"><canvas id="stChartTrendComp"></canvas></div>
+    </div>
+
+    <!-- MONTHLY CUMULATIVE -->
+    <div class="st-monthly-section mb16" id="stMonthlySection">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+        <div class="st-chart-title" style="margin-bottom:0">📆 מצטבר חודשי לפי סניף</div>
+        <div id="stMonthButtons" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:0"></div>
+      </div>
+      <div id="stMonthCompareInfo" style="font-size:11px;color:var(--text2);margin-bottom:12px;background:var(--card2);border-radius:8px;padding:8px 12px;"></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px" id="stMonthlyKpiRow"></div>
+      <div class="st-branch-wrap mb16">
+        <table class="st-table">
+          <thead>
+            <tr>
+              <th>סניף</th>
+              <th>הזמנות</th>
+              <th id="stMonthThF">זמן F</th>
+              <th id="stMonthThG">זמן G</th>
+              <th id="stMonthThH">זמן H</th>
+              <th id="stMonthThI">זמן I</th>
+              <th>F החודש הקודם</th>
+              <th>שינוי F</th>
+            </tr>
+          </thead>
+          <tbody id="stMonthlyTbody">
+            <tr><td colspan="8" class="nodata-msg">בחר חודש לצפייה</td></tr>
+          </tbody>
+          <tfoot id="stMonthlyTfoot"></tfoot>
+        </table>
+      </div>
+      <div class="st-chart-wrap tall"><canvas id="stChartMonthly"></canvas></div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /sandyTimesApp -->
+
+
+<!-- ══════════════════════════════════
      CLOSURES ANALYTICS APP
 ══════════════════════════════════ -->
 <div id="closuresApp">
@@ -4719,6 +5114,898 @@ function clToggleEl(elId, chId) {
 function clToggleDay(di) {
   clToggleEl('cld' + di, 'clchd' + di);
 }
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  SANDY TIMES DASHBOARD — DATA & LOGIC
+// ═══════════════════════════════════════════════════════════
+// !! SET YOUR SHEET 5 GID BELOW !!
+// Open your Google Sheet → click Sheet 5 tab → look at URL: ...gid=XXXXXXXX
+const GOOGLE_SHEET5_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTAtc0vyPuariz_HuCrOWuZmjDc2CbUpvZxWemBbNfjvYNMLFXG1nBRWZQSQwu1Cl5Yi2ZY8nuL2s52/pub?gid=1337571500&single=true&output=csv';
+
+let stAllData = [];
+let stColF = 'זמן F', stColG = 'זמן G', stColH = 'זמן H', stColI = 'זמן I';
+
+let stViewFrom = '', stViewTo = '', stViewPreset = 'yesterday';
+let stCmpFrom = '', stCmpTo = '', stCmpPreset = '';
+let stFbBranch = '';
+let stSortCol = 'orders', stSortDir = -1;
+let stTrendMode = 'dvd';
+let stTrendMetric = 'avgF';
+let stLineMetric = 'avgF';
+let stSelectedMonth = '';
+let stCharts = {};
+
+// ── Column map (flexible, supports 4 time columns) ──
+const ST_COL_MAP = {
+  date:   ['תאריך','Date','date','Time Received Date','יום','day','created_at','order_date'],
+  branch: ['Venue Name','סניף','Branch','venue_name','מסעדה','Restaurant','store','חנות','שם סניף','מיקום'],
+  orders: ['Count','הזמנות','Orders','כמות','order_count','סה"כ הזמנות','Orders Count','Total','# הזמנות'],
+  colF:   ['כמה זמן לפני היציאה מהתנור קראו','קריאה לסנדי','קריאה','זמן קריאה','ממוצע F','F','col_f','עמודה F','זמן F'],
+  colG:   ['מקריאה עד איסוף','זמן איסוף','קריאה עד איסוף','ממוצע G','G','col_g','עמודה G','זמן G'],
+  colH:   ['מקריאה עד מסירה','זמן מסירה','קריאה עד מסירה','ממוצע H','H','col_h','עמודה H','זמן H'],
+  colI:   ['זמן נוסף','ממוצע I','I','col_i','עמודה I','זמן I','נסיעה','courier']
+};
+
+function stFindCol(headers, keys) {
+  if (!keys?.length) return null;
+  for (const k of keys) {
+    const f = headers.find(h => String(h).trim() === k.trim());
+    if (f !== undefined) return f;
+  }
+  for (const k of keys) {
+    const f = headers.find(h => String(h).trim().toLowerCase() === k.trim().toLowerCase());
+    if (f !== undefined) return f;
+  }
+  for (const k of keys) {
+    const kl = k.toLowerCase();
+    const f = headers.find(h => String(h).toLowerCase().includes(kl) || kl.includes(String(h).toLowerCase()));
+    if (f !== undefined) return f;
+  }
+  return null;
+}
+
+let ST_DATE_FMT = 'dmy';
+
+function stDetectDateFormat(raw) {
+  let dmy = 0, mdy = 0;
+  const dateHdr = stFindCol(Object.keys(raw[0] || {}), ST_COL_MAP.date);
+  raw.slice(0,30).forEach(r => {
+    const v = String(dateHdr ? (r[dateHdr]||'') : (r[Object.keys(r)[0]]||'')).trim();
+    const m = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if (m) {
+      const a=parseInt(m[1]),b=parseInt(m[2]);
+      if (a>12&&b<=12) dmy++;
+      else if (b>12&&a<=12) mdy++;
+    }
+  });
+  if (dmy>0&&mdy===0) return 'dmy';
+  if (mdy>0&&dmy===0) return 'mdy';
+  return 'dmy';
+}
+
+function stParseDate(v) {
+  if (!v && v!==0) return null;
+  if (v instanceof Date) return isNaN(v.getTime())?null:v;
+  if (typeof v==='number') {
+    const d=new Date((v-25569)*86400*1000);
+    return isNaN(d)?null:d;
+  }
+  const s=String(v).trim();
+  // ISO
+  const iso=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) { const d=new Date(parseInt(iso[1]),parseInt(iso[2])-1,parseInt(iso[3])); return isNaN(d)?null:d; }
+  // D/M/Y or M/D/Y
+  const sl=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (sl) {
+    let day,mon,yr;
+    if (ST_DATE_FMT==='mdy') { mon=parseInt(sl[1])-1;day=parseInt(sl[2]);yr=parseInt(sl[3]); }
+    else { day=parseInt(sl[1]);mon=parseInt(sl[2])-1;yr=parseInt(sl[3]); }
+    if (yr<100) yr+=yr<50?2000:1900;
+    const d=new Date(yr,mon,day);
+    return isNaN(d)?null:d;
+  }
+  const d=new Date(s);
+  return isNaN(d)?null:d;
+}
+
+function stParseRows(raw) {
+  if (!raw.length) return [];
+  const headers = Object.keys(raw[0]);
+  const firstRow = raw[0];
+  ST_DATE_FMT = stDetectDateFormat(raw);
+
+  // Date col
+  let dateCol = stFindCol(headers, ST_COL_MAP.date);
+  if (!dateCol) {
+    for (const h of headers) {
+      const v=firstRow[h];
+      if (v!==undefined&&v!=='') { const d=stParseDate(v); if(d&&d.getFullYear()>=2020&&d.getFullYear()<=2030){dateCol=h;break;} }
+    }
+    dateCol = dateCol || headers[0];
+  }
+  // Branch col
+  let branchCol = stFindCol(headers, ST_COL_MAP.branch);
+  if (!branchCol) {
+    for (const h of headers) {
+      if (h===dateCol) continue;
+      const v=firstRow[h];
+      if (v&&isNaN(Number(v))&&stParseDate(v)===null&&String(v).length>1){branchCol=h;break;}
+    }
+    branchCol = branchCol || headers[1];
+  }
+  let ordersCol = stFindCol(headers, ST_COL_MAP.orders)
+    || headers.find(h=>{ const n=parseFloat(firstRow[h]); return n>0&&n<10000&&h!==dateCol&&h!==branchCol; })
+    || null;
+
+  let colFH = stFindCol(headers, ST_COL_MAP.colF) || headers[4] || null;
+  let colGH = stFindCol(headers, ST_COL_MAP.colG) || headers[5] || null;
+  let colHH = stFindCol(headers, ST_COL_MAP.colH) || headers[6] || null;
+  let colIH = stFindCol(headers, ST_COL_MAP.colI) || headers[7] || null;
+
+  const shortName = s => {
+    if (!s) return s;
+    if (s.includes('לפני היציאה')||s.includes('קריאה ל')) return 'קריאה לסנדי';
+    if (s.includes('עד איסוף')) return 'קריאה → איסוף';
+    if (s.includes('עד מסירה')) return 'קריאה → מסירה';
+    return s.length>22 ? s.substr(0,22)+'…' : s;
+  };
+  if (colFH) stColF=shortName(String(colFH));
+  if (colGH) stColG=shortName(String(colGH));
+  if (colHH) stColH=shortName(String(colHH));
+  if (colIH) stColI=shortName(String(colIH));
+
+  const s=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  s('stLblF',stColF); s('stLblG',stColG); s('stLblH',stColH); s('stLblI',stColI);
+  s('stThF',stColF+' ↕'); s('stThG',stColG+' ↕'); s('stThH',stColH+' ↕'); s('stThI',stColI+' ↕');
+  s('stMonthThF',stColF); s('stMonthThG',stColG); s('stMonthThH',stColH); s('stMonthThI',stColI);
+  s('stColNames',stColF+' | '+stColG+' | '+stColH+(colIH?' | '+stColI:''));
+
+  const parseTime = v => {
+    if (!v&&v!==0) return 0;
+    const n=parseFloat(v);
+    if (!isNaN(n)) return n;
+    const ts=String(v).trim();
+    const hms=ts.match(/^(\d+):(\d{2}):(\d{2})$/);
+    if (hms) return parseInt(hms[1])*60+parseInt(hms[2])+parseInt(hms[3])/60;
+    const ms=ts.match(/^(\d+):(\d{2})$/);
+    if (ms) return parseInt(ms[1])+parseInt(ms[2])/60;
+    return 0;
+  };
+
+  return raw.map(r => {
+    const rawDate = dateCol?r[dateCol]:(r[headers[0]]||'');
+    const dt = stParseDate(rawDate);
+    const dateStr = dt ? fmtDate(dt) : '';
+    if (!dateStr) return null;
+    let branch = String(branchCol?r[branchCol]||'':'').trim();
+    if (branch.includes(' | ')) { const p=branch.split(' | ').map(x=>x.trim()).filter(Boolean); branch=p[p.length-1]||p[0]||branch; }
+    if (!branch) branch='לא ידוע';
+    const ordersRaw=ordersCol?r[ordersCol]:'';
+    const orders=ordersRaw!==''?(parseFloat(ordersRaw)||0):1;
+    const avgF=parseTime(colFH?r[colFH]:0);
+    const avgG=parseTime(colGH?r[colGH]:0);
+    const avgH=parseTime(colHH?r[colHH]:0);
+    const avgI=parseTime(colIH?r[colIH]:0);
+    return {dateStr,branch,orders,avgF,avgG,avgH,avgI};
+  }).filter(r=>r&&r.branch&&r.dateStr);
+}
+
+// ── Data loading ──
+async function stLoadFromSheets() {
+  if (GOOGLE_SHEET5_CSV_URL.includes('SET_SHEET5_GID_HERE')) {
+    alert('⚠️ יש להגדיר את ה-GID של גיליון 5 ב-GOOGLE_SHEET5_CSV_URL בקוד. ניתן גם לטעון קובץ ידני.');
+    return;
+  }
+  stShowLoading(true);
+  try {
+    const response = await fetch(GOOGLE_SHEET5_CSV_URL);
+    if (!response.ok) throw new Error('HTTP '+response.status);
+    const csvText = await response.text();
+    const wb = XLSX.read(csvText,{type:'string'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const raw = XLSX.utils.sheet_to_json(ws,{defval:''});
+    stAllData = stParseRows(raw);
+    stShowToast(`✅ נטענו ${stAllData.length} שורות מגיליון 5`);
+    stRefreshAll();
+  } catch(e) {
+    console.error('[ST] Load error:', e);
+    alert('שגיאה בטעינת גיליון 5: '+e.message);
+  }
+  stShowLoading(false);
+}
+
+function stLoadFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  stShowLoading(true);
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result,{type:'array'});
+      // Sheet 5 = index 4
+      const sheetIdx = wb.SheetNames.length > 4 ? 4 : wb.SheetNames.length-1;
+      const ws = wb.Sheets[wb.SheetNames[sheetIdx]];
+      const raw = XLSX.utils.sheet_to_json(ws,{defval:''});
+      stAllData = stParseRows(raw);
+      stShowToast(`✅ נטענו ${stAllData.length} שורות מגיליון ${sheetIdx+1}`);
+      stRefreshAll();
+    } catch(err) {
+      alert('שגיאה: '+err.message);
+    }
+    stShowLoading(false);
+    input.value='';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── Date range helpers (reuse tmParseDate pattern) ──
+function stGetCurrentWeekRange() {
+  const now=new Date();
+  const day=now.getDay();
+  const sun=new Date(now); sun.setDate(now.getDate()-day); sun.setHours(0,0,0,0);
+  const sat=new Date(sun); sat.setDate(sun.getDate()+6);
+  return {from:fmtDate(sun),to:fmtDate(sat)};
+}
+function stGetPrevWeekRange() {
+  const now=new Date();
+  const day=now.getDay();
+  const prevSun=new Date(now); prevSun.setDate(now.getDate()-day-7); prevSun.setHours(0,0,0,0);
+  const prevSat=new Date(prevSun); prevSat.setDate(prevSun.getDate()+6);
+  return {from:fmtDate(prevSun),to:fmtDate(prevSat)};
+}
+function stGetYesterday() {
+  const d=new Date(); d.setDate(d.getDate()-1);
+  return fmtDate(d);
+}
+
+function stApplyPreset(preset) {
+  stViewPreset=preset;
+  ['stPreYesterday','stPreCurWeek','stPrePrevWeek','stPreAll','stPreCustom'].forEach(id=>{
+    document.getElementById(id)?.classList.remove('active');
+  });
+  document.getElementById('stPre'+preset.charAt(0).toUpperCase()+preset.slice(1))?.classList.add('active');
+  const cp=document.getElementById('stCustomPickers');
+  if (cp) cp.style.display=preset==='custom'?'flex':'none';
+  if (preset==='yesterday') {
+    const y=stGetYesterday();
+    stViewFrom=y; stViewTo=y;
+  } else if (preset==='curweek') {
+    const r=stGetCurrentWeekRange(); stViewFrom=r.from; stViewTo=r.to;
+  } else if (preset==='prevweek') {
+    const r=stGetPrevWeekRange(); stViewFrom=r.from; stViewTo=r.to;
+  } else if (preset==='all') {
+    stViewFrom=''; stViewTo='';
+  }
+  stUpdateRangeBadge();
+  stRefreshAll();
+}
+function stOnCustomRange() {
+  stViewFrom=document.getElementById('stDpFrom')?.value||'';
+  stViewTo=document.getElementById('stDpTo')?.value||'';
+  if (stViewFrom&&stViewTo) { stUpdateRangeBadge(); stRefreshAll(); }
+}
+function stApplyCompare(preset) {
+  stCmpPreset=preset;
+  ['stCmpNone','stCmpYest','stCmpPrevWeek','stCmpCustom'].forEach(id=>{
+    document.getElementById(id)?.classList.remove('active');
+  });
+  const btnId = preset===''?'stCmpNone':preset==='yesterday'?'stCmpYest':preset==='prevweek'?'stCmpPrevWeek':'stCmpCustom';
+  document.getElementById(btnId)?.classList.add('active');
+  const dc=document.getElementById('stDpCompare');
+  if (dc) dc.style.display=preset==='custom'?'inline-block':'none';
+  if (preset==='') { stCmpFrom=''; stCmpTo=''; }
+  else if (preset==='yesterday') { const y=stGetYesterday(); stCmpFrom=y; stCmpTo=y; }
+  else if (preset==='prevweek') { const r=stGetPrevWeekRange(); stCmpFrom=r.from; stCmpTo=r.to; }
+  stRefreshAll();
+}
+function stOnCompareDate() {
+  const v=document.getElementById('stDpCompare')?.value||'';
+  stCmpFrom=v; stCmpTo=v;
+  if (v) stRefreshAll();
+}
+function stUpdateRangeBadge() {
+  const b=document.getElementById('stRangeBadge');
+  if (!b) return;
+  if (stViewFrom||stViewTo) {
+    b.style.display='inline';
+    b.textContent=(stViewFrom===stViewTo&&stViewFrom)?stViewFrom:`${stViewFrom||'…'} — ${stViewTo||'…'}`;
+  } else { b.style.display='none'; }
+}
+function stApplyFilters() {
+  stFbBranch=document.getElementById('stFbBranch')?.value||'';
+  stRefreshAll();
+}
+function stResetFilters() {
+  stFbBranch='';
+  const fb=document.getElementById('stFbBranch');
+  if (fb) fb.value='';
+  stRefreshAll();
+}
+
+// ── Filter data ──
+function stFilterData(data) {
+  let d=data;
+  if (stViewFrom||stViewTo) {
+    d=d.filter(r=>{
+      if (stViewFrom&&r.dateStr<stViewFrom) return false;
+      if (stViewTo&&r.dateStr>stViewTo) return false;
+      return true;
+    });
+  }
+  if (stFbBranch) d=d.filter(r=>r.branch===stFbBranch);
+  return d;
+}
+function stFilterCmp(data) {
+  if (!stCmpFrom&&!stCmpTo) return [];
+  return data.filter(r=>{
+    if (stCmpFrom&&r.dateStr<stCmpFrom) return false;
+    if (stCmpTo&&r.dateStr>stCmpTo) return false;
+    if (stFbBranch&&r.branch!==stFbBranch) return false;
+    return true;
+  });
+}
+
+// ── Aggregate by branch ──
+function stAggByBranch(data) {
+  const map={};
+  data.forEach(r=>{
+    if (!map[r.branch]) map[r.branch]={branch:r.branch,orders:0,sumF:0,sumG:0,sumH:0,sumI:0,cntF:0,cntG:0,cntH:0,cntI:0};
+    const b=map[r.branch];
+    b.orders+=r.orders;
+    if (r.avgF>0){b.sumF+=r.avgF*r.orders;b.cntF+=r.orders;}
+    if (r.avgG>0){b.sumG+=r.avgG*r.orders;b.cntG+=r.orders;}
+    if (r.avgH>0){b.sumH+=r.avgH*r.orders;b.cntH+=r.orders;}
+    if (r.avgI>0){b.sumI+=r.avgI*r.orders;b.cntI+=r.orders;}
+  });
+  return Object.values(map).map(b=>({
+    ...b,
+    avgF:b.cntF>0?b.sumF/b.cntF:0,
+    avgG:b.cntG>0?b.sumG/b.cntG:0,
+    avgH:b.cntH>0?b.sumH/b.cntH:0,
+    avgI:b.cntI>0?b.sumI/b.cntI:0
+  }));
+}
+
+// ── Aggregate overall ──
+function stAggOverall(data) {
+  let orders=0,sumF=0,sumG=0,sumH=0,sumI=0,cntF=0,cntG=0,cntH=0,cntI=0;
+  data.forEach(r=>{
+    orders+=r.orders;
+    if(r.avgF>0){sumF+=r.avgF*r.orders;cntF+=r.orders;}
+    if(r.avgG>0){sumG+=r.avgG*r.orders;cntG+=r.orders;}
+    if(r.avgH>0){sumH+=r.avgH*r.orders;cntH+=r.orders;}
+    if(r.avgI>0){sumI+=r.avgI*r.orders;cntI+=r.orders;}
+  });
+  return {orders,avgF:cntF>0?sumF/cntF:0,avgG:cntG>0?sumG/cntG:0,avgH:cntH>0?sumH/cntH:0,avgI:cntI>0?sumI/cntI:0};
+}
+
+// ── Pill helper ──
+function stPillClass(v,good=30,warn=45){if(!v)return'neutral';if(v<=good)return'good';if(v<=warn)return'warn';return'bad';}
+
+// ── Sort branch table ──
+function stSortBranch(col) {
+  if (stSortCol===col) stSortDir*=-1;
+  else { stSortCol=col; stSortDir=-1; }
+  stRefreshAll();
+}
+
+// ── Export CSV ──
+function stExportCSV() {
+  const data=stFilterData(stAllData);
+  const rows=stAggByBranch(data);
+  const header=['סניף','הזמנות',stColF,stColG,stColH,stColI];
+  const lines=[header.join(','),...rows.map(r=>[r.branch,r.orders,r.avgF.toFixed(1),r.avgG.toFixed(1),r.avgH.toFixed(1),r.avgI.toFixed(1)].join(','))];
+  const blob=new Blob(['\uFEFF'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='sandy_times.csv';a.click();URL.revokeObjectURL(url);
+}
+
+// ── Monthly helpers ──
+function stGetMonths(data) {
+  const s=new Set();
+  data.forEach(r=>{const p=r.dateStr.split('/');if(p.length===3)s.add(p[1]+'/'+p[2]);});
+  return [...s].sort((a,b)=>{const[ma,ya]=a.split('/');const[mb,yb]=b.split('/');return parseInt(ya)*12+parseInt(ma)-parseInt(yb)*12-parseInt(mb);});
+}
+function stGetMonthRange(ym) {
+  const [m,y]=ym.split('/');
+  const yr=parseInt(y),mo=parseInt(m)-1;
+  const first=new Date(yr,mo,1);
+  const last=new Date(yr,mo+1,0);
+  const fd=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  return {from:fd(first),to:fd(last)};
+}
+
+// ── Trend helpers ──
+function stSetTrendMode(mode) {
+  stTrendMode=mode;
+  document.getElementById('stTrendDvD')?.classList.toggle('active',mode==='dvd');
+  document.getElementById('stTrendWvW')?.classList.toggle('active',mode==='wvw');
+  stRenderTrend();
+}
+function stSetTrendMetric(m) {
+  stTrendMetric=m;
+  ['stTrMetF','stTrMetG','stTrMetH','stTrMetI','stTrMetOrders'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  const map={avgF:'stTrMetF',avgG:'stTrMetG',avgH:'stTrMetH',avgI:'stTrMetI',orders:'stTrMetOrders'};
+  document.getElementById(map[m])?.classList.add('active');
+  stRenderTrend();
+}
+function stSetLineMetric(m) {
+  stLineMetric=m;
+  ['stLineMetF','stLineMetG','stLineMetH','stLineMetI'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  const map={avgF:'stLineMetF',avgG:'stLineMetG',avgH:'stLineMetH',avgI:'stLineMetI'};
+  document.getElementById(map[m])?.classList.add('active');
+  stRenderRollingLine();
+}
+
+// ── Chart helper ──
+function stMakeChart(id,cfg){
+  const ctx=document.getElementById(id);
+  if(!ctx)return null;
+  if(stCharts[id]){stCharts[id].destroy();}
+  stCharts[id]=new Chart(ctx,cfg);
+  return stCharts[id];
+}
+
+// ── MAIN REFRESH ──
+function stRefreshAll() {
+  if (!stAllData.length) return;
+  const data=stFilterData(stAllData);
+  const cmpData=stFilterCmp(stAllData);
+  const curr=stAggOverall(data);
+  const prev=stAggOverall(cmpData);
+
+  // Update count
+  const fce=document.getElementById('stFbCount');
+  if(fce) fce.textContent=`מציג ${data.length.toLocaleString('he-IL')} שורות`;
+
+  // Update branch select
+  const branches=[...new Set(stAllData.map(r=>r.branch))].sort();
+  const fb=document.getElementById('stFbBranch');
+  if(fb){
+    const cur=fb.value;
+    fb.innerHTML='<option value="">כל הסניפים</option>'+branches.map(b=>`<option value="${b}"${b===cur?' selected':''}>${b}</option>`).join('');
+  }
+
+  // KPI cards
+  const mkChg=(c,p,isTime=true,lowerBetter=false)=>{
+    if(!p||p===0)return'<span class="kpi-change flat">—</span>';
+    const d=c-p;const pct=(d/p*100).toFixed(1);
+    const isGood=lowerBetter?d<0:d>0;
+    const cls=Math.abs(d)<0.1?'flat':isGood?'up good-down':'down';
+    const sign=d>0?'+':'';
+    return`<span class="kpi-change ${cls}">${sign}${isTime?fmtDuration(Math.abs(d)):Math.abs(d).toFixed(0)} (${sign}${pct}%)</span>`;
+  };
+  const se=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  se('stKpiOrders',curr.orders.toLocaleString('he-IL'));
+  document.getElementById('stKpiOrdersChg').outerHTML && (document.getElementById('stKpiOrdersChg').outerHTML=mkChg(curr.orders,prev.orders,false));
+  const tv=(id,v)=>{const e=document.getElementById(id);if(e){e.textContent=fmtDuration(v);e.className='st-time-val '+stPillClass(v);}};
+  tv('stKpiF',curr.avgF); tv('stKpiG',curr.avgG); tv('stKpiH',curr.avgH); tv('stKpiI',curr.avgI);
+
+  // Branch table
+  stRenderBranchTable(data,cmpData);
+
+  // Charts
+  stRenderBranchChart(data);
+  stRenderTierDonut(data);
+  stRenderBreakdownDonut(curr);
+  stRenderRollingLine();
+  stRenderBranchLine(data);
+  stRenderTrend();
+  stRenderOrdersChart(data);
+  stRenderMonthly();
+  stRenderInsights(data,curr);
+}
+
+// ── Branch Table ──
+function stRenderBranchTable(data,cmpData) {
+  let rows=stAggByBranch(data);
+  const cmpMap={};
+  if(cmpData.length) stAggByBranch(cmpData).forEach(r=>{cmpMap[r.branch]=r;});
+  rows.sort((a,b)=>{
+    const av=a[stSortCol]??a.branch;const bv=b[stSortCol]??b.branch;
+    if(typeof av==='string')return av.localeCompare(bv)*stSortDir;
+    return (av-bv)*stSortDir;
+  });
+  const totO=rows.reduce((s,r)=>s+r.orders,0);
+  const wAvg=(k)=>{const s=rows.reduce((a,r)=>a+r[k]*r.orders,0);const c=rows.reduce((a,r)=>a+r.orders,0);return c>0?s/c:0;};
+  const totF=wAvg('avgF'),totG=wAvg('avgG'),totH=wAvg('avgH'),totI=wAvg('avgI');
+
+  const tbody=document.getElementById('stBranchTbody');
+  if(!tbody)return;
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="7" class="nodata-msg">אין נתונים לטווח הנבחר</td></tr>';return;}
+
+  tbody.innerHTML=rows.map(r=>{
+    const c=cmpMap[r.branch];
+    const cmpBadge=c?`<span class="${r.avgF<c.avgF?'st-badge-pos':r.avgF>c.avgF?'st-badge-neg':'st-badge-flat'}">${fmtDuration(Math.abs(r.avgF-c.avgF))} ${r.avgF<c.avgF?'▼ שיפור':r.avgF>c.avgF?'▲ עלייה':'= '}${c?'':'—'}</span>`:
+      '<span class="st-badge-flat">אין השוואה</span>';
+    return`<tr>
+      <td style="font-weight:600">${r.branch}</td>
+      <td>${r.orders.toLocaleString('he-IL')}</td>
+      <td><span class="st-pill ${stPillClass(r.avgF)}">${fmtDuration(r.avgF)}</span></td>
+      <td><span class="st-pill ${stPillClass(r.avgG)}">${fmtDuration(r.avgG)}</span></td>
+      <td><span class="st-pill ${stPillClass(r.avgH)}">${fmtDuration(r.avgH)}</span></td>
+      <td><span class="st-pill teal">${fmtDuration(r.avgI)}</span></td>
+      <td>${cmpBadge}</td>
+    </tr>`;
+  }).join('');
+
+  const tfoot=document.getElementById('stBranchTfoot');
+  if(tfoot) tfoot.innerHTML=`<tr class="st-total-row">
+    <td>סה"כ / ממוצע</td>
+    <td>${totO.toLocaleString('he-IL')}</td>
+    <td><span class="st-pill ${stPillClass(totF)}">${fmtDuration(totF)}</span></td>
+    <td><span class="st-pill ${stPillClass(totG)}">${fmtDuration(totG)}</span></td>
+    <td><span class="st-pill ${stPillClass(totH)}">${fmtDuration(totH)}</span></td>
+    <td><span class="st-pill teal">${fmtDuration(totI)}</span></td>
+    <td>—</td>
+  </tr>`;
+}
+
+// ── Branch Bar Chart ──
+function stRenderBranchChart(data) {
+  let rows=stAggByBranch(data).filter(r=>r.orders>0);
+  rows.sort((a,b)=>b.avgF-a.avgF);
+  rows=rows.slice(0,15);
+  stMakeChart('stChartBranch',{
+    type:'bar',
+    data:{
+      labels:rows.map(r=>r.branch),
+      datasets:[
+        {label:stColF,data:rows.map(r=>+r.avgF.toFixed(1)),backgroundColor:'rgba(249,115,22,.8)',borderColor:'#F97316',borderWidth:1},
+        {label:stColG,data:rows.map(r=>+r.avgG.toFixed(1)),backgroundColor:'rgba(20,184,166,.7)',borderColor:'#14B8A6',borderWidth:1},
+        {label:stColH,data:rows.map(r=>+r.avgH.toFixed(1)),backgroundColor:'rgba(137,87,229,.7)',borderColor:'#8957E5',borderWidth:1},
+        {label:stColI,data:rows.map(r=>+r.avgI.toFixed(1)),backgroundColor:'rgba(46,160,67,.7)',borderColor:'#2EA043',borderWidth:1}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{position:'top',labels:{color:'#8B949E',font:{size:11}}},
+        tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+fmtDuration(ctx.raw)}}},
+      scales:{
+        x:{grid:{color:'rgba(48,54,61,.5)'},ticks:{color:'#8B949E',callback:v=>fmtDuration(v)}},
+        y:{grid:{color:'rgba(48,54,61,.3)'},ticks:{color:'#E6EDF3',font:{size:11}}}
+      }
+    }
+  });
+}
+
+// ── Tier Donut ──
+function stRenderTierDonut(data) {
+  let rows=stAggByBranch(data).filter(r=>r.avgF>0);
+  const tiers={excellent:0,good:0,warn:0,bad:0};
+  rows.forEach(r=>{
+    if(r.avgF<=25)tiers.excellent++;
+    else if(r.avgF<=35)tiers.good++;
+    else if(r.avgF<=45)tiers.warn++;
+    else tiers.bad++;
+  });
+  stMakeChart('stChartTierDonut',{
+    type:'doughnut',
+    data:{
+      labels:['מצוין (≤25)','טוב (≤35)','סביר (≤45)','דרוש שיפור (>45)'],
+      datasets:[{data:[tiers.excellent,tiers.good,tiers.warn,tiers.bad],
+        backgroundColor:['rgba(46,160,67,.8)','rgba(249,115,22,.7)','rgba(227,179,65,.8)','rgba(218,54,51,.8)'],
+        borderColor:'#161B22',borderWidth:2}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{
+      legend:{position:'bottom',labels:{color:'#8B949E',font:{size:11}}},
+      tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.raw} סניפים`}}
+    }}
+  });
+  const ts=document.getElementById('stTierStats');
+  if(ts) ts.innerHTML=Object.entries(tiers).map(([k,v])=>{
+    const colors={excellent:'var(--green)',good:'var(--sandy)',warn:'var(--orange)',bad:'var(--red)'};
+    const labels={excellent:'מצוין',good:'טוב',warn:'סביר',bad:'לשיפור'};
+    return`<div style="display:flex;align-items:center;gap:8px;font-size:12px">
+      <span style="width:10px;height:10px;border-radius:50%;background:${colors[k]};flex-shrink:0"></span>
+      <span style="color:var(--text2)">${labels[k]}</span>
+      <span style="font-weight:700;color:${colors[k]};margin-right:auto">${v}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── Breakdown Donut ──
+function stRenderBreakdownDonut(curr) {
+  const prep=curr.avgG>0?curr.avgG:0;
+  const courier=curr.avgH>curr.avgG&&curr.avgH>0?curr.avgH-curr.avgG:0;
+  const extra=curr.avgI>0?curr.avgI:0;
+  stMakeChart('stChartBreakdownDonut',{
+    type:'doughnut',
+    data:{
+      labels:[stColG,'זמן שליח',stColI],
+      datasets:[{data:[prep.toFixed(1),courier.toFixed(1),extra.toFixed(1)],
+        backgroundColor:['rgba(249,115,22,.8)','rgba(20,184,166,.8)','rgba(46,160,67,.7)'],
+        borderColor:'#161B22',borderWidth:2}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{
+      legend:{position:'bottom',labels:{color:'#8B949E',font:{size:11}}},
+      tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmtDuration(parseFloat(ctx.raw))}`}}
+    }}
+  });
+  const bs=document.getElementById('stBreakdownStats');
+  if(bs) bs.innerHTML=[
+    {label:stColF,v:curr.avgF,color:'var(--sandy)'},
+    {label:stColG,v:curr.avgG,color:'var(--teal)'},
+    {label:stColH,v:curr.avgH,color:'var(--purple)'},
+    {label:stColI,v:curr.avgI,color:'var(--green)'}
+  ].map(x=>`<div style="font-size:12px;color:var(--text2)">${x.label}<br>
+    <span style="font-size:16px;font-weight:900;color:${x.color}">${fmtDuration(x.v)}</span></div>`).join('');
+  const sub=document.getElementById('stDonutBreakdownSub');
+  if(sub) sub.textContent=`סה"כ: ${fmtDuration(curr.avgH)} קריאה עד מסירה`;
+}
+
+// ── Rolling Line ──
+function stRenderRollingLine() {
+  const data=stFilterData(stAllData);
+  const byDay={};
+  data.forEach(r=>{
+    if(!byDay[r.dateStr]) byDay[r.dateStr]={orders:0,sumF:0,sumG:0,sumH:0,sumI:0,cntF:0,cntG:0,cntH:0,cntI:0};
+    const d=byDay[r.dateStr];
+    d.orders+=r.orders;
+    if(r.avgF>0){d.sumF+=r.avgF*r.orders;d.cntF+=r.orders;}
+    if(r.avgG>0){d.sumG+=r.avgG*r.orders;d.cntG+=r.orders;}
+    if(r.avgH>0){d.sumH+=r.avgH*r.orders;d.cntH+=r.orders;}
+    if(r.avgI>0){d.sumI+=r.avgI*r.orders;d.cntI+=r.orders;}
+  });
+  const days=Object.keys(byDay).sort();
+  const metricKey=stLineMetric;
+  const vals=days.map(d=>{const v=byDay[d];
+    if(metricKey==='orders')return v.orders;
+    if(metricKey==='avgF')return v.cntF>0?v.sumF/v.cntF:null;
+    if(metricKey==='avgG')return v.cntG>0?v.sumG/v.cntG:null;
+    if(metricKey==='avgH')return v.cntH>0?v.sumH/v.cntH:null;
+    if(metricKey==='avgI')return v.cntI>0?v.sumI/v.cntI:null;
+    return null;
+  });
+  const rolling=vals.map((v,i)=>{
+    const slice=vals.slice(Math.max(0,i-6),i+1).filter(x=>x!==null);
+    return slice.length?slice.reduce((a,b)=>a+b,0)/slice.length:null;
+  });
+  stMakeChart('stChartRollingLine',{
+    type:'line',
+    data:{labels:days,datasets:[
+      {label:'יומי',data:vals,borderColor:'rgba(249,115,22,.7)',backgroundColor:'rgba(249,115,22,.1)',borderWidth:2,pointRadius:2,tension:.3,fill:true,spanGaps:true},
+      {label:'ממוצע נע 7 ימים',data:rolling,borderColor:'var(--teal)',backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:.4,borderDash:[],spanGaps:true}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#8B949E',font:{size:11}}},
+        tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+(metricKey==='orders'?ctx.raw:fmtDuration(ctx.raw))}}},
+      scales:{
+        x:{grid:{color:'rgba(48,54,61,.3)'},ticks:{color:'#8B949E',maxTicksLimit:12}},
+        y:{grid:{color:'rgba(48,54,61,.5)'},ticks:{color:'#8B949E',callback:v=>metricKey==='orders'?v:fmtDuration(v)}}
+      }
+    }
+  });
+}
+
+// ── Top 5 Branch Line ──
+function stRenderBranchLine(data) {
+  const byBranchDay={};
+  data.forEach(r=>{
+    const k=r.branch;
+    if(!byBranchDay[k]) byBranchDay[k]={};
+    if(!byBranchDay[k][r.dateStr]) byBranchDay[k][r.dateStr]={sum:0,cnt:0};
+    if(r.avgF>0){byBranchDay[k][r.dateStr].sum+=r.avgF*r.orders;byBranchDay[k][r.dateStr].cnt+=r.orders;}
+  });
+  const top5=stAggByBranch(data).filter(r=>r.avgF>0).sort((a,b)=>b.orders-a.orders).slice(0,5);
+  const allDays=[...new Set(data.map(r=>r.dateStr))].sort();
+  const colors=['#F97316','#14B8A6','#8957E5','#2EA043','#E3B341'];
+  stMakeChart('stChartBranchLine',{
+    type:'line',
+    data:{labels:allDays,datasets:top5.map((b,i)=>({
+      label:b.branch,
+      data:allDays.map(d=>{const v=byBranchDay[b.branch]?.[d];return v&&v.cnt>0?v.sum/v.cnt:null;}),
+      borderColor:colors[i],backgroundColor:'transparent',borderWidth:2,pointRadius:2,tension:.3,spanGaps:true
+    }))},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{color:'#8B949E',font:{size:10}}},
+        tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+fmtDuration(ctx.raw)}}},
+      scales:{
+        x:{grid:{color:'rgba(48,54,61,.3)'},ticks:{color:'#8B949E',maxTicksLimit:10}},
+        y:{grid:{color:'rgba(48,54,61,.5)'},ticks:{color:'#8B949E',callback:v=>fmtDuration(v)}}
+      }
+    }
+  });
+  const sub=document.getElementById('stTop5Sub');
+  if(sub) sub.textContent='לפי כמות הזמנות — '+stColF;
+}
+
+// ── Trend Chart ──
+function stRenderTrend() {
+  const data=stFilterData(stAllData);
+  const now=new Date();
+  let currDays=[],prevDays=[];
+  if(stTrendMode==='dvd') {
+    const today=new Date(now);today.setHours(0,0,0,0);
+    const prev=new Date(today);prev.setDate(today.getDate()-7);
+    currDays=[fmtDate(today)];prevDays=[fmtDate(prev)];
+    const lbl=document.getElementById('stTrendRangeLabel');
+    if(lbl) lbl.textContent=`היום (${fmtDate(today)}) מול שבוע שעבר (${fmtDate(prev)})`;
+  } else {
+    const r=stGetCurrentWeekRange();const p=stGetPrevWeekRange();
+    const d1=stParseDate(r.from)||new Date();
+    const d2=stParseDate(r.to)||new Date();
+    for(let d=new Date(d1);d<=d2;d.setDate(d.getDate()+1)) currDays.push(fmtDate(new Date(d)));
+    const d3=stParseDate(p.from)||new Date();
+    const d4=stParseDate(p.to)||new Date();
+    for(let d=new Date(d3);d<=d4;d.setDate(d.getDate()+1)) prevDays.push(fmtDate(new Date(d)));
+    const lbl=document.getElementById('stTrendRangeLabel');
+    if(lbl) lbl.textContent=`שבוע נוכחי (${r.from}–${r.to}) מול שבוע קודם (${p.from}–${p.to})`;
+  }
+  const byDay={};
+  data.forEach(r=>{
+    if(!byDay[r.dateStr]) byDay[r.dateStr]={orders:0,sumF:0,sumG:0,sumH:0,sumI:0,cntF:0,cntG:0,cntH:0,cntI:0};
+    const d=byDay[r.dateStr];
+    d.orders+=r.orders;
+    if(r.avgF>0){d.sumF+=r.avgF*r.orders;d.cntF+=r.orders;}
+    if(r.avgG>0){d.sumG+=r.avgG*r.orders;d.cntG+=r.orders;}
+    if(r.avgH>0){d.sumH+=r.avgH*r.orders;d.cntH+=r.orders;}
+    if(r.avgI>0){d.sumI+=r.avgI*r.orders;d.cntI+=r.orders;}
+  });
+  const getVal=(day)=>{
+    const v=byDay[day];if(!v)return null;
+    if(stTrendMetric==='orders')return v.orders;
+    if(stTrendMetric==='avgF')return v.cntF>0?v.sumF/v.cntF:null;
+    if(stTrendMetric==='avgG')return v.cntG>0?v.sumG/v.cntG:null;
+    if(stTrendMetric==='avgH')return v.cntH>0?v.sumH/v.cntH:null;
+    if(stTrendMetric==='avgI')return v.cntI>0?v.sumI/v.cntI:null;
+    return null;
+  };
+  const len=Math.max(currDays.length,prevDays.length);
+  const labels=Array.from({length:len},(_,i)=>stTrendMode==='wvw'?['א',"ב",'ג',"ד",'ה',"ו",'ש'][i]||(i+1)+'':currDays[i]||'');
+  const isTime=stTrendMetric!=='orders';
+  stMakeChart('stChartTrendComp',{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'תקופה נוכחית',data:currDays.map(d=>getVal(d)),borderColor:'#F97316',backgroundColor:'rgba(249,115,22,.15)',borderWidth:2.5,pointRadius:4,tension:.3,fill:true,spanGaps:true},
+      {label:'תקופה קודמת',data:prevDays.map(d=>getVal(d)),borderColor:'rgba(139,148,158,.7)',backgroundColor:'transparent',borderWidth:2,borderDash:[5,4],pointRadius:3,tension:.3,spanGaps:true}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#8B949E',font:{size:11}}},
+        tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+(isTime?fmtDuration(ctx.raw):ctx.raw)}}},
+      scales:{
+        x:{grid:{color:'rgba(48,54,61,.3)'},ticks:{color:'#8B949E'}},
+        y:{grid:{color:'rgba(48,54,61,.5)'},ticks:{color:'#8B949E',callback:v=>isTime?fmtDuration(v):v}}
+      }
+    }
+  });
+}
+
+// ── Orders by Day ──
+function stRenderOrdersChart(data) {
+  const byDay={};
+  data.forEach(r=>{byDay[r.dateStr]=(byDay[r.dateStr]||0)+r.orders;});
+  const days=Object.keys(byDay).sort();
+  stMakeChart('stChartOrders',{
+    type:'bar',
+    data:{labels:days,datasets:[{label:'הזמנות',data:days.map(d=>byDay[d]),
+      backgroundColor:'rgba(249,115,22,.7)',borderColor:'#F97316',borderWidth:1,borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:'rgba(48,54,61,.3)'},ticks:{color:'#8B949E',maxTicksLimit:14}},
+        y:{grid:{color:'rgba(48,54,61,.5)'},ticks:{color:'#8B949E'}}
+      }
+    }
+  });
+}
+
+// ── Monthly ──
+function stRenderMonthly() {
+  const months=stGetMonths(stAllData);
+  const mb=document.getElementById('stMonthButtons');
+  if(mb) {
+    if(!stSelectedMonth||!months.includes(stSelectedMonth)) stSelectedMonth=months[months.length-1]||'';
+    mb.innerHTML=months.map(m=>`<button class="st-month-btn ${m===stSelectedMonth?'active':''}" onclick="stSelectMonth('${m}')">${m}</button>`).join('');
+  }
+  if(!stSelectedMonth) return;
+  const range=stGetMonthRange(stSelectedMonth);
+  const currMonData=stFilterData(stAllData.filter(r=>r.dateStr>=range.from&&r.dateStr<=range.to));
+  const prevM=stGetPrevMonth(stSelectedMonth);
+  const prevRange=stGetMonthRange(prevM);
+  const prevMonData=stFilterData(stAllData.filter(r=>r.dateStr>=prevRange.from&&r.dateStr<=prevRange.to));
+  const prevMap={};
+  stAggByBranch(prevMonData).forEach(r=>{prevMap[r.branch]=r;});
+
+  const rows=stAggByBranch(currMonData).sort((a,b)=>b.orders-a.orders);
+  const totOrders=rows.reduce((s,r)=>s+r.orders,0);
+  const wA=(k)=>{const s=rows.reduce((a,r)=>a+r[k]*r.orders,0);return totOrders>0?s/totOrders:0;};
+  const tF=wA('avgF'),tG=wA('avgG'),tH=wA('avgH'),tI=wA('avgI');
+
+  const inf=document.getElementById('stMonthCompareInfo');
+  if(inf) inf.textContent=`מציג נתוני ${stSelectedMonth} | ${rows.length} סניפים | ${totOrders.toLocaleString('he-IL')} הזמנות`;
+
+  const kpiRow=document.getElementById('stMonthlyKpiRow');
+  if(kpiRow) kpiRow.innerHTML=[
+    {l:'הזמנות',v:totOrders.toLocaleString('he-IL'),color:'var(--blue)',icon:'📦'},
+    {l:stColF,v:fmtDuration(tF),color:'var(--sandy)',icon:'⏱️'},
+    {l:stColG,v:fmtDuration(tG),color:'var(--teal)',icon:'🕐'},
+    {l:stColH,v:fmtDuration(tH),color:'var(--purple)',icon:'🚴'},
+  ].map(x=>`<div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px">
+    <span style="font-size:20px">${x.icon}</span>
+    <div><div style="font-size:10px;color:var(--text2)">${x.l}</div><div style="font-size:18px;font-weight:900;color:${x.color}">${x.v}</div></div>
+  </div>`).join('');
+
+  const tbody=document.getElementById('stMonthlyTbody');
+  if(tbody) tbody.innerHTML=rows.map(r=>{
+    const p=prevMap[r.branch];
+    const chg=p&&p.avgF>0?(r.avgF-p.avgF):null;
+    const chgDir=chg===null?'—':chg<0?'▼':chg>0?'▲':'=';
+    const chgCls=chg===null?'':chg<0?'st-badge-pos':chg>0?'st-badge-neg':'st-badge-flat';
+    const chgBadge=chg!==null?`<span class="${chgCls}">${chgDir} ${fmtDuration(Math.abs(chg))}</span>`:'—';
+    return`<tr>
+      <td style="font-weight:600">${r.branch}</td>
+      <td>${r.orders.toLocaleString('he-IL')}</td>
+      <td><span class="st-pill ${stPillClass(r.avgF)}">${fmtDuration(r.avgF)}</span></td>
+      <td><span class="st-pill ${stPillClass(r.avgG)}">${fmtDuration(r.avgG)}</span></td>
+      <td><span class="st-pill ${stPillClass(r.avgH)}">${fmtDuration(r.avgH)}</span></td>
+      <td><span class="st-pill teal">${fmtDuration(r.avgI)}</span></td>
+      <td>${p?`<span class="st-pill neutral">${fmtDuration(p.avgF)}</span>`:'—'}</td>
+      <td>${chgBadge}</td>
+    </tr>`;
+  }).join('');
+
+  const tfoot=document.getElementById('stMonthlyTfoot');
+  if(tfoot) tfoot.innerHTML=`<tr class="st-total-row">
+    <td>ממוצע כולל</td><td>${totOrders.toLocaleString('he-IL')}</td>
+    <td><span class="st-pill ${stPillClass(tF)}">${fmtDuration(tF)}</span></td>
+    <td><span class="st-pill ${stPillClass(tG)}">${fmtDuration(tG)}</span></td>
+    <td><span class="st-pill ${stPillClass(tH)}">${fmtDuration(tH)}</span></td>
+    <td><span class="st-pill teal">${fmtDuration(tI)}</span></td>
+    <td>—</td><td>—</td>
+  </tr>`;
+
+  // Monthly chart
+  const top8=rows.slice(0,8);
+  stMakeChart('stChartMonthly',{
+    type:'bar',
+    data:{labels:top8.map(r=>r.branch),datasets:[
+      {label:stColF,data:top8.map(r=>+r.avgF.toFixed(1)),backgroundColor:'rgba(249,115,22,.8)',stack:'s'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{position:'top',labels:{color:'#8B949E',font:{size:11}}},
+        tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+fmtDuration(ctx.raw)}}},
+      scales:{
+        x:{grid:{color:'rgba(48,54,61,.5)'},ticks:{color:'#8B949E',callback:v=>fmtDuration(v)}},
+        y:{grid:{display:false},ticks:{color:'#E6EDF3',font:{size:11}}}
+      }
+    }
+  });
+}
+function stSelectMonth(m) {stSelectedMonth=m;stRenderMonthly();}
+function stGetPrevMonth(ym) {
+  const [m,y]=ym.split('/');
+  let mo=parseInt(m)-1,yr=parseInt(y);
+  if(mo<1){mo=12;yr--;}
+  return String(mo).padStart(2,'0')+'/'+yr;
+}
+
+// ── Insights ──
+function stRenderInsights(data,curr) {
+  const grid=document.getElementById('stInsightsGrid');
+  if(!grid) return;
+  const rows=stAggByBranch(data).filter(r=>r.orders>=3&&r.avgF>0);
+  const best=rows.sort((a,b)=>a.avgF-b.avgF)[0];
+  const worst=[...rows].sort((a,b)=>b.avgF-a.avgF)[0];
+  const byDay={};
+  data.forEach(r=>{byDay[r.dateStr]=(byDay[r.dateStr]||0)+r.orders;});
+  const peakDay=Object.entries(byDay).sort((a,b)=>b[1]-a[1])[0];
+  const insights=[
+    best?{icon:'🏆',title:'סניף מהיר ביותר',text:`${best.branch}: ${fmtDuration(best.avgF)} ממוצע ${stColF}`}:null,
+    worst&&worst!==best?{icon:'🐢',title:'סניף איטי ביותר',text:`${worst.branch}: ${fmtDuration(worst.avgF)} — מומלץ לבדוק`}:null,
+    {icon:'⏱️',title:'ממוצע כלל',text:`${stColF}: ${fmtDuration(curr.avgF)} | ${stColH}: ${fmtDuration(curr.avgH)}`},
+    peakDay?{icon:'📅',title:'יום עמוס',text:`${peakDay[0]}: ${peakDay[1].toLocaleString('he-IL')} הזמנות`}:null
+  ].filter(Boolean);
+  grid.innerHTML=insights.map(i=>`<div class="st-insight-card">
+    <div class="st-insight-icon">${i.icon}</div>
+    <div><div class="st-insight-title">${i.title}</div><div class="st-insight-text">${i.text}</div></div>
+  </div>`).join('');
+}
+
+// ── UI helpers ──
+function stShowLoading(v){const e=document.getElementById('stLoadingOverlay');if(e)e.classList.toggle('show',v);}
+function stShowToast(msg){const e=document.getElementById('stToast');if(!e)return;e.textContent=msg;e.style.display='block';setTimeout(()=>{e.style.display='none';},3500);}
 </script>
 
 </body>
