@@ -5226,24 +5226,53 @@ function stParseDate(v) {
 }
 
 // ── Parse Sheet 5 rows ──────────────────────────────────
-// The sheet is already aggregated: each row = one store on one date
-// Values are already averages in minutes — no further averaging of raw orders needed
 function stParseRows(raw) {
   if (!raw.length) return [];
-  const headers = Object.keys(raw[0]);
-  const firstRow = raw[0];
 
-  // Log all headers for debugging
-  console.log('[Sandy] Headers:', headers);
-  console.log('[Sandy] First row:', firstRow);
+  // ── Handle double-header sheets ──────────────────────
+  // Sandy's sheet has row 0 = report title (Store Performance - dominos.heila - YYYY-MM-DD)
+  // and row 1 = actual column headers. XLSX.js uses row 0 as keys → all columns get EMPTY_N_ names.
+  // Detect this: if most header keys start with EMPTY_ or are numeric, skip row 0 and re-parse.
+  let workingRaw = raw;
+  const firstKeys = Object.keys(raw[0] || {});
+  const emptyCount = firstKeys.filter(k => /^EMPTY_|^__EMPTY/.test(k)).length;
+  if (emptyCount > firstKeys.length / 2) {
+    // Row 0 is the title row — treat row 1 as real headers
+    const realHeaders = Object.values(raw[0]).map(v => String(v||'').trim());
+    // Build new objects using row 1 values as keys, rows 2+ as data
+    // But raw[1] is already the next row — its values are the real headers
+    // Re-read using raw[1] keys as headers, raw[2..] as data
+    const headerRow = raw[1] ? Object.values(raw[1]).map(v => String(v||'').trim()) : realHeaders;
+    workingRaw = raw.slice(2).map(r => {
+      const vals = Object.values(r);
+      const obj = {};
+      headerRow.forEach((h, i) => { if (h) obj[h] = vals[i] ?? ''; });
+      return obj;
+    });
+    console.log('[Sandy] Detected double-header — using real headers:', headerRow);
+    if (!workingRaw.length) {
+      // Fallback: maybe raw[0] values ARE the headers, raw[1..] are data
+      workingRaw = raw.slice(1).map(r => {
+        const vals = Object.values(r);
+        const obj = {};
+        realHeaders.forEach((h, i) => { if (h) obj[h] = vals[i] ?? ''; });
+        return obj;
+      });
+    }
+  }
 
-  ST_DATE_FMT = stDetectDateFormat(raw);
+  if (!workingRaw.length) return [];
+  const headers = Object.keys(workingRaw[0]);
+  const firstRow = workingRaw[0];
+
+  console.log('[Sandy] Working headers:', headers);
+  console.log('[Sandy] First data row:', firstRow);
+
+  ST_DATE_FMT = stDetectDateFormat(workingRaw);
 
   // ── Detect columns ──
-  // Date: look for the report date column
   let dateCol = stFindCol(headers, ST_COL_MAP.date);
   if (!dateCol) {
-    // Auto-detect: first column that contains a date-like value
     for (const h of headers) {
       const v = firstRow[h];
       if (v !== undefined && v !== '') {
@@ -5254,10 +5283,10 @@ function stParseRows(raw) {
     dateCol = dateCol || headers[0];
   }
 
-  // Branch: Store Name preferred over Store ID
-  let branchCol = stFindCol(headers, ST_COL_MAP.branch);
+  const storeNameCol   = stFindCol(headers, ['Store Name','שם הסניף','שם']);
+  const storeIdCol     = stFindCol(headers, ST_COL_MAP.storeId);
+  let   branchCol      = storeNameCol || stFindCol(headers, ST_COL_MAP.branch);
   if (!branchCol) {
-    // Fall back to any text column that isn't the date
     for (const h of headers) {
       if (h === dateCol) continue;
       const v = firstRow[h];
@@ -5266,45 +5295,31 @@ function stParseRows(raw) {
     branchCol = branchCol || headers[1];
   }
 
-  // If we only have Store ID (numeric), try Store Name explicitly
-  const storeNameCol = stFindCol(headers, ['Store Name','שם הסניף','שם']);
-  const storeIdCol   = stFindCol(headers, ST_COL_MAP.storeId);
-
-  // Orders: prefer Delivered Count, then Total Orders
-  let deliveredCol = stFindCol(headers, ST_COL_MAP.orders);
+  let deliveredCol   = stFindCol(headers, ST_COL_MAP.orders);
   let totalOrdersCol = stFindCol(headers, ST_COL_MAP.totalOrders);
-  let cancelledCol = stFindCol(headers, ST_COL_MAP.cancelled);
-  let cancelPctCol = stFindCol(headers, ST_COL_MAP.cancelPct);
+  let cancelledCol   = stFindCol(headers, ST_COL_MAP.cancelled);
+  let cancelPctCol   = stFindCol(headers, ST_COL_MAP.cancelPct);
+  let colFH = stFindCol(headers, ST_COL_MAP.colF) || headers[4] || null;
+  let colGH = stFindCol(headers, ST_COL_MAP.colG) || headers[5] || null;
+  let colHH = stFindCol(headers, ST_COL_MAP.colH) || headers[6] || null;
+  let colIH = stFindCol(headers, ST_COL_MAP.colI) || headers[7] || null;
 
-  // Time columns (values are already in minutes)
-  let colFH = stFindCol(headers, ST_COL_MAP.colF);
-  let colGH = stFindCol(headers, ST_COL_MAP.colG);
-  let colHH = stFindCol(headers, ST_COL_MAP.colH);
-  let colIH = stFindCol(headers, ST_COL_MAP.colI);
-
-  // Fallback to positional if not found by name
-  if (!colFH) colFH = headers[4] || null;
-  if (!colGH) colGH = headers[5] || null;
-  if (!colHH) colHH = headers[6] || null;
-  if (!colIH) colIH = headers[7] || null;
-
-  console.log('[Sandy] Detected cols — date:', dateCol, '| branch:', branchCol,
+  console.log('[Sandy] Cols — date:', dateCol, '| branch:', branchCol,
     '| delivered:', deliveredCol, '| total:', totalOrdersCol,
     '| F:', colFH, '| G:', colGH, '| H:', colHH, '| I:', colIH);
 
-  // ── Update UI labels with actual column names ──
+  // ── Update UI labels ──
   const shortLabel = s => {
     if (!s) return s;
-    // Map English column names to short Hebrew labels
-    if (/Create to Drop/i.test(s))   return 'Create to Drop';
-    if (/Create to Client/i.test(s)) return 'Create to Client';
-    if (/Create to Rest/i.test(s))   return 'Create to Rest';
-    if (/Pickup to Client/i.test(s)) return 'Pickup to Client';
-    if (/Delivery Time/i.test(s))    return 'זמן מסירה';
-    if (/Customer Arrival/i.test(s)) return 'הגעת לקוח';
-    if (/Restaurant Arrival/i.test(s)) return 'הגעה למסעדה';
-    if (/Pickup/i.test(s))           return 'איסוף → לקוח';
-    return s.length > 20 ? s.substr(0,20)+'…' : s;
+    if (/Create.to.Drop/i.test(s))    return 'Create to Drop';
+    if (/Create.to.Client/i.test(s))  return 'Create to Client';
+    if (/Create.to.Rest/i.test(s))    return 'Create to Rest';
+    if (/Pickup.to.Client/i.test(s))  return 'Pickup to Client';
+    if (/Delivery.Time/i.test(s))     return 'זמן מסירה';
+    if (/Customer.Arrival/i.test(s))  return 'הגעת לקוח';
+    if (/Restaurant.Arrival/i.test(s))return 'הגעה למסעדה';
+    if (/Pickup/i.test(s))            return 'איסוף → לקוח';
+    return s.length > 22 ? s.substr(0,22)+'…' : s;
   };
   if (colFH) stColF = shortLabel(String(colFH));
   if (colGH) stColG = shortLabel(String(colGH));
@@ -5312,17 +5327,16 @@ function stParseRows(raw) {
   if (colIH) stColI = shortLabel(String(colIH));
 
   const se = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
-  se('stLblF', stColF); se('stLblG', stColG); se('stLblH', stColH); se('stLblI', stColI);
-  se('stThF', stColF+' ↕'); se('stThG', stColG+' ↕'); se('stThH', stColH+' ↕'); se('stThI', stColI+' ↕');
-  se('stMonthThF', stColF); se('stMonthThG', stColG); se('stMonthThH', stColH); se('stMonthThI', stColI);
-  se('stColNames', [stColF,stColG,stColH,stColI].filter(Boolean).join(' | '));
+  se('stLblF',stColF); se('stLblG',stColG); se('stLblH',stColH); se('stLblI',stColI);
+  se('stThF',stColF+' ↕'); se('stThG',stColG+' ↕'); se('stThH',stColH+' ↕'); se('stThI',stColI+' ↕');
+  se('stMonthThF',stColF); se('stMonthThG',stColG); se('stMonthThH',stColH); se('stMonthThI',stColI);
+  se('stColNames',[stColF,stColG,stColH,stColI].filter(Boolean).join(' | '));
 
-  // ── Parse time value (already in minutes as decimal) ──
+  // ── Parse time value (minutes as decimal) ──
   const parseMin = v => {
-    if (v === '' || v === null || v === undefined) return null;
+    if (v===''||v===null||v===undefined) return null;
     const n = parseFloat(v);
     if (!isNaN(n) && n >= 0) return n;
-    // Handle "HH:MM:SS" or "MM:SS"
     const s2 = String(v).trim();
     const hms = s2.match(/^(\d+):(\d{2}):(\d{2})$/);
     if (hms) return parseInt(hms[1])*60 + parseInt(hms[2]) + parseInt(hms[3])/60;
@@ -5331,36 +5345,30 @@ function stParseRows(raw) {
     return null;
   };
 
-  const parsed = raw.map(r => {
-    // Date
-    const rawDate = dateCol ? r[dateCol] : (r[headers[0]] || '');
+  return workingRaw.map(r => {
+    const rawDate = dateCol ? r[dateCol] : (r[headers[0]]||'');
     const dt = stParseDate(rawDate);
     const dateStr = dt ? fmtDate(dt) : '';
     if (!dateStr) return null;
 
-    // Branch name — prefer Store Name over Store ID
+    // Branch name
     let branch = '';
     if (storeNameCol && r[storeNameCol] && String(r[storeNameCol]).trim()) {
       branch = String(r[storeNameCol]).trim();
     } else if (branchCol && r[branchCol]) {
       branch = String(r[branchCol]).trim();
     }
-    if (!branch || branch === '0') {
-      // Use Store ID as fallback label
+    if (!branch || branch==='0') {
       const sid = storeIdCol ? r[storeIdCol] : '';
       branch = sid ? 'סניף '+sid : 'לא ידוע';
     }
 
-    // Orders — use Delivered Count (completed orders)
-    const delivered  = parseMin(deliveredCol  ? r[deliveredCol]  : '') ?? 0;
-    const total      = parseMin(totalOrdersCol ? r[totalOrdersCol]: '') ?? delivered;
-    const cancelled  = parseMin(cancelledCol  ? r[cancelledCol]  : '') ?? 0;
-    const cancelPct  = parseMin(cancelPctCol  ? r[cancelPctCol]  : '') ?? 0;
+    const delivered   = parseMin(deliveredCol   ? r[deliveredCol]   : '') ?? 0;
+    const total       = parseMin(totalOrdersCol  ? r[totalOrdersCol] : '') ?? delivered;
+    const cancelled   = parseMin(cancelledCol    ? r[cancelledCol]   : '') ?? 0;
+    const cancelPct   = parseMin(cancelPctCol    ? r[cancelPctCol]   : '') ?? 0;
+    const orders      = total > 0 ? total : (delivered > 0 ? delivered : 1);
 
-    // Use Total Orders as the weight for averaging; fall back to delivered
-    const orders = total > 0 ? total : (delivered > 0 ? delivered : 1);
-
-    // Time values — already in minutes, just read them
     const avgF = parseMin(colFH ? r[colFH] : null) ?? 0;
     const avgG = parseMin(colGH ? r[colGH] : null) ?? 0;
     const avgH = parseMin(colHH ? r[colHH] : null) ?? 0;
@@ -5368,9 +5376,6 @@ function stParseRows(raw) {
 
     return { dateStr, branch, orders, delivered, cancelled, cancelPct, avgF, avgG, avgH, avgI };
   }).filter(r => r && r.branch && r.dateStr);
-
-  console.log('[Sandy] Parsed rows:', parsed.length, '| sample:', parsed[0]);
-  return parsed;
 }
 
 // ── Aggregate: each row is already a store-day average.
@@ -5439,6 +5444,7 @@ async function stLoadFromSheets() {
     const raw = XLSX.utils.sheet_to_json(ws, {defval:''});
     stAllData = stParseRows(raw);
     stShowToast(`✅ נטענו ${stAllData.length} שורות מגיליון 5`);
+    stApplyPreset('all');
     stRefreshAll();
   } catch(e) {
     console.error('[Sandy] Load error:', e);
@@ -5460,6 +5466,7 @@ function stLoadFile(input) {
       const raw = XLSX.utils.sheet_to_json(ws, {defval:''});
       stAllData = stParseRows(raw);
       stShowToast(`✅ נטענו ${stAllData.length} שורות מגיליון ${sheetIdx+1}`);
+      stApplyPreset('all');
       stRefreshAll();
     } catch(err) { alert('שגיאה: ' + err.message); }
     stShowLoading(false);
@@ -5538,17 +5545,19 @@ function stResetFilters() {
 
 // ── Filter helpers ──
 function stFilterData(data) {
-  let d=data;
-  if(stViewFrom||stViewTo) d=d.filter(r=>
-    (!stViewFrom||r.dateStr>=stViewFrom)&&(!stViewTo||r.dateStr<=stViewTo));
-  if(stFbBranch) d=d.filter(r=>r.branch===stFbBranch);
+  let d = data;
+  if (stViewFrom || stViewTo) {
+    d = d.filter(r => inRange(r.dateStr, stViewFrom, stViewTo));
+  }
+  if (stFbBranch) d = d.filter(r => r.branch === stFbBranch);
   return d;
 }
 function stFilterCmp(data) {
-  if(!stCmpFrom&&!stCmpTo) return [];
-  return data.filter(r=>
-    (!stCmpFrom||r.dateStr>=stCmpFrom)&&(!stCmpTo||r.dateStr<=stCmpTo)&&
-    (!stFbBranch||r.branch===stFbBranch));
+  if (!stCmpFrom && !stCmpTo) return [];
+  return data.filter(r =>
+    inRange(r.dateStr, stCmpFrom, stCmpTo) &&
+    (!stFbBranch || r.branch === stFbBranch)
+  );
 }
 
 // ── Pill helper ──
