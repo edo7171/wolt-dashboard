@@ -4616,7 +4616,9 @@ if (missingConfig) {
           <thead>
             <tr>
               <th onclick="stSortBranch('branch')">סניף ↕</th>
-              <th onclick="stSortBranch('orders')">הזמנות ↕</th>
+              <th onclick="stSortBranch('orders')">סה"כ הזמנות ↕</th>
+              <th onclick="stSortBranch('delivered')">הושלמו ↕</th>
+              <th onclick="stSortBranch('cancelPct')">ביטולים % ↕</th>
               <th id="stThF" onclick="stSortBranch('avgF')">זמן F ↕</th>
               <th id="stThG" onclick="stSortBranch('avgG')">זמן G ↕</th>
               <th id="stThH" onclick="stSortBranch('avgH')">זמן H ↕</th>
@@ -5120,12 +5122,11 @@ function clToggleDay(di) {
 // ═══════════════════════════════════════════════════════════
 //  SANDY TIMES DASHBOARD — DATA & LOGIC
 // ═══════════════════════════════════════════════════════════
-// !! SET YOUR SHEET 5 GID BELOW !!
-// Open your Google Sheet → click Sheet 5 tab → look at URL: ...gid=XXXXXXXX
 const GOOGLE_SHEET5_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTAtc0vyPuariz_HuCrOWuZmjDc2CbUpvZxWemBbNfjvYNMLFXG1nBRWZQSQwu1Cl5Yi2ZY8nuL2s52/pub?gid=1337571500&single=true&output=csv';
 
 let stAllData = [];
-let stColF = 'זמן F', stColG = 'זמן G', stColH = 'זמן H', stColI = 'זמן I';
+// Dynamic column labels (set from actual header names)
+let stColF = 'Create to Drop', stColG = 'Create to Client', stColH = 'Create to Rest', stColI = 'Pickup to Client';
 
 let stViewFrom = '', stViewTo = '', stViewPreset = 'yesterday';
 let stCmpFrom = '', stCmpTo = '', stCmpPreset = '';
@@ -5137,30 +5138,43 @@ let stLineMetric = 'avgF';
 let stSelectedMonth = '';
 let stCharts = {};
 
-// ── Column map (flexible, supports 4 time columns) ──
+// ── Sandy column map — matches actual sheet headers ──────
+// Sheet columns: Store ID | Store Name | Cancel Count | Delivered Count |
+//   Avg Delivery Time [Create to Drop] [min] |
+//   Avg Customer Arrival [Create to Client] [min] |
+//   Avg Restaurant Arrival [Create to Rest] [min] |
+//   Avg Pickup to Client Arrival [min] |
+//   Total Orders [Delivered + Canceled] | Cancel %
 const ST_COL_MAP = {
-  date:   ['תאריך','Date','date','Time Received Date','יום','day','created_at','order_date'],
-  branch: ['Venue Name','סניף','Branch','venue_name','מסעדה','Restaurant','store','חנות','שם סניף','מיקום'],
-  orders: ['Count','הזמנות','Orders','כמות','order_count','סה"כ הזמנות','Orders Count','Total','# הזמנות'],
-  colF:   ['כמה זמן לפני היציאה מהתנור קראו','קריאה לסנדי','קריאה','זמן קריאה','ממוצע F','F','col_f','עמודה F','זמן F'],
-  colG:   ['מקריאה עד איסוף','זמן איסוף','קריאה עד איסוף','ממוצע G','G','col_g','עמודה G','זמן G'],
-  colH:   ['מקריאה עד מסירה','זמן מסירה','קריאה עד מסירה','ממוצע H','H','col_h','עמודה H','זמן H'],
-  colI:   ['זמן נוסף','ממוצע I','I','col_i','עמודה I','זמן I','נסיעה','courier']
+  date:       ['Date','תאריך','date','Store Performance','store_date','report_date','יום'],
+  storeId:    ['Store ID','store_id','StoreID','ID','מזהה'],
+  branch:     ['Store Name','Venue Name','סניף','Branch','venue_name','מסעדה','Restaurant','store','שם סניף','שם'],
+  cancelled:  ['Cancel Count','Cancelled','Canceled','cancelled_count','ביטולים'],
+  orders:     ['Delivered Count','Delivered','delivered_count','הזמנות שהושלמו','Delivered + Canceled','Total Orders'],
+  totalOrders:['Total Orders','Total Orders [Delivered + Canceled]','סה"כ'],
+  cancelPct:  ['Cancel %','Cancel Pct','אחוז ביטול'],
+  colF:       ['Avg Delivery Time [Create to Drop] [min]','Avg Delivery Time','Create to Drop','delivery_time','זמן מסירה','ממוצע F'],
+  colG:       ['Avg Customer Arrival [Create to Client] [min]','Avg Customer Arrival','Create to Client','customer_arrival','הגעת לקוח','ממוצע G'],
+  colH:       ['Avg Restaurant Arrival [Create to Rest] [min]','Avg Restaurant Arrival','Create to Rest','restaurant_arrival','הגעה למסעדה','ממוצע H'],
+  colI:       ['Avg Pickup to Client Arrival [min]','Avg Pickup to Client','Pickup to Client','pickup_arrival','איסוף עד לקוח','ממוצע I']
 };
 
 function stFindCol(headers, keys) {
   if (!keys?.length) return null;
+  // 1. Exact match
   for (const k of keys) {
     const f = headers.find(h => String(h).trim() === k.trim());
     if (f !== undefined) return f;
   }
+  // 2. Case-insensitive exact
   for (const k of keys) {
     const f = headers.find(h => String(h).trim().toLowerCase() === k.trim().toLowerCase());
     if (f !== undefined) return f;
   }
+  // 3. Substring
   for (const k of keys) {
     const kl = k.toLowerCase();
-    const f = headers.find(h => String(h).toLowerCase().includes(kl) || kl.includes(String(h).toLowerCase()));
+    const f = headers.find(h => String(h).toLowerCase().includes(kl));
     if (f !== undefined) return f;
   }
   return null;
@@ -5189,11 +5203,12 @@ function stParseDate(v) {
   if (!v && v!==0) return null;
   if (v instanceof Date) return isNaN(v.getTime())?null:v;
   if (typeof v==='number') {
+    // Excel serial
     const d=new Date((v-25569)*86400*1000);
     return isNaN(d)?null:d;
   }
   const s=String(v).trim();
-  // ISO
+  // ISO YYYY-MM-DD
   const iso=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (iso) { const d=new Date(parseInt(iso[1]),parseInt(iso[2])-1,parseInt(iso[3])); return isNaN(d)?null:d; }
   // D/M/Y or M/D/Y
@@ -5210,275 +5225,206 @@ function stParseDate(v) {
   return isNaN(d)?null:d;
 }
 
+// ── Parse Sheet 5 rows ──────────────────────────────────
+// The sheet is already aggregated: each row = one store on one date
+// Values are already averages in minutes — no further averaging of raw orders needed
 function stParseRows(raw) {
   if (!raw.length) return [];
   const headers = Object.keys(raw[0]);
   const firstRow = raw[0];
+
+  // Log all headers for debugging
+  console.log('[Sandy] Headers:', headers);
+  console.log('[Sandy] First row:', firstRow);
+
   ST_DATE_FMT = stDetectDateFormat(raw);
 
-  // Date col
+  // ── Detect columns ──
+  // Date: look for the report date column
   let dateCol = stFindCol(headers, ST_COL_MAP.date);
   if (!dateCol) {
+    // Auto-detect: first column that contains a date-like value
     for (const h of headers) {
-      const v=firstRow[h];
-      if (v!==undefined&&v!=='') { const d=stParseDate(v); if(d&&d.getFullYear()>=2020&&d.getFullYear()<=2030){dateCol=h;break;} }
+      const v = firstRow[h];
+      if (v !== undefined && v !== '') {
+        const d = stParseDate(v);
+        if (d && d.getFullYear() >= 2020 && d.getFullYear() <= 2030) { dateCol = h; break; }
+      }
     }
     dateCol = dateCol || headers[0];
   }
-  // Branch col
+
+  // Branch: Store Name preferred over Store ID
   let branchCol = stFindCol(headers, ST_COL_MAP.branch);
   if (!branchCol) {
+    // Fall back to any text column that isn't the date
     for (const h of headers) {
-      if (h===dateCol) continue;
-      const v=firstRow[h];
-      if (v&&isNaN(Number(v))&&stParseDate(v)===null&&String(v).length>1){branchCol=h;break;}
+      if (h === dateCol) continue;
+      const v = firstRow[h];
+      if (v && isNaN(Number(v)) && stParseDate(v) === null && String(v).length > 1) { branchCol = h; break; }
     }
     branchCol = branchCol || headers[1];
   }
-  let ordersCol = stFindCol(headers, ST_COL_MAP.orders)
-    || headers.find(h=>{ const n=parseFloat(firstRow[h]); return n>0&&n<10000&&h!==dateCol&&h!==branchCol; })
-    || null;
 
-  let colFH = stFindCol(headers, ST_COL_MAP.colF) || headers[4] || null;
-  let colGH = stFindCol(headers, ST_COL_MAP.colG) || headers[5] || null;
-  let colHH = stFindCol(headers, ST_COL_MAP.colH) || headers[6] || null;
-  let colIH = stFindCol(headers, ST_COL_MAP.colI) || headers[7] || null;
+  // If we only have Store ID (numeric), try Store Name explicitly
+  const storeNameCol = stFindCol(headers, ['Store Name','שם הסניף','שם']);
+  const storeIdCol   = stFindCol(headers, ST_COL_MAP.storeId);
 
-  const shortName = s => {
+  // Orders: prefer Delivered Count, then Total Orders
+  let deliveredCol = stFindCol(headers, ST_COL_MAP.orders);
+  let totalOrdersCol = stFindCol(headers, ST_COL_MAP.totalOrders);
+  let cancelledCol = stFindCol(headers, ST_COL_MAP.cancelled);
+  let cancelPctCol = stFindCol(headers, ST_COL_MAP.cancelPct);
+
+  // Time columns (values are already in minutes)
+  let colFH = stFindCol(headers, ST_COL_MAP.colF);
+  let colGH = stFindCol(headers, ST_COL_MAP.colG);
+  let colHH = stFindCol(headers, ST_COL_MAP.colH);
+  let colIH = stFindCol(headers, ST_COL_MAP.colI);
+
+  // Fallback to positional if not found by name
+  if (!colFH) colFH = headers[4] || null;
+  if (!colGH) colGH = headers[5] || null;
+  if (!colHH) colHH = headers[6] || null;
+  if (!colIH) colIH = headers[7] || null;
+
+  console.log('[Sandy] Detected cols — date:', dateCol, '| branch:', branchCol,
+    '| delivered:', deliveredCol, '| total:', totalOrdersCol,
+    '| F:', colFH, '| G:', colGH, '| H:', colHH, '| I:', colIH);
+
+  // ── Update UI labels with actual column names ──
+  const shortLabel = s => {
     if (!s) return s;
-    if (s.includes('לפני היציאה')||s.includes('קריאה ל')) return 'קריאה לסנדי';
-    if (s.includes('עד איסוף')) return 'קריאה → איסוף';
-    if (s.includes('עד מסירה')) return 'קריאה → מסירה';
-    return s.length>22 ? s.substr(0,22)+'…' : s;
+    // Map English column names to short Hebrew labels
+    if (/Create to Drop/i.test(s))   return 'Create to Drop';
+    if (/Create to Client/i.test(s)) return 'Create to Client';
+    if (/Create to Rest/i.test(s))   return 'Create to Rest';
+    if (/Pickup to Client/i.test(s)) return 'Pickup to Client';
+    if (/Delivery Time/i.test(s))    return 'זמן מסירה';
+    if (/Customer Arrival/i.test(s)) return 'הגעת לקוח';
+    if (/Restaurant Arrival/i.test(s)) return 'הגעה למסעדה';
+    if (/Pickup/i.test(s))           return 'איסוף → לקוח';
+    return s.length > 20 ? s.substr(0,20)+'…' : s;
   };
-  if (colFH) stColF=shortName(String(colFH));
-  if (colGH) stColG=shortName(String(colGH));
-  if (colHH) stColH=shortName(String(colHH));
-  if (colIH) stColI=shortName(String(colIH));
+  if (colFH) stColF = shortLabel(String(colFH));
+  if (colGH) stColG = shortLabel(String(colGH));
+  if (colHH) stColH = shortLabel(String(colHH));
+  if (colIH) stColI = shortLabel(String(colIH));
 
-  const s=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  s('stLblF',stColF); s('stLblG',stColG); s('stLblH',stColH); s('stLblI',stColI);
-  s('stThF',stColF+' ↕'); s('stThG',stColG+' ↕'); s('stThH',stColH+' ↕'); s('stThI',stColI+' ↕');
-  s('stMonthThF',stColF); s('stMonthThG',stColG); s('stMonthThH',stColH); s('stMonthThI',stColI);
-  s('stColNames',stColF+' | '+stColG+' | '+stColH+(colIH?' | '+stColI:''));
+  const se = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
+  se('stLblF', stColF); se('stLblG', stColG); se('stLblH', stColH); se('stLblI', stColI);
+  se('stThF', stColF+' ↕'); se('stThG', stColG+' ↕'); se('stThH', stColH+' ↕'); se('stThI', stColI+' ↕');
+  se('stMonthThF', stColF); se('stMonthThG', stColG); se('stMonthThH', stColH); se('stMonthThI', stColI);
+  se('stColNames', [stColF,stColG,stColH,stColI].filter(Boolean).join(' | '));
 
-  const parseTime = v => {
-    if (!v&&v!==0) return 0;
-    const n=parseFloat(v);
-    if (!isNaN(n)) return n;
-    const ts=String(v).trim();
-    const hms=ts.match(/^(\d+):(\d{2}):(\d{2})$/);
-    if (hms) return parseInt(hms[1])*60+parseInt(hms[2])+parseInt(hms[3])/60;
-    const ms=ts.match(/^(\d+):(\d{2})$/);
-    if (ms) return parseInt(ms[1])+parseInt(ms[2])/60;
-    return 0;
+  // ── Parse time value (already in minutes as decimal) ──
+  const parseMin = v => {
+    if (v === '' || v === null || v === undefined) return null;
+    const n = parseFloat(v);
+    if (!isNaN(n) && n >= 0) return n;
+    // Handle "HH:MM:SS" or "MM:SS"
+    const s2 = String(v).trim();
+    const hms = s2.match(/^(\d+):(\d{2}):(\d{2})$/);
+    if (hms) return parseInt(hms[1])*60 + parseInt(hms[2]) + parseInt(hms[3])/60;
+    const ms = s2.match(/^(\d+):(\d{2})$/);
+    if (ms) return parseInt(ms[1]) + parseInt(ms[2])/60;
+    return null;
   };
 
-  return raw.map(r => {
-    const rawDate = dateCol?r[dateCol]:(r[headers[0]]||'');
+  const parsed = raw.map(r => {
+    // Date
+    const rawDate = dateCol ? r[dateCol] : (r[headers[0]] || '');
     const dt = stParseDate(rawDate);
     const dateStr = dt ? fmtDate(dt) : '';
     if (!dateStr) return null;
-    let branch = String(branchCol?r[branchCol]||'':'').trim();
-    if (branch.includes(' | ')) { const p=branch.split(' | ').map(x=>x.trim()).filter(Boolean); branch=p[p.length-1]||p[0]||branch; }
-    if (!branch) branch='לא ידוע';
-    const ordersRaw=ordersCol?r[ordersCol]:'';
-    const orders=ordersRaw!==''?(parseFloat(ordersRaw)||0):1;
-    const avgF=parseTime(colFH?r[colFH]:0);
-    const avgG=parseTime(colGH?r[colGH]:0);
-    const avgH=parseTime(colHH?r[colHH]:0);
-    const avgI=parseTime(colIH?r[colIH]:0);
-    return {dateStr,branch,orders,avgF,avgG,avgH,avgI};
-  }).filter(r=>r&&r.branch&&r.dateStr);
-}
 
-// ── Data loading ──
-async function stLoadFromSheets() {
-  if (GOOGLE_SHEET5_CSV_URL.includes('SET_SHEET5_GID_HERE')) {
-    alert('⚠️ יש להגדיר את ה-GID של גיליון 5 ב-GOOGLE_SHEET5_CSV_URL בקוד. ניתן גם לטעון קובץ ידני.');
-    return;
-  }
-  stShowLoading(true);
-  try {
-    const response = await fetch(GOOGLE_SHEET5_CSV_URL);
-    if (!response.ok) throw new Error('HTTP '+response.status);
-    const csvText = await response.text();
-    const wb = XLSX.read(csvText,{type:'string'});
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const raw = XLSX.utils.sheet_to_json(ws,{defval:''});
-    stAllData = stParseRows(raw);
-    stShowToast(`✅ נטענו ${stAllData.length} שורות מגיליון 5`);
-    stRefreshAll();
-  } catch(e) {
-    console.error('[ST] Load error:', e);
-    alert('שגיאה בטעינת גיליון 5: '+e.message);
-  }
-  stShowLoading(false);
-}
-
-function stLoadFile(input) {
-  const file = input.files[0];
-  if (!file) return;
-  stShowLoading(true);
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const wb = XLSX.read(e.target.result,{type:'array'});
-      // Sheet 5 = index 4
-      const sheetIdx = wb.SheetNames.length > 4 ? 4 : wb.SheetNames.length-1;
-      const ws = wb.Sheets[wb.SheetNames[sheetIdx]];
-      const raw = XLSX.utils.sheet_to_json(ws,{defval:''});
-      stAllData = stParseRows(raw);
-      stShowToast(`✅ נטענו ${stAllData.length} שורות מגיליון ${sheetIdx+1}`);
-      stRefreshAll();
-    } catch(err) {
-      alert('שגיאה: '+err.message);
+    // Branch name — prefer Store Name over Store ID
+    let branch = '';
+    if (storeNameCol && r[storeNameCol] && String(r[storeNameCol]).trim()) {
+      branch = String(r[storeNameCol]).trim();
+    } else if (branchCol && r[branchCol]) {
+      branch = String(r[branchCol]).trim();
     }
-    stShowLoading(false);
-    input.value='';
-  };
-  reader.readAsArrayBuffer(file);
+    if (!branch || branch === '0') {
+      // Use Store ID as fallback label
+      const sid = storeIdCol ? r[storeIdCol] : '';
+      branch = sid ? 'סניף '+sid : 'לא ידוע';
+    }
+
+    // Orders — use Delivered Count (completed orders)
+    const delivered  = parseMin(deliveredCol  ? r[deliveredCol]  : '') ?? 0;
+    const total      = parseMin(totalOrdersCol ? r[totalOrdersCol]: '') ?? delivered;
+    const cancelled  = parseMin(cancelledCol  ? r[cancelledCol]  : '') ?? 0;
+    const cancelPct  = parseMin(cancelPctCol  ? r[cancelPctCol]  : '') ?? 0;
+
+    // Use Total Orders as the weight for averaging; fall back to delivered
+    const orders = total > 0 ? total : (delivered > 0 ? delivered : 1);
+
+    // Time values — already in minutes, just read them
+    const avgF = parseMin(colFH ? r[colFH] : null) ?? 0;
+    const avgG = parseMin(colGH ? r[colGH] : null) ?? 0;
+    const avgH = parseMin(colHH ? r[colHH] : null) ?? 0;
+    const avgI = parseMin(colIH ? r[colIH] : null) ?? 0;
+
+    return { dateStr, branch, orders, delivered, cancelled, cancelPct, avgF, avgG, avgH, avgI };
+  }).filter(r => r && r.branch && r.dateStr);
+
+  console.log('[Sandy] Parsed rows:', parsed.length, '| sample:', parsed[0]);
+  return parsed;
 }
 
-// ── Date range helpers (reuse tmParseDate pattern) ──
-function stGetCurrentWeekRange() {
-  const now=new Date();
-  const day=now.getDay();
-  const sun=new Date(now); sun.setDate(now.getDate()-day); sun.setHours(0,0,0,0);
-  const sat=new Date(sun); sat.setDate(sun.getDate()+6);
-  return {from:fmtDate(sun),to:fmtDate(sat)};
-}
-function stGetPrevWeekRange() {
-  const now=new Date();
-  const day=now.getDay();
-  const prevSun=new Date(now); prevSun.setDate(now.getDate()-day-7); prevSun.setHours(0,0,0,0);
-  const prevSat=new Date(prevSun); prevSat.setDate(prevSun.getDate()+6);
-  return {from:fmtDate(prevSun),to:fmtDate(prevSat)};
-}
-function stGetYesterday() {
-  const d=new Date(); d.setDate(d.getDate()-1);
-  return fmtDate(d);
-}
-
-function stApplyPreset(preset) {
-  stViewPreset=preset;
-  ['stPreYesterday','stPreCurWeek','stPrePrevWeek','stPreAll','stPreCustom'].forEach(id=>{
-    document.getElementById(id)?.classList.remove('active');
-  });
-  document.getElementById('stPre'+preset.charAt(0).toUpperCase()+preset.slice(1))?.classList.add('active');
-  const cp=document.getElementById('stCustomPickers');
-  if (cp) cp.style.display=preset==='custom'?'flex':'none';
-  if (preset==='yesterday') {
-    const y=stGetYesterday();
-    stViewFrom=y; stViewTo=y;
-  } else if (preset==='curweek') {
-    const r=stGetCurrentWeekRange(); stViewFrom=r.from; stViewTo=r.to;
-  } else if (preset==='prevweek') {
-    const r=stGetPrevWeekRange(); stViewFrom=r.from; stViewTo=r.to;
-  } else if (preset==='all') {
-    stViewFrom=''; stViewTo='';
-  }
-  stUpdateRangeBadge();
-  stRefreshAll();
-}
-function stOnCustomRange() {
-  stViewFrom=document.getElementById('stDpFrom')?.value||'';
-  stViewTo=document.getElementById('stDpTo')?.value||'';
-  if (stViewFrom&&stViewTo) { stUpdateRangeBadge(); stRefreshAll(); }
-}
-function stApplyCompare(preset) {
-  stCmpPreset=preset;
-  ['stCmpNone','stCmpYest','stCmpPrevWeek','stCmpCustom'].forEach(id=>{
-    document.getElementById(id)?.classList.remove('active');
-  });
-  const btnId = preset===''?'stCmpNone':preset==='yesterday'?'stCmpYest':preset==='prevweek'?'stCmpPrevWeek':'stCmpCustom';
-  document.getElementById(btnId)?.classList.add('active');
-  const dc=document.getElementById('stDpCompare');
-  if (dc) dc.style.display=preset==='custom'?'inline-block':'none';
-  if (preset==='') { stCmpFrom=''; stCmpTo=''; }
-  else if (preset==='yesterday') { const y=stGetYesterday(); stCmpFrom=y; stCmpTo=y; }
-  else if (preset==='prevweek') { const r=stGetPrevWeekRange(); stCmpFrom=r.from; stCmpTo=r.to; }
-  stRefreshAll();
-}
-function stOnCompareDate() {
-  const v=document.getElementById('stDpCompare')?.value||'';
-  stCmpFrom=v; stCmpTo=v;
-  if (v) stRefreshAll();
-}
-function stUpdateRangeBadge() {
-  const b=document.getElementById('stRangeBadge');
-  if (!b) return;
-  if (stViewFrom||stViewTo) {
-    b.style.display='inline';
-    b.textContent=(stViewFrom===stViewTo&&stViewFrom)?stViewFrom:`${stViewFrom||'…'} — ${stViewTo||'…'}`;
-  } else { b.style.display='none'; }
-}
-function stApplyFilters() {
-  stFbBranch=document.getElementById('stFbBranch')?.value||'';
-  stRefreshAll();
-}
-function stResetFilters() {
-  stFbBranch='';
-  const fb=document.getElementById('stFbBranch');
-  if (fb) fb.value='';
-  stRefreshAll();
-}
-
-// ── Filter data ──
-function stFilterData(data) {
-  let d=data;
-  if (stViewFrom||stViewTo) {
-    d=d.filter(r=>{
-      if (stViewFrom&&r.dateStr<stViewFrom) return false;
-      if (stViewTo&&r.dateStr>stViewTo) return false;
-      return true;
-    });
-  }
-  if (stFbBranch) d=d.filter(r=>r.branch===stFbBranch);
-  return d;
-}
-function stFilterCmp(data) {
-  if (!stCmpFrom&&!stCmpTo) return [];
-  return data.filter(r=>{
-    if (stCmpFrom&&r.dateStr<stCmpFrom) return false;
-    if (stCmpTo&&r.dateStr>stCmpTo) return false;
-    if (stFbBranch&&r.branch!==stFbBranch) return false;
-    return true;
-  });
-}
-
-// ── Aggregate by branch ──
+// ── Aggregate: each row is already a store-day average.
+//    To combine multiple days, do a weighted average by order count. ──
 function stAggByBranch(data) {
-  const map={};
-  data.forEach(r=>{
-    if (!map[r.branch]) map[r.branch]={branch:r.branch,orders:0,sumF:0,sumG:0,sumH:0,sumI:0,cntF:0,cntG:0,cntH:0,cntI:0};
-    const b=map[r.branch];
-    b.orders+=r.orders;
-    if (r.avgF>0){b.sumF+=r.avgF*r.orders;b.cntF+=r.orders;}
-    if (r.avgG>0){b.sumG+=r.avgG*r.orders;b.cntG+=r.orders;}
-    if (r.avgH>0){b.sumH+=r.avgH*r.orders;b.cntH+=r.orders;}
-    if (r.avgI>0){b.sumI+=r.avgI*r.orders;b.cntI+=r.orders;}
+  const map = {};
+  data.forEach(r => {
+    if (!map[r.branch]) map[r.branch] = {
+      branch: r.branch,
+      orders: 0, delivered: 0, cancelled: 0,
+      sumF: 0, sumG: 0, sumH: 0, sumI: 0,
+      cntF: 0, cntG: 0, cntH: 0, cntI: 0
+    };
+    const b = map[r.branch];
+    b.orders    += r.orders;
+    b.delivered += r.delivered || 0;
+    b.cancelled += r.cancelled || 0;
+    // Weight each day's average by its order count
+    if (r.avgF > 0) { b.sumF += r.avgF * r.orders; b.cntF += r.orders; }
+    if (r.avgG > 0) { b.sumG += r.avgG * r.orders; b.cntG += r.orders; }
+    if (r.avgH > 0) { b.sumH += r.avgH * r.orders; b.cntH += r.orders; }
+    if (r.avgI > 0) { b.sumI += r.avgI * r.orders; b.cntI += r.orders; }
   });
-  return Object.values(map).map(b=>({
+  return Object.values(map).map(b => ({
     ...b,
-    avgF:b.cntF>0?b.sumF/b.cntF:0,
-    avgG:b.cntG>0?b.sumG/b.cntG:0,
-    avgH:b.cntH>0?b.sumH/b.cntH:0,
-    avgI:b.cntI>0?b.sumI/b.cntI:0
+    avgF: b.cntF > 0 ? b.sumF / b.cntF : 0,
+    avgG: b.cntG > 0 ? b.sumG / b.cntG : 0,
+    avgH: b.cntH > 0 ? b.sumH / b.cntH : 0,
+    avgI: b.cntI > 0 ? b.sumI / b.cntI : 0,
+    cancelPct: b.orders > 0 ? (b.cancelled / b.orders * 100) : 0
   }));
 }
 
-// ── Aggregate overall ──
 function stAggOverall(data) {
-  let orders=0,sumF=0,sumG=0,sumH=0,sumI=0,cntF=0,cntG=0,cntH=0,cntI=0;
-  data.forEach(r=>{
-    orders+=r.orders;
-    if(r.avgF>0){sumF+=r.avgF*r.orders;cntF+=r.orders;}
-    if(r.avgG>0){sumG+=r.avgG*r.orders;cntG+=r.orders;}
-    if(r.avgH>0){sumH+=r.avgH*r.orders;cntH+=r.orders;}
-    if(r.avgI>0){sumI+=r.avgI*r.orders;cntI+=r.orders;}
+  let orders=0, delivered=0, cancelled=0;
+  let sumF=0, sumG=0, sumH=0, sumI=0;
+  let cntF=0, cntG=0, cntH=0, cntI=0;
+  data.forEach(r => {
+    orders    += r.orders;
+    delivered += r.delivered || 0;
+    cancelled += r.cancelled || 0;
+    if (r.avgF > 0) { sumF += r.avgF * r.orders; cntF += r.orders; }
+    if (r.avgG > 0) { sumG += r.avgG * r.orders; cntG += r.orders; }
+    if (r.avgH > 0) { sumH += r.avgH * r.orders; cntH += r.orders; }
+    if (r.avgI > 0) { sumI += r.avgI * r.orders; cntI += r.orders; }
   });
-  return {orders,avgF:cntF>0?sumF/cntF:0,avgG:cntG>0?sumG/cntG:0,avgH:cntH>0?sumH/cntH:0,avgI:cntI>0?sumI/cntI:0};
+  return {
+    orders, delivered, cancelled,
+    cancelPct: orders > 0 ? cancelled/orders*100 : 0,
+    avgF: cntF > 0 ? sumF/cntF : 0,
+    avgG: cntG > 0 ? sumG/cntG : 0,
+    avgH: cntH > 0 ? sumH/cntH : 0,
+    avgI: cntI > 0 ? sumI/cntI : 0
+  };
 }
 
 // ── Pill helper ──
@@ -5558,7 +5504,7 @@ function stRefreshAll() {
 
   // Update count
   const fce=document.getElementById('stFbCount');
-  if(fce) fce.textContent=`מציג ${data.length.toLocaleString('he-IL')} שורות`;
+  if(fce) fce.textContent=`מציג ${data.length.toLocaleString('he-IL')} שורות | ${curr.orders.toLocaleString('he-IL')} הזמנות`;
 
   // Update branch select
   const branches=[...new Set(stAllData.map(r=>r.branch))].sort();
@@ -5568,18 +5514,24 @@ function stRefreshAll() {
     fb.innerHTML='<option value="">כל הסניפים</option>'+branches.map(b=>`<option value="${b}"${b===cur?' selected':''}>${b}</option>`).join('');
   }
 
-  // KPI cards
-  const mkChg=(c,p,isTime=true,lowerBetter=false)=>{
-    if(!p||p===0)return'<span class="kpi-change flat">—</span>';
-    const d=c-p;const pct=(d/p*100).toFixed(1);
-    const isGood=lowerBetter?d<0:d>0;
-    const cls=Math.abs(d)<0.1?'flat':isGood?'up good-down':'down';
-    const sign=d>0?'+':'';
-    return`<span class="kpi-change ${cls}">${sign}${isTime?fmtDuration(Math.abs(d)):Math.abs(d).toFixed(0)} (${sign}${pct}%)</span>`;
-  };
+  // KPI cards — time values are in minutes, display with fmtDuration
   const se=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  se('stKpiOrders',curr.orders.toLocaleString('he-IL'));
-  document.getElementById('stKpiOrdersChg').outerHTML && (document.getElementById('stKpiOrdersChg').outerHTML=mkChg(curr.orders,prev.orders,false));
+  se('stKpiOrders', curr.orders.toLocaleString('he-IL'));
+
+  const mkChg=(c,p,lowerBetter=false,isTime=false)=>{
+    if(!p||p===0)return'<span class="kpi-change flat">—</span>';
+    const d=c-p; const pct=(d/p*100).toFixed(1);
+    const isGood=lowerBetter?(d<0):(d>0);
+    const cls=Math.abs(pct)<0.5?'flat':isGood?'up':'down';
+    const sign=d>0?'+':'';
+    const val=isTime?fmtDuration(Math.abs(d)):`${Math.abs(d).toFixed(0)}`;
+    return`<span class="kpi-change ${cls}">${sign}${val} (${sign}${pct}%)</span>`;
+  };
+
+  // Update orders KPI change safely
+  const ordChgEl=document.getElementById('stKpiOrdersChg');
+  if(ordChgEl) ordChgEl.outerHTML=mkChg(curr.orders,prev.orders,false,false).replace('kpi-change','kpi-change" id="stKpiOrdersChg"').replace('id="stKpiOrdersChg"','').replace('<span','<span id="stKpiOrdersChg"');
+
   const tv=(id,v)=>{const e=document.getElementById(id);if(e){e.textContent=fmtDuration(v);e.className='st-time-val '+stPillClass(v);}};
   tv('stKpiF',curr.avgF); tv('stKpiG',curr.avgG); tv('stKpiH',curr.avgH); tv('stKpiI',curr.avgI);
 
@@ -5605,24 +5557,38 @@ function stRenderBranchTable(data,cmpData) {
   if(cmpData.length) stAggByBranch(cmpData).forEach(r=>{cmpMap[r.branch]=r;});
   rows.sort((a,b)=>{
     const av=a[stSortCol]??a.branch;const bv=b[stSortCol]??b.branch;
-    if(typeof av==='string')return av.localeCompare(bv)*stSortDir;
+    if(typeof av==='string')return av.localeCompare(bv,'he')*stSortDir;
     return (av-bv)*stSortDir;
   });
-  const totO=rows.reduce((s,r)=>s+r.orders,0);
-  const wAvg=(k)=>{const s=rows.reduce((a,r)=>a+r[k]*r.orders,0);const c=rows.reduce((a,r)=>a+r.orders,0);return c>0?s/c:0;};
+  const totOrders=rows.reduce((s,r)=>s+r.orders,0);
+  const totDelivered=rows.reduce((s,r)=>s+(r.delivered||0),0);
+  const totCancelled=rows.reduce((s,r)=>s+(r.cancelled||0),0);
+  // Weighted avg for time cols
+  const wAvg=(k)=>{
+    const s=rows.reduce((a,r)=>a+(r[k]>0?r[k]*r.orders:0),0);
+    const c=rows.reduce((a,r)=>a+(r[k]>0?r.orders:0),0);
+    return c>0?s/c:0;
+  };
   const totF=wAvg('avgF'),totG=wAvg('avgG'),totH=wAvg('avgH'),totI=wAvg('avgI');
 
   const tbody=document.getElementById('stBranchTbody');
   if(!tbody)return;
-  if(!rows.length){tbody.innerHTML='<tr><td colspan="7" class="nodata-msg">אין נתונים לטווח הנבחר</td></tr>';return;}
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="8" class="nodata-msg">אין נתונים לטווח הנבחר</td></tr>`;return;}
 
   tbody.innerHTML=rows.map(r=>{
     const c=cmpMap[r.branch];
-    const cmpBadge=c?`<span class="${r.avgF<c.avgF?'st-badge-pos':r.avgF>c.avgF?'st-badge-neg':'st-badge-flat'}">${fmtDuration(Math.abs(r.avgF-c.avgF))} ${r.avgF<c.avgF?'▼ שיפור':r.avgF>c.avgF?'▲ עלייה':'= '}${c?'':'—'}</span>`:
-      '<span class="st-badge-flat">אין השוואה</span>';
+    const diff=c&&c.avgF>0?r.avgF-c.avgF:null;
+    const diffDir=diff===null?'':diff<0?'▼':diff>0?'▲':'=';
+    const diffCls=diff===null?'st-badge-flat':diff<0?'st-badge-pos':diff>0?'st-badge-neg':'st-badge-flat';
+    const cmpBadge=diff!==null
+      ?`<span class="${diffCls}">${diffDir} ${fmtDuration(Math.abs(diff))}</span>`
+      :'<span class="st-badge-flat">אין השוואה</span>';
+    const cancelPct=r.orders>0?(r.cancelled/r.orders*100).toFixed(0)+'%':'—';
     return`<tr>
       <td style="font-weight:600">${r.branch}</td>
       <td>${r.orders.toLocaleString('he-IL')}</td>
+      <td>${(r.delivered||0).toLocaleString('he-IL')}</td>
+      <td style="color:${r.cancelPct>20?'var(--red)':r.cancelPct>10?'var(--orange)':'var(--text2)'}">${r.orders>0?r.cancelPct.toFixed(0)+'%':'—'}</td>
       <td><span class="st-pill ${stPillClass(r.avgF)}">${fmtDuration(r.avgF)}</span></td>
       <td><span class="st-pill ${stPillClass(r.avgG)}">${fmtDuration(r.avgG)}</span></td>
       <td><span class="st-pill ${stPillClass(r.avgH)}">${fmtDuration(r.avgH)}</span></td>
@@ -5632,9 +5598,12 @@ function stRenderBranchTable(data,cmpData) {
   }).join('');
 
   const tfoot=document.getElementById('stBranchTfoot');
+  const totCancelPct=totOrders>0?(totCancelled/totOrders*100).toFixed(0)+'%':'—';
   if(tfoot) tfoot.innerHTML=`<tr class="st-total-row">
     <td>סה"כ / ממוצע</td>
-    <td>${totO.toLocaleString('he-IL')}</td>
+    <td>${totOrders.toLocaleString('he-IL')}</td>
+    <td>${totDelivered.toLocaleString('he-IL')}</td>
+    <td>${totCancelPct}</td>
     <td><span class="st-pill ${stPillClass(totF)}">${fmtDuration(totF)}</span></td>
     <td><span class="st-pill ${stPillClass(totG)}">${fmtDuration(totG)}</span></td>
     <td><span class="st-pill ${stPillClass(totH)}">${fmtDuration(totH)}</span></td>
