@@ -5444,7 +5444,7 @@ async function stLoadFromSheets() {
     const raw = XLSX.utils.sheet_to_json(ws, {defval:''});
     stAllData = stParseRows(raw);
     stShowToast(`✅ נטענו ${stAllData.length} שורות מגיליון 5`);
-    stApplyPreset('all');
+    stApplyPreset('yesterday');
     stRefreshAll();
   } catch(e) {
     console.error('[Sandy] Load error:', e);
@@ -5466,7 +5466,7 @@ function stLoadFile(input) {
       const raw = XLSX.utils.sheet_to_json(ws, {defval:''});
       stAllData = stParseRows(raw);
       stShowToast(`✅ נטענו ${stAllData.length} שורות מגיליון ${sheetIdx+1}`);
-      stApplyPreset('all');
+      stApplyPreset('yesterday');
       stRefreshAll();
     } catch(err) { alert('שגיאה: ' + err.message); }
     stShowLoading(false);
@@ -5995,18 +5995,28 @@ function stRenderOrdersChart(data) {
 
 // ── Monthly ──
 function stRenderMonthly() {
+  // ── Monthly always uses ALL data — not affected by date/branch filters ──
   const months=stGetMonths(stAllData);
   const mb=document.getElementById('stMonthButtons');
+
+  // Default to current calendar month
+  if (!stSelectedMonth || !months.includes(stSelectedMonth)) {
+    const now=new Date();
+    const curMon=String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
+    stSelectedMonth = months.includes(curMon) ? curMon : (months[months.length-1]||'');
+  }
+
   if(mb) {
-    if(!stSelectedMonth||!months.includes(stSelectedMonth)) stSelectedMonth=months[months.length-1]||'';
     mb.innerHTML=months.map(m=>`<button class="st-month-btn ${m===stSelectedMonth?'active':''}" onclick="stSelectMonth('${m}')">${m}</button>`).join('');
   }
   if(!stSelectedMonth) return;
   const range=stGetMonthRange(stSelectedMonth);
-  const currMonData=stFilterData(stAllData.filter(r=>r.dateStr>=range.from&&r.dateStr<=range.to));
+
+  // Use stAllData directly — filter by date range only, ignore branch/date UI filters
+  const currMonData=stAllData.filter(r=>inRange(r.dateStr,range.from,range.to));
   const prevM=stGetPrevMonth(stSelectedMonth);
   const prevRange=stGetMonthRange(prevM);
-  const prevMonData=stFilterData(stAllData.filter(r=>r.dateStr>=prevRange.from&&r.dateStr<=prevRange.to));
+  const prevMonData=stAllData.filter(r=>inRange(r.dateStr,prevRange.from,prevRange.to));
   const prevMap={};
   stAggByBranch(prevMonData).forEach(r=>{prevMap[r.branch]=r;});
 
