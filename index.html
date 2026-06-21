@@ -5427,6 +5427,130 @@ function stAggOverall(data) {
   };
 }
 
+// ── Data loading ──
+async function stLoadFromSheets() {
+  stShowLoading(true);
+  try {
+    const response = await fetch(GOOGLE_SHEET5_CSV_URL);
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const csvText = await response.text();
+    const wb = XLSX.read(csvText, {type:'string'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const raw = XLSX.utils.sheet_to_json(ws, {defval:''});
+    stAllData = stParseRows(raw);
+    stShowToast(`✅ נטענו ${stAllData.length} שורות מגיליון 5`);
+    stRefreshAll();
+  } catch(e) {
+    console.error('[Sandy] Load error:', e);
+    alert('שגיאה בטעינת גיליון 5: ' + e.message);
+  }
+  stShowLoading(false);
+}
+
+function stLoadFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  stShowLoading(true);
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      const sheetIdx = wb.SheetNames.length > 4 ? 4 : wb.SheetNames.length - 1;
+      const ws = wb.Sheets[wb.SheetNames[sheetIdx]];
+      const raw = XLSX.utils.sheet_to_json(ws, {defval:''});
+      stAllData = stParseRows(raw);
+      stShowToast(`✅ נטענו ${stAllData.length} שורות מגיליון ${sheetIdx+1}`);
+      stRefreshAll();
+    } catch(err) { alert('שגיאה: ' + err.message); }
+    stShowLoading(false);
+    input.value = '';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── Date range helpers ──
+function stGetYesterday() { const d=new Date(); d.setDate(d.getDate()-1); return fmtDate(d); }
+function stGetCurrentWeekRange() {
+  const now=new Date(), day=now.getDay();
+  const sun=new Date(now); sun.setDate(now.getDate()-day); sun.setHours(0,0,0,0);
+  const sat=new Date(sun); sat.setDate(sun.getDate()+6);
+  return {from:fmtDate(sun), to:fmtDate(sat)};
+}
+function stGetPrevWeekRange() {
+  const now=new Date(), day=now.getDay();
+  const sun=new Date(now); sun.setDate(now.getDate()-day-7); sun.setHours(0,0,0,0);
+  const sat=new Date(sun); sat.setDate(sun.getDate()+6);
+  return {from:fmtDate(sun), to:fmtDate(sat)};
+}
+
+function stUpdateRangeBadge() {
+  const b=document.getElementById('stRangeBadge'); if(!b) return;
+  if (stViewFrom||stViewTo) {
+    b.style.display='inline';
+    b.textContent=(stViewFrom===stViewTo&&stViewFrom)?stViewFrom:`${stViewFrom||'…'} — ${stViewTo||'…'}`;
+  } else { b.style.display='none'; }
+}
+
+function stApplyPreset(preset) {
+  stViewPreset=preset;
+  ['stPreYesterday','stPreCurWeek','stPrePrevWeek','stPreAll','stPreCustom'].forEach(id=>
+    document.getElementById(id)?.classList.remove('active'));
+  const idMap={yesterday:'stPreYesterday',curweek:'stPreCurWeek',prevweek:'stPrePrevWeek',all:'stPreAll',custom:'stPreCustom'};
+  document.getElementById(idMap[preset])?.classList.add('active');
+  const cp=document.getElementById('stCustomPickers');
+  if(cp) cp.style.display=preset==='custom'?'flex':'none';
+  if(preset==='yesterday')     { const y=stGetYesterday(); stViewFrom=y; stViewTo=y; }
+  else if(preset==='curweek')  { const r=stGetCurrentWeekRange(); stViewFrom=r.from; stViewTo=r.to; }
+  else if(preset==='prevweek') { const r=stGetPrevWeekRange();    stViewFrom=r.from; stViewTo=r.to; }
+  else if(preset==='all')      { stViewFrom=''; stViewTo=''; }
+  stUpdateRangeBadge(); stRefreshAll();
+}
+function stOnCustomRange() {
+  stViewFrom=document.getElementById('stDpFrom')?.value||'';
+  stViewTo=document.getElementById('stDpTo')?.value||'';
+  if(stViewFrom&&stViewTo) { stUpdateRangeBadge(); stRefreshAll(); }
+}
+function stApplyCompare(preset) {
+  stCmpPreset=preset;
+  ['stCmpNone','stCmpYest','stCmpPrevWeek','stCmpCustom'].forEach(id=>
+    document.getElementById(id)?.classList.remove('active'));
+  const idMap={'':'stCmpNone',yesterday:'stCmpYest',prevweek:'stCmpPrevWeek',custom:'stCmpCustom'};
+  document.getElementById(idMap[preset]||'stCmpNone')?.classList.add('active');
+  const dc=document.getElementById('stDpCompare');
+  if(dc) dc.style.display=preset==='custom'?'inline-block':'none';
+  if(preset==='')              { stCmpFrom=''; stCmpTo=''; }
+  else if(preset==='yesterday'){ const y=stGetYesterday(); stCmpFrom=y; stCmpTo=y; }
+  else if(preset==='prevweek') { const r=stGetPrevWeekRange(); stCmpFrom=r.from; stCmpTo=r.to; }
+  stRefreshAll();
+}
+function stOnCompareDate() {
+  const v=document.getElementById('stDpCompare')?.value||'';
+  stCmpFrom=v; stCmpTo=v; if(v) stRefreshAll();
+}
+function stApplyFilters() {
+  stFbBranch=document.getElementById('stFbBranch')?.value||''; stRefreshAll();
+}
+function stResetFilters() {
+  stFbBranch='';
+  const fb=document.getElementById('stFbBranch'); if(fb) fb.value='';
+  stRefreshAll();
+}
+
+// ── Filter helpers ──
+function stFilterData(data) {
+  let d=data;
+  if(stViewFrom||stViewTo) d=d.filter(r=>
+    (!stViewFrom||r.dateStr>=stViewFrom)&&(!stViewTo||r.dateStr<=stViewTo));
+  if(stFbBranch) d=d.filter(r=>r.branch===stFbBranch);
+  return d;
+}
+function stFilterCmp(data) {
+  if(!stCmpFrom&&!stCmpTo) return [];
+  return data.filter(r=>
+    (!stCmpFrom||r.dateStr>=stCmpFrom)&&(!stCmpTo||r.dateStr<=stCmpTo)&&
+    (!stFbBranch||r.branch===stFbBranch));
+}
+
 // ── Pill helper ──
 function stPillClass(v,good=30,warn=45){if(!v)return'neutral';if(v<=good)return'good';if(v<=warn)return'warn';return'bad';}
 
