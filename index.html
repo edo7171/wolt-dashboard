@@ -4618,7 +4618,7 @@ if (missingConfig) {
               <th onclick="stSortBranch('branch')">סניף ↕</th>
               <th onclick="stSortBranch('orders')">סה"כ הזמנות ↕</th>
               <th onclick="stSortBranch('delivered')">הושלמו ↕</th>
-              <th onclick="stSortBranch('cancelPct')">ביטולים % ↕</th>
+              <th onclick="stSortBranch('cancelled')">ביטולים ↕</th>
               <th id="stThF" onclick="stSortBranch('avgF')">זמן F ↕</th>
               <th id="stThG" onclick="stSortBranch('avgG')">זמן G ↕</th>
               <th id="stThH" onclick="stSortBranch('avgH')">זמן H ↕</th>
@@ -5721,7 +5721,7 @@ function stRenderBranchTable(data,cmpData) {
       <td style="font-weight:600">${r.branch}</td>
       <td>${r.orders.toLocaleString('he-IL')}</td>
       <td>${(r.delivered||0).toLocaleString('he-IL')}</td>
-      <td style="color:${r.cancelPct>20?'var(--red)':r.cancelPct>10?'var(--orange)':'var(--text2)'}">${r.orders>0?r.cancelPct.toFixed(0)+'%':'—'}</td>
+      <td>${(r.cancelled||0).toLocaleString('he-IL')}</td>
       <td><span class="st-pill ${stPillClass(r.avgF)}">${fmtDuration(r.avgF)}</span></td>
       <td><span class="st-pill ${stPillClass(r.avgG)}">${fmtDuration(r.avgG)}</span></td>
       <td><span class="st-pill ${stPillClass(r.avgH)}">${fmtDuration(r.avgH)}</span></td>
@@ -5736,7 +5736,7 @@ function stRenderBranchTable(data,cmpData) {
     <td>סה"כ / ממוצע</td>
     <td>${totOrders.toLocaleString('he-IL')}</td>
     <td>${totDelivered.toLocaleString('he-IL')}</td>
-    <td>${totCancelPct}</td>
+    <td>${totCancelled.toLocaleString('he-IL')}</td>
     <td><span class="st-pill ${stPillClass(totF)}">${fmtDuration(totF)}</span></td>
     <td><span class="st-pill ${stPillClass(totG)}">${fmtDuration(totG)}</span></td>
     <td><span class="st-pill ${stPillClass(totH)}">${fmtDuration(totH)}</span></td>
