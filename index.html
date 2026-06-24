@@ -822,7 +822,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
   <div class="landing-logo">🍕</div>
   <div class="landing-title">דשבורד דומינו'ס Wolt</div>
   <div class="landing-subtitle">בחר את הדשבורד לצפייה</div>
-  <div style="margin-top:8px;font-size:11px;color:var(--text3);letter-spacing:.5px;font-weight:500">v7.0 · סגירות עם חישוב שעת סגירה</div>
+  <div style="margin-top:8px;font-size:11px;color:var(--text3);letter-spacing:.5px;font-weight:500">v7.1 · תיקון דריל דאון שעת סגירה</div>
 
   <div class="landing-cards">
     <!-- Card: Orders -->
@@ -5005,7 +5005,7 @@ window.clRenderAll = function() {
   ins.push({t:'שעת שיא',b:`${peakH}:00–${peakH+1}:00 — ${hourly[peakH]} אירועים`});
   if(avgMin>60) ins.push({t:'⚠️ זמן ממוצע גבוה',b:`${clFmt(avgMin)} בממוצע לאירוע`});
   if(permCount>total*0.3) ins.push({t:'📌 שיעור קבועים גבוה',b:`${Math.round(permCount/total*100)}% מסומנים קבועים`});
-  if(clCalcCapped(longest||{},ctMap)>120) ins.push({t:'🕐 האירוע הארוך ביותר',b:`${longest.branchName} — ${clFmt(longest.durationMinutes)}`});
+  if(clCalcCapped(longest||{},ctMap)>120) ins.push({t:'🕐 האירוע הארוך ביותר',b:`${longest.branchName} — ${clFmt(clCalcCapped(longest,ctMap))}`});
 
   const colors=['#DA3633','#E3B341','#8957E5','#2EA043','#009DE0','#6A1B9A','#00838F','#37474F','#5D4037','#AD1457'];
 
@@ -5062,7 +5062,7 @@ window.clRenderAll = function() {
     const stDetail = Object.entries(d.bySt).sort((a,b)=>b[1].count-a[1].count).map(([sid,sd])=>{
       const st=clStById(sid);
       const evRows=sd.events.map(ev=>`<div style="display:flex;gap:10px;font-size:11px;padding:3px 8px;border-bottom:1px solid rgba(48,54,61,.3);color:var(--text2)">
-        <span>${clFmtTs(ev.startedAt)}</span><span style="font-weight:600">${clFmt(ev.durationMinutes||0)}</span><span style="color:var(--text3)">${ev.note||''}</span>
+        <span>${clFmtTs(ev.startedAt)}</span><span style="font-weight:600">${clFmt(clCalcCapped(ev,ctMap))}</span><span style="color:var(--text3)">${ev.note||''}</span>
       </div>`).join('');
       return `<div style="margin:3px 0;border:1px solid rgba(255,255,255,.06);border-radius:5px;overflow:hidden">
         <div style="background:rgba(255,255,255,.04);padding:5px 10px;font-size:12px;font-weight:600">
@@ -5086,7 +5086,7 @@ window.clRenderAll = function() {
     const st=clStById(sid); const pct=Math.round(data.count/total*100);
     const brDetail=Object.entries(data.branches).sort((a,b)=>b[1].count-a[1].count).map(([bname,bd])=>{
       const evRows=bd.events.map(ev=>`<div style="display:flex;gap:10px;font-size:11px;padding:3px 8px;border-bottom:1px solid rgba(48,54,61,.3);color:var(--text2)">
-        <span>${clFmtTs(ev.startedAt)}</span><span style="font-weight:600">${clFmt(ev.durationMinutes||0)}</span><span>${ev.isPermanent?'📌':'⏱'}</span>
+        <span>${clFmtTs(ev.startedAt)}</span><span style="font-weight:600">${clFmt(clCalcCapped(ev,ctMap))}</span><span>${ev.isPermanent?'📌':'⏱'}</span>
       </div>`).join('');
       return `<div style="margin:3px 0;border:1px solid rgba(255,255,255,.06);border-radius:5px;overflow:hidden">
         <div style="background:rgba(255,255,255,.04);padding:5px 10px;font-size:12px;font-weight:600">📍 ${bname} · ${bd.count} · ${clFmt(bd.min)}</div>${evRows}</div>`;
