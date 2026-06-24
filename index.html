@@ -822,6 +822,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
   <div class="landing-logo">🍕</div>
   <div class="landing-title">דשבורד דומינו'ס Wolt</div>
   <div class="landing-subtitle">בחר את הדשבורד לצפייה</div>
+  <div style="margin-top:8px;font-size:11px;color:var(--text3);letter-spacing:.5px;font-weight:500">v7.0 · סגירות עם חישוב שעת סגירה</div>
 
   <div class="landing-cards">
     <!-- Card: Orders -->
@@ -4831,6 +4832,7 @@ async function clLoadData() {
   clStatuses = sSnap.docs.map(d=>({id:d.id,...d.data()}));
   clLogs     = lSnap.docs.map(d=>({id:d.id,...d.data()}));
   clBranches = bSnap.docs.map(d=>({id:d.id,...d.data()}));
+  console.log('[Closures] branches:', clBranches.length, clBranches.map(b=>b.name+':'+(b.closeTime||'NONE')));
   clLoaded   = true;
 }
 
@@ -4937,6 +4939,7 @@ window.clRenderAll = function() {
   const {from,to} = clGetRange();
   const typeF = document.getElementById('cl-type-filter')?.value||'all';
   const ctMap = clCloseTimeMap(); // closeTime per branch
+  console.log('[Closures] ctMap:', ctMap, 'branches loaded:', clBranches.length);
 
   const logs = clLogs.filter(l=>{
     const ts=l.startedAt?.toDate?.()||new Date(0);
