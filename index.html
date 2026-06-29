@@ -827,7 +827,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
       border:1px solid rgba(249,115,22,0.3);border-radius:20px;
       padding:4px 14px;font-size:11px;color:rgba(249,115,22,0.85);font-family:monospace;
       letter-spacing:0.5px">
-      🕐 v2025.06.30 · 00:10
+      🕐 v2025.06.30 · 00:40
     </span>
   </div>
 
@@ -2956,7 +2956,21 @@ async function tmLoadFromSheets() {
     const wb = XLSX.read(csvText, { type: 'string' });
     const ws = wb.Sheets[wb.SheetNames[0]];
     const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
-    const rows = tmParseRows(raw);
+    // ── Handle double-header: if most keys are EMPTY_N_, row 0 is title, row 1 = real headers ──
+    let workingRaw = raw;
+    const firstKeys = Object.keys(raw[0] || {});
+    const emptyCount = firstKeys.filter(k => /^EMPTY_|^__EMPTY/.test(k)).length;
+    if (emptyCount > firstKeys.length / 2 && raw.length > 1) {
+      const headerRow = Object.values(raw[1]).map(v => String(v||'').trim());
+      workingRaw = raw.slice(2).map(r => {
+        const vals = Object.values(r);
+        const obj = {};
+        headerRow.forEach((h, i) => { if (h) obj[h] = vals[i] ?? ''; });
+        return obj;
+      });
+      console.log('[TM] Double-header detected, real headers:', headerRow);
+    }
+    const rows = tmParseRows(workingRaw);
     if (!rows.length) {
       // Show detailed diagnostic
       const hdrs = raw.length ? Object.keys(raw[0]).join(' | ') : 'אין שורות';
@@ -3000,7 +3014,19 @@ function tmLoadFile(input) {
       const sheetIdx = wb.SheetNames.length > 1 ? 1 : 0;
       const ws = wb.Sheets[wb.SheetNames[sheetIdx]];
       const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
-      const rows = tmParseRows(raw);
+      // ── Handle double-header ──
+      let workingRaw = raw;
+      const fk = Object.keys(raw[0] || {});
+      if (fk.filter(k => /^EMPTY_|^__EMPTY/.test(k)).length > fk.length / 2 && raw.length > 1) {
+        const headerRow = Object.values(raw[1]).map(v => String(v||'').trim());
+        workingRaw = raw.slice(2).map(r => {
+          const vals = Object.values(r);
+          const obj = {};
+          headerRow.forEach((h, i) => { if (h) obj[h] = vals[i] ?? ''; });
+          return obj;
+        });
+      }
+      const rows = tmParseRows(workingRaw);
       if (!rows.length) {
         const hdrs = raw.length ? Object.keys(raw[0]).join(' | ') : 'אין שורות';
         alert(`⚠️ לא נמצאו שורות תקינות.\n\nכותרות עמודות בקובץ:\n${hdrs}\n\nוודא שהקובץ מכיל עמודות: תאריך, סניף, ועמודות זמנים F/G/H`);
@@ -4627,10 +4653,10 @@ if (missingConfig) {
               <th onclick="stSortBranch('orders')">סה"כ הזמנות ↕</th>
               <th onclick="stSortBranch('delivered')">הושלמו ↕</th>
               <th onclick="stSortBranch('cancelled')">ביטולים ↕</th>
-              <th id="stThF" onclick="stSortBranch('avgF')">זמן F ↕</th>
-              <th id="stThG" onclick="stSortBranch('avgG')">זמן G ↕</th>
-              <th id="stThH" onclick="stSortBranch('avgH')">זמן H ↕</th>
-              <th id="stThI" onclick="stSortBranch('avgI')">זמן I ↕</th>
+              <th id="stThF" onclick="stSortBranch('avgF')">מקריאה עד מסירה ↕</th>
+              <th id="stThG" onclick="stSortBranch('avgG')">מקריאה עד איסוף ↕</th>
+              <th id="stThH" onclick="stSortBranch('avgH')">איסוף עד לקוח ↕</th>
+              <th id="stThI" onclick="stSortBranch('avgI')" style="display:none"></th>
               <th>השוואה F</th>
             </tr>
           </thead>
@@ -4743,10 +4769,10 @@ if (missingConfig) {
             <tr>
               <th>סניף</th>
               <th>הזמנות</th>
-              <th id="stMonthThF">זמן F</th>
-              <th id="stMonthThG">זמן G</th>
-              <th id="stMonthThH">זמן H</th>
-              <th id="stMonthThI">זמן I</th>
+              <th id="stMonthThF">מקריאה עד מסירה</th>
+              <th id="stMonthThG">מקריאה עד איסוף</th>
+              <th id="stMonthThH">איסוף עד לקוח</th>
+              <th id="stMonthThI" style="display:none"></th>
               <th>F החודש הקודם</th>
               <th>שינוי F</th>
             </tr>
@@ -5134,7 +5160,7 @@ const GOOGLE_SHEET5_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1v
 
 let stAllData = [];
 // Dynamic column labels (set from actual header names)
-let stColF = 'Create to Drop', stColG = 'Create to Client', stColH = 'Create to Rest', stColI = 'Pickup to Client';
+let stColF = 'מקריאה עד מסירה', stColG = 'מקריאה עד איסוף', stColH = 'איסוף עד לקוח', stColI = '';
 
 let stViewFrom = '', stViewTo = '', stViewPreset = 'yesterday';
 let stCmpFrom = '', stCmpTo = '', stCmpPreset = '';
