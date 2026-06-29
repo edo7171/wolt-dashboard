@@ -827,7 +827,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
       border:1px solid rgba(249,115,22,0.3);border-radius:20px;
       padding:4px 14px;font-size:11px;color:rgba(249,115,22,0.85);font-family:monospace;
       letter-spacing:0.5px">
-      🕐 v2025.06.30 · 00:40
+      🕐 v2025.06.30 · 01:00
     </span>
   </div>
 
@@ -2620,10 +2620,10 @@ let tmCharts = {};
 // Sheet 2 expected columns (very flexible auto-detection):
 // Date | Branch/Venue | OrderCount | ColA | ColB | ColC | ColF | ColG | ColH
 const TM_COL_MAP = {
-  date:    ['תאריך','Date','date','Time Received Date','יום','day','created_at','order_date'],
-  branch:  ['Venue Name','סניף','Branch','venue_name','מסעדה','Restaurant','store','חנות','שם סניף','מיקום'],
-  orders:  ['Count','הזמנות','Orders','כמות','order_count','סה"כ הזמנות','Orders Count','Total','סהכ','# הזמנות','מספר הזמנות'],
-  colF:    ['כמה זמן לפני היציאה מהתנור קראו לוולט','קריאה לוולט','זמן קריאה','ממוצע F','F','col_f','עמודה F','זמן F','ממוצע זמן F'],
+  date:    ['תאריך','Date','date','Time Received Date','יום','day','created_at','order_date','I'],
+  branch:  ['Venue Name','סניף','Branch','venue_name','מסעדה','Restaurant','store','חנות','שם סניף','מיקום','B'],
+  orders:  ['Count','הזמנות','Orders','כמות','order_count','סה"כ הזמנות','Orders Count','Total','סהכ','# הזמנות','מספר הזמנות','D'],
+  colF:    ['כמה זמן לפני היציאה מהתנור קראו לוולט','כמה זמן לפני היציאה מהתנור קראו','קריאה לוולט','זמן קריאה','ממוצע F','F','col_f','עמודה F','זמן F','ממוצע זמן F'],
   colG:    ['מקריאה עד איסוף','זמן איסוף','קריאה עד איסוף','ממוצע G','G','col_g','עמודה G','זמן G','ממוצע זמן G'],
   colH:    ['מקריאה עד מסירה','זמן מסירה','קריאה עד מסירה','ממוצע H','H','col_h','עמודה H','זמן H','ממוצע זמן H']
 };
@@ -2716,7 +2716,8 @@ function tmParseRows(raw) {
     || headers.find(h => { const n=parseFloat(firstRow[h]); return n>0 && n<10000 && h!==dateCol && h!==branchCol; })
     || null;
 
-  // F, G, H: name lookup first, then positional fallback (cols 5,6,7 = F,G,H in 0-indexed)
+  // F, G, H: name lookup first, then positional fallback
+  // Sheet 2 layout: A=empty, B=Venue Name, C=Venue ID, D=Count, E=Delivery Distance, F=זמן F, G=זמן G, H=זמן H, I=תאריך
   let colFH = tmFindCol(headers, TM_COL_MAP.colF) || headers[5] || null;
   let colGH = tmFindCol(headers, TM_COL_MAP.colG) || headers[6] || null;
   let colHH = tmFindCol(headers, TM_COL_MAP.colH) || headers[7] || null;
@@ -2743,7 +2744,14 @@ function tmParseRows(raw) {
   s('tmMonthThF', tmColF); s('tmMonthThG', tmColG); s('tmMonthThH', tmColH);
   s('tmColNames', tmColF + ' | ' + tmColG + ' | ' + tmColH);
 
-  const parsed = raw.map((r) => {
+  // Filter out repeating header rows (rows where branch column contains header text)
+  const knownTmHeaders = new Set(['venue name','סניף','branch','store name','מסעדה']);
+  const filtered = raw.filter(r => {
+    const bv = String(branchCol ? (r[branchCol]||'') : '').trim().toLowerCase();
+    return bv && !knownTmHeaders.has(bv) && bv !== 'venue name';
+  });
+
+  const parsed = filtered.map((r) => {
     // ── Date ──
     const rawDate = dateCol ? r[dateCol] : (r[headers[0]] || '');
     const dt = tmParseDate(rawDate);
@@ -2956,12 +2964,15 @@ async function tmLoadFromSheets() {
     const wb = XLSX.read(csvText, { type: 'string' });
     const ws = wb.Sheets[wb.SheetNames[0]];
     const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
-    // ── Handle double-header: if most keys are EMPTY_N_, row 0 is title, row 1 = real headers ──
+    // ── Handle double-header: row 0 = report title, row 1 = real column headers ──
+    // Only apply if: most keys are EMPTY_N_ AND row 1 values look like real column headers
     let workingRaw = raw;
     const firstKeys = Object.keys(raw[0] || {});
     const emptyCount = firstKeys.filter(k => /^EMPTY_|^__EMPTY/.test(k)).length;
-    if (emptyCount > firstKeys.length / 2 && raw.length > 1) {
-      const headerRow = Object.values(raw[1]).map(v => String(v||'').trim());
+    const row1vals = raw[1] ? Object.values(raw[1]).map(v => String(v||'').trim()) : [];
+    const row1HasHeaders = row1vals.some(v => v.length > 2 && isNaN(Number(v)));
+    if (emptyCount > firstKeys.length / 2 && raw.length > 1 && row1HasHeaders) {
+      const headerRow = row1vals;
       workingRaw = raw.slice(2).map(r => {
         const vals = Object.values(r);
         const obj = {};
