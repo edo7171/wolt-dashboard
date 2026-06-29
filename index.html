@@ -827,7 +827,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
       border:1px solid rgba(249,115,22,0.3);border-radius:20px;
       padding:4px 14px;font-size:11px;color:rgba(249,115,22,0.85);font-family:monospace;
       letter-spacing:0.5px">
-      🕐 v2025.06.29 · 23:15
+      🕐 v2025.06.29 · 23:58
     </span>
   </div>
 
@@ -5154,17 +5154,29 @@ let stCharts = {};
 //   Avg Pickup to Client Arrival [min] |
 //   Total Orders [Delivered + Canceled] | Cancel %
 const ST_COL_MAP = {
-  date:       ['Date','תאריך','date','Store Performance','store_date','report_date','יום'],
-  storeId:    ['Store ID','store_id','StoreID','ID','מזהה'],
-  branch:     ['Store Name','Venue Name','סניף','Branch','venue_name','מסעדה','Restaurant','store','שם סניף','שם'],
-  cancelled:  ['Cancel Count','Cancelled','Canceled','cancelled_count','ביטולים'],
-  orders:     ['Delivered Count','Delivered','delivered_count','הזמנות שהושלמו','Delivered + Canceled','Total Orders'],
-  totalOrders:['Total Orders','Total Orders [Delivered + Canceled]','סה"כ'],
-  cancelPct:  ['Cancel %','Cancel Pct','אחוז ביטול'],
-  colF:       ['Avg Delivery Time [Create to Drop] [min]','Avg Delivery Time','Create to Drop','delivery_time','זמן מסירה','ממוצע F'],
-  colG:       ['Avg Customer Arrival [Create to Client] [min]','Avg Customer Arrival','Create to Client','customer_arrival','הגעת לקוח','ממוצע G'],
-  colH:       ['Avg Restaurant Arrival [Create to Rest] [min]','Avg Restaurant Arrival','Create to Rest','restaurant_arrival','הגעה למסעדה','ממוצע H'],
-  colI:       ['Avg Pickup to Client Arrival [min]','Avg Pickup to Client','Pickup to Client','pickup_arrival','איסוף עד לקוח','ממוצע I']
+  // K = תאריך
+  date:       ['תאריך','Date','date','K','store_date','report_date','יום'],
+  // A = Store ID
+  storeId:    ['Store ID','store_id','StoreID','A','מזהה'],
+  // B = Store Name
+  branch:     ['Store Name','שם','B','Venue Name','סניף','Branch','venue_name','מסעדה','Restaurant'],
+  // C = סה"כ ביטולים
+  cancelled:  ['סה"כ ביטולים','Cancel Count','Cancelled','Canceled','ביטולים','C'],
+  // D = סה"כ משלוחים (= Delivered)
+  orders:     ['סה"כ משלוחים','Delivered Count','Delivered','D','delivered_count'],
+  // I = סה"כ (הזמנות+ביטולים)
+  totalOrders:['סה"כ (הזמנות+ביטולים)','Total Orders','סה"כ הזמנות','I'],
+  // J = % ביטולים
+  cancelPct:  ['% ביטולים','Cancel %','Cancel Pct','אחוז ביטול','J'],
+  // E = Avg Delivery Time (Create to Drop) — EXCLUDED / ignored
+  // colF = F = מקריאה עד מסירה
+  colF:       ['מקריאה עד מסירה','Avg Customer Arrival [Create to Client] [min]','Create to Client','F'],
+  // colG = G = מקריאה עד איסוף
+  colG:       ['מקריאה עד איסוף','Avg Restaurant Arrival [Create to Rest] [min]','Create to Rest','G'],
+  // colH = H = איסוף עד לקוח
+  colH:       ['איסוף עד לקוח','Avg Pickup to Client Arrival [min]','Pickup to Client','H'],
+  // No colI in this sheet
+  colI:       []
 };
 
 function stFindCol(headers, keys) {
@@ -5234,113 +5246,77 @@ function stParseDate(v) {
 }
 
 // ── Parse Sheet 5 rows ──────────────────────────────────
+// Sheet structure (actual columns):
+//   A=Store ID | B=Store Name | C=סה"כ ביטולים | D=סה"כ משלוחים
+//   E=Avg Delivery Time (IGNORED) | F=מקריאה עד מסירה
+//   G=מקריאה עד איסוף | H=איסוף עד לקוח
+//   I=סה"כ (הזמנות+ביטולים) | J=% ביטולים | K=תאריך
 function stParseRows(raw) {
   if (!raw.length) return [];
 
-  // ── Handle double-header sheets ──────────────────────
-  // Sandy's sheet has row 0 = report title (Store Performance - dominos.heila - YYYY-MM-DD)
-  // and row 1 = actual column headers. XLSX.js uses row 0 as keys → all columns get EMPTY_N_ names.
-  // Detect this: if most header keys start with EMPTY_ or are numeric, skip row 0 and re-parse.
+  // ── Step 1: handle XLSX double-header (first row = report title) ──
   let workingRaw = raw;
   const firstKeys = Object.keys(raw[0] || {});
   const emptyCount = firstKeys.filter(k => /^EMPTY_|^__EMPTY/.test(k)).length;
+
   if (emptyCount > firstKeys.length / 2) {
-    // Row 0 is the title row — treat row 1 as real headers
-    const realHeaders = Object.values(raw[0]).map(v => String(v||'').trim());
-    // Build new objects using row 1 values as keys, rows 2+ as data
-    // But raw[1] is already the next row — its values are the real headers
-    // Re-read using raw[1] keys as headers, raw[2..] as data
-    const headerRow = raw[1] ? Object.values(raw[1]).map(v => String(v||'').trim()) : realHeaders;
-    workingRaw = raw.slice(2).map(r => {
-      const vals = Object.values(r);
-      const obj = {};
-      headerRow.forEach((h, i) => { if (h) obj[h] = vals[i] ?? ''; });
-      return obj;
-    });
-    console.log('[Sandy] Detected double-header — using real headers:', headerRow);
-    if (!workingRaw.length) {
-      // Fallback: maybe raw[0] values ARE the headers, raw[1..] are data
-      workingRaw = raw.slice(1).map(r => {
+    // Row 0 = report title, Row 1 = real column headers, Row 2+ = data
+    const headerRow = raw[1] ? Object.values(raw[1]).map(v => String(v||'').trim()) : [];
+    if (headerRow.length) {
+      workingRaw = raw.slice(2).map(r => {
         const vals = Object.values(r);
         const obj = {};
-        realHeaders.forEach((h, i) => { if (h) obj[h] = vals[i] ?? ''; });
+        headerRow.forEach((h, i) => { if (h) obj[h] = vals[i] ?? ''; });
         return obj;
       });
+      console.log('[Sandy] Double-header detected, real headers:', headerRow);
     }
   }
 
   if (!workingRaw.length) return [];
+
+  // ── Step 2: identify real headers and detect column positions ──
   const headers = Object.keys(workingRaw[0]);
   const firstRow = workingRaw[0];
-
-  console.log('[Sandy] Working headers:', headers);
-  console.log('[Sandy] First data row:', firstRow);
+  console.log('[Sandy] Headers:', headers);
+  console.log('[Sandy] First row:', firstRow);
 
   ST_DATE_FMT = stDetectDateFormat(workingRaw);
 
-  // ── Detect columns ──
-  let dateCol = stFindCol(headers, ST_COL_MAP.date);
-  if (!dateCol) {
-    for (const h of headers) {
-      const v = firstRow[h];
-      if (v !== undefined && v !== '') {
-        const d = stParseDate(v);
-        if (d && d.getFullYear() >= 2020 && d.getFullYear() <= 2030) { dateCol = h; break; }
-      }
-    }
-    dateCol = dateCol || headers[0];
-  }
+  // Column detection — by name first, then by known position
+  // Positions: A=0, B=1, C=2, D=3, E=4(skip), F=5, G=6, H=7, I=8, J=9, K=10
+  const h = (idx) => headers[idx] || null;
 
-  const storeNameCol   = stFindCol(headers, ['Store Name','שם הסניף','שם']);
-  const storeIdCol     = stFindCol(headers, ST_COL_MAP.storeId);
-  let   branchCol      = storeNameCol || stFindCol(headers, ST_COL_MAP.branch);
-  if (!branchCol) {
-    for (const h of headers) {
-      if (h === dateCol) continue;
-      const v = firstRow[h];
-      if (v && isNaN(Number(v)) && stParseDate(v) === null && String(v).length > 1) { branchCol = h; break; }
-    }
-    branchCol = branchCol || headers[1];
-  }
+  const storeIdCol     = stFindCol(headers, ST_COL_MAP.storeId)     || h(0);
+  const storeNameCol   = stFindCol(headers, ST_COL_MAP.branch)       || h(1);
+  const cancelledCol   = stFindCol(headers, ST_COL_MAP.cancelled)    || h(2);
+  const deliveredCol   = stFindCol(headers, ST_COL_MAP.orders)       || h(3);
+  // h(4) = E = Avg Delivery Time → IGNORED
+  const colFH          = stFindCol(headers, ST_COL_MAP.colF)         || h(5);
+  const colGH          = stFindCol(headers, ST_COL_MAP.colG)         || h(6);
+  const colHH          = stFindCol(headers, ST_COL_MAP.colH)         || h(7);
+  const totalOrdersCol = stFindCol(headers, ST_COL_MAP.totalOrders)  || h(8);
+  const cancelPctCol   = stFindCol(headers, ST_COL_MAP.cancelPct)    || h(9);
+  const dateCol        = stFindCol(headers, ST_COL_MAP.date)         || h(10) || h(0);
 
-  let deliveredCol   = stFindCol(headers, ST_COL_MAP.orders);
-  let totalOrdersCol = stFindCol(headers, ST_COL_MAP.totalOrders);
-  let cancelledCol   = stFindCol(headers, ST_COL_MAP.cancelled);
-  let cancelPctCol   = stFindCol(headers, ST_COL_MAP.cancelPct);
-  let colFH = stFindCol(headers, ST_COL_MAP.colF) || headers[4] || null;
-  let colGH = stFindCol(headers, ST_COL_MAP.colG) || headers[5] || null;
-  let colHH = stFindCol(headers, ST_COL_MAP.colH) || headers[6] || null;
-  let colIH = stFindCol(headers, ST_COL_MAP.colI) || headers[7] || null;
+  console.log('[Sandy] Mapped — date:', dateCol, '| branch:', storeNameCol,
+    '| cancelled:', cancelledCol, '| delivered:', deliveredCol,
+    '| F(skip E):', colFH, '| G:', colGH, '| H:', colHH,
+    '| total:', totalOrdersCol, '| cancel%:', cancelPctCol);
 
-  console.log('[Sandy] Cols — date:', dateCol, '| branch:', branchCol,
-    '| delivered:', deliveredCol, '| total:', totalOrdersCol,
-    '| F:', colFH, '| G:', colGH, '| H:', colHH, '| I:', colIH);
-
-  // ── Update UI labels ──
-  const shortLabel = s => {
-    if (!s) return s;
-    if (/Create.to.Drop/i.test(s))    return 'Create to Drop';
-    if (/Create.to.Client/i.test(s))  return 'Create to Client';
-    if (/Create.to.Rest/i.test(s))    return 'Create to Rest';
-    if (/Pickup.to.Client/i.test(s))  return 'Pickup to Client';
-    if (/Delivery.Time/i.test(s))     return 'זמן מסירה';
-    if (/Customer.Arrival/i.test(s))  return 'הגעת לקוח';
-    if (/Restaurant.Arrival/i.test(s))return 'הגעה למסעדה';
-    if (/Pickup/i.test(s))            return 'איסוף → לקוח';
-    return s.length > 22 ? s.substr(0,22)+'…' : s;
-  };
-  if (colFH) stColF = shortLabel(String(colFH));
-  if (colGH) stColG = shortLabel(String(colGH));
-  if (colHH) stColH = shortLabel(String(colHH));
-  if (colIH) stColI = shortLabel(String(colIH));
+  // ── Update UI labels with actual Hebrew column names ──
+  if (colFH) stColF = String(colFH).length > 20 ? String(colFH).substr(0,20)+'…' : String(colFH);
+  if (colGH) stColG = String(colGH).length > 20 ? String(colGH).substr(0,20)+'…' : String(colGH);
+  if (colHH) stColH = String(colHH).length > 20 ? String(colHH).substr(0,20)+'…' : String(colHH);
+  stColI = ''; // No colI in this sheet
 
   const se = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
-  se('stLblF',stColF); se('stLblG',stColG); se('stLblH',stColH); se('stLblI',stColI);
-  se('stThF',stColF+' ↕'); se('stThG',stColG+' ↕'); se('stThH',stColH+' ↕'); se('stThI',stColI+' ↕');
-  se('stMonthThF',stColF); se('stMonthThG',stColG); se('stMonthThH',stColH); se('stMonthThI',stColI);
-  se('stColNames',[stColF,stColG,stColH,stColI].filter(Boolean).join(' | '));
+  se('stLblF',stColF); se('stLblG',stColG); se('stLblH',stColH); se('stLblI','');
+  se('stThF',stColF+' ↕'); se('stThG',stColG+' ↕'); se('stThH',stColH+' ↕'); se('stThI','');
+  se('stMonthThF',stColF); se('stMonthThG',stColG); se('stMonthThH',stColH); se('stMonthThI','');
+  se('stColNames',[stColF,stColG,stColH].filter(Boolean).join(' | '));
 
-  // ── Parse time value (minutes as decimal) ──
+  // ── Parse time/number value ──
   const parseMin = v => {
     if (v===''||v===null||v===undefined) return null;
     const n = parseFloat(v);
@@ -5353,37 +5329,47 @@ function stParseRows(raw) {
     return null;
   };
 
-  return workingRaw.map(r => {
-    const rawDate = dateCol ? r[dateCol] : (r[headers[0]]||'');
+  // ── Step 3: filter out repeating header rows inside the data ──
+  // A repeating header row has a non-numeric, non-date value in the branch column
+  // that matches one of the known header strings
+  const knownHeaders = new Set([
+    'store name','שם','store id','סה"כ ביטולים','סה"כ משלוחים',
+    'avg delivery','מקריאה','איסוף','סה"כ (הזמנות','% ביטולים','תאריך','date'
+  ]);
+  const isHeaderRow = r => {
+    const branchVal = String(r[storeNameCol]||'').trim().toLowerCase();
+    if (!branchVal) return false;
+    return [...knownHeaders].some(k => branchVal.includes(k));
+  };
+
+  return workingRaw.filter(r => !isHeaderRow(r)).map(r => {
+    // Date — column K
+    const rawDate = r[dateCol];
     const dt = stParseDate(rawDate);
     const dateStr = dt ? fmtDate(dt) : '';
     if (!dateStr) return null;
 
-    // Branch name
-    let branch = '';
-    if (storeNameCol && r[storeNameCol] && String(r[storeNameCol]).trim()) {
-      branch = String(r[storeNameCol]).trim();
-    } else if (branchCol && r[branchCol]) {
-      branch = String(r[branchCol]).trim();
-    }
-    if (!branch || branch==='0') {
-      const sid = storeIdCol ? r[storeIdCol] : '';
+    // Branch name — column B
+    let branch = String(r[storeNameCol]||'').trim();
+    if (!branch || branch==='0' || !isNaN(Number(branch))) {
+      const sid = r[storeIdCol] ? String(r[storeIdCol]).trim() : '';
       branch = sid ? 'סניף '+sid : 'לא ידוע';
     }
 
-    const delivered   = parseMin(deliveredCol   ? r[deliveredCol]   : '') ?? 0;
-    const total       = parseMin(totalOrdersCol  ? r[totalOrdersCol] : '') ?? delivered;
-    const cancelled   = parseMin(cancelledCol    ? r[cancelledCol]   : '') ?? 0;
-    const cancelPct   = parseMin(cancelPctCol    ? r[cancelPctCol]   : '') ?? 0;
-    const orders      = total > 0 ? total : (delivered > 0 ? delivered : 1);
+    const delivered    = parseMin(r[deliveredCol])   ?? 0;
+    const total        = parseMin(r[totalOrdersCol]) ?? delivered;
+    const cancelled    = parseMin(r[cancelledCol])   ?? 0;
+    const cancelPct    = parseMin(r[cancelPctCol])   ?? 0;
+    const orders       = total > 0 ? total : (delivered > 0 ? delivered : 1);
 
-    const avgF = parseMin(colFH ? r[colFH] : null) ?? 0;
-    const avgG = parseMin(colGH ? r[colGH] : null) ?? 0;
-    const avgH = parseMin(colHH ? r[colHH] : null) ?? 0;
-    const avgI = parseMin(colIH ? r[colIH] : null) ?? 0;
+    // E column is skipped — F,G,H are the 3 time metrics
+    const avgF = parseMin(r[colFH]) ?? 0;
+    const avgG = parseMin(r[colGH]) ?? 0;
+    const avgH = parseMin(r[colHH]) ?? 0;
+    const avgI = 0; // not present
 
     return { dateStr, branch, orders, delivered, cancelled, cancelPct, avgF, avgG, avgH, avgI };
-  }).filter(r => r && r.branch && r.dateStr);
+  }).filter(r => r && r.branch && r.dateStr && r.branch !== 'לא ידוע');
 }
 
 // ── Aggregate: each row is already a store-day average.
@@ -5693,7 +5679,12 @@ function stRefreshAll() {
   setKpiChg('stKpiIChg',      mkChg(curr.avgI,     prev.avgI,     true,  true));
 
   const tv=(id,v)=>{const e=document.getElementById(id);if(e){e.textContent=fmtDuration(v);e.className='st-time-val '+stPillClass(v);}};
-  tv('stKpiF',curr.avgF); tv('stKpiG',curr.avgG); tv('stKpiH',curr.avgH); tv('stKpiI',curr.avgI);
+  tv('stKpiF',curr.avgF); tv('stKpiG',curr.avgG); tv('stKpiH',curr.avgH);
+  // Hide I card — not present in Sandy sheet
+  const kpiICard = document.querySelector('#stKpiGrid .st-kpi-card.green');
+  if (kpiICard) kpiICard.style.display = 'none';
+  const thI = document.getElementById('stThI');
+  if (thI) thI.closest('th') && (thI.style.display='none');
 
   // Branch table
   stRenderBranchTable(data,cmpData);
