@@ -827,7 +827,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
       border:1px solid rgba(249,115,22,0.3);border-radius:20px;
       padding:4px 14px;font-size:11px;color:rgba(249,115,22,0.85);font-family:monospace;
       letter-spacing:0.5px">
-      🕐 v2025.06.29 · 23:58
+      🕐 v2025.06.30 · 00:10
     </span>
   </div>
 
@@ -4582,19 +4582,19 @@ if (missingConfig) {
         <span class="kpi-change flat" id="stKpiOrdersChg">—</span>
       </div>
       <div class="st-kpi-card sandy">
-        <div class="kpi-top"><span class="kpi-label" id="stLblF">זמן ממוצע F</span><span class="kpi-icon">⏱️</span></div>
+        <div class="kpi-top"><span class="kpi-label" id="stLblF">מקריאה עד מסירה</span><span class="kpi-icon">⏱️</span></div>
         <div class="st-time-val" id="stKpiF">—</div>
         <div class="kpi-sub">ממוצע כלל הסניפים</div>
         <span class="kpi-change flat" id="stKpiFChg">—</span>
       </div>
       <div class="st-kpi-card teal">
-        <div class="kpi-top"><span class="kpi-label" id="stLblG">זמן ממוצע G</span><span class="kpi-icon">🕐</span></div>
+        <div class="kpi-top"><span class="kpi-label" id="stLblG">מקריאה עד איסוף</span><span class="kpi-icon">🕐</span></div>
         <div class="st-time-val" id="stKpiG">—</div>
         <div class="kpi-sub">ממוצע כלל הסניפים</div>
         <span class="kpi-change flat" id="stKpiGChg">—</span>
       </div>
       <div class="st-kpi-card purple">
-        <div class="kpi-top"><span class="kpi-label" id="stLblH">זמן ממוצע H</span><span class="kpi-icon">🚴</span></div>
+        <div class="kpi-top"><span class="kpi-label" id="stLblH">איסוף עד לקוח</span><span class="kpi-icon">🚴</span></div>
         <div class="st-time-val" id="stKpiH">—</div>
         <div class="kpi-sub">ממוצע כלל הסניפים</div>
         <span class="kpi-change flat" id="stKpiHChg">—</span>
@@ -5304,10 +5304,10 @@ function stParseRows(raw) {
     '| F(skip E):', colFH, '| G:', colGH, '| H:', colHH,
     '| total:', totalOrdersCol, '| cancel%:', cancelPctCol);
 
-  // ── Update UI labels with actual Hebrew column names ──
-  if (colFH) stColF = String(colFH).length > 20 ? String(colFH).substr(0,20)+'…' : String(colFH);
-  if (colGH) stColG = String(colGH).length > 20 ? String(colGH).substr(0,20)+'…' : String(colGH);
-  if (colHH) stColH = String(colHH).length > 20 ? String(colHH).substr(0,20)+'…' : String(colHH);
+  // ── Update UI labels — use known Hebrew names from sheet, not detected header strings ──
+  stColF = 'מקריאה עד מסירה';
+  stColG = 'מקריאה עד איסוף';
+  stColH = 'איסוף עד לקוח';
   stColI = ''; // No colI in this sheet
 
   const se = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
