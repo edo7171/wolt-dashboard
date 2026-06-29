@@ -822,6 +822,14 @@ body.auth-locked #closuresApp{visibility:hidden;}
   <div class="landing-logo">🍕</div>
   <div class="landing-title">דשבורד דומינו'ס Wolt</div>
   <div class="landing-subtitle">בחר את הדשבורד לצפייה</div>
+  <div style="text-align:center;margin-top:-20px;margin-bottom:8px">
+    <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(249,115,22,0.1);
+      border:1px solid rgba(249,115,22,0.3);border-radius:20px;
+      padding:4px 14px;font-size:11px;color:rgba(249,115,22,0.85);font-family:monospace;
+      letter-spacing:0.5px">
+      🕐 v2025.06.29 · 23:15
+    </span>
+  </div>
 
   <div class="landing-cards">
     <!-- Card: Orders -->
@@ -5658,19 +5666,31 @@ function stRefreshAll() {
   const se=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   se('stKpiOrders', curr.orders.toLocaleString('he-IL'));
 
+  const hasCmp = cmpData.length > 0;
+
+  // Build comparison badge: for times, lower is better; for orders, higher is better
   const mkChg=(c,p,lowerBetter=false,isTime=false)=>{
-    if(!p||p===0)return'<span class="kpi-change flat">—</span>';
+    if(!hasCmp||!p||p===0) return '<span class="kpi-change flat">—</span>';
     const d=c-p; const pct=(d/p*100).toFixed(1);
-    const isGood=lowerBetter?(d<0):(d>0);
-    const cls=Math.abs(pct)<0.5?'flat':isGood?'up':'down';
-    const sign=d>0?'+':'';
-    const val=isTime?fmtDuration(Math.abs(d)):`${Math.abs(d).toFixed(0)}`;
-    return`<span class="kpi-change ${cls}">${sign}${val} (${sign}${pct}%)</span>`;
+    const isGood = lowerBetter ? (d<0) : (d>0);
+    const cls = Math.abs(parseFloat(pct))<0.5 ? 'flat' : isGood ? 'up' : 'down';
+    const sign = d>0 ? '+' : '';
+    const val = isTime ? fmtDuration(Math.abs(d)) : Math.abs(d).toFixed(0);
+    const arrow = d<0 ? '▼' : d>0 ? '▲' : '=';
+    return `<span class="kpi-change ${cls}">${arrow} ${sign}${val} (${sign}${pct}%)</span>`;
   };
 
-  // Update orders KPI change safely
-  const ordChgEl=document.getElementById('stKpiOrdersChg');
-  if(ordChgEl) ordChgEl.outerHTML=mkChg(curr.orders,prev.orders,false,false).replace('kpi-change','kpi-change" id="stKpiOrdersChg"').replace('id="stKpiOrdersChg"','').replace('<span','<span id="stKpiOrdersChg"');
+  // Update all KPI change badges by replacing innerHTML of sub element
+  const setKpiChg = (cardSub, chgHtml) => {
+    const e = document.getElementById(cardSub);
+    if (e) e.innerHTML = chgHtml;
+  };
+
+  setKpiChg('stKpiOrdersChg', mkChg(curr.orders,   prev.orders,   false, false));
+  setKpiChg('stKpiFChg',      mkChg(curr.avgF,     prev.avgF,     true,  true));
+  setKpiChg('stKpiGChg',      mkChg(curr.avgG,     prev.avgG,     true,  true));
+  setKpiChg('stKpiHChg',      mkChg(curr.avgH,     prev.avgH,     true,  true));
+  setKpiChg('stKpiIChg',      mkChg(curr.avgI,     prev.avgI,     true,  true));
 
   const tv=(id,v)=>{const e=document.getElementById(id);if(e){e.textContent=fmtDuration(v);e.className='st-time-val '+stPillClass(v);}};
   tv('stKpiF',curr.avgF); tv('stKpiG',curr.avgG); tv('stKpiH',curr.avgH); tv('stKpiI',curr.avgI);
