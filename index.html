@@ -5528,6 +5528,7 @@ function stOnCompareDate() {
   stCmpTo   = stIsoToDmy(v);
   if (v) stRefreshAll();
 }
+function stApplyCompare(preset) {
   stCmpPreset=preset;
   ['stCmpNone','stCmpYest','stCmpPrevWeek','stCmpCustom'].forEach(id=>
     document.getElementById(id)?.classList.remove('active'));
