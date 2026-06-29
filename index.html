@@ -822,7 +822,6 @@ body.auth-locked #closuresApp{visibility:hidden;}
   <div class="landing-logo">🍕</div>
   <div class="landing-title">דשבורד דומינו'ס Wolt</div>
   <div class="landing-subtitle">בחר את הדשבורד לצפייה</div>
-  <div style="margin-top:8px;font-size:11px;color:var(--text3);letter-spacing:.5px;font-weight:500">v7.1 · תיקון דריל דאון שעת סגירה</div>
 
   <div class="landing-cards">
     <!-- Card: Orders -->
@@ -4817,62 +4816,18 @@ const fbConfig = {
 
 let clApp, clDb, clStatuses=[], clLogs=[], clLoaded=false;
 
-let clBranches = [];
-
 async function clLoadData() {
   if(!clApp) {
     clApp = initializeApp(fbConfig, 'closures-ro');
     clDb  = getFirestore(clApp);
   }
-  const [sSnap, lSnap, bSnap] = await Promise.all([
+  const [sSnap, lSnap] = await Promise.all([
     getDocs(query(collection(clDb,'statuses'), orderBy('sortOrder'))),
-    getDocs(query(collection(clDb,'status_logs'), orderBy('startedAt','desc'))),
-    getDocs(collection(clDb,'branches'))
+    getDocs(query(collection(clDb,'status_logs'), orderBy('startedAt','desc')))
   ]);
   clStatuses = sSnap.docs.map(d=>({id:d.id,...d.data()}));
   clLogs     = lSnap.docs.map(d=>({id:d.id,...d.data()}));
-  clBranches = bSnap.docs.map(d=>({id:d.id,...d.data()}));
-  console.log('[Closures] branches:', clBranches.length, clBranches.map(b=>b.name+':'+(b.closeTime||'NONE')));
   clLoaded   = true;
-}
-
-// Build closeTime map: branchName -> closeTime string
-function clCloseTimeMap() {
-  const m = {};
-  clBranches.forEach(b => { m[b.name] = b.closeTime || '23:00'; });
-  return m;
-}
-
-// Capped duration calculation (mirrors branch-status-app logic)
-function clCalcCapped(l, closeTimeMap) {
-  const OPEN_HOUR = 11;
-  const closeTimeStr = closeTimeMap[l.branchName] || '23:00';
-
-  const startTs = l.startedAt?.toDate ? l.startedAt.toDate() : new Date(l.startedAt||0);
-  const endTs   = l.endedAt?.toDate   ? l.endedAt.toDate()   : null;
-
-  function parseClose(dateRef, timeStr) {
-    const [hStr, mStr] = (timeStr||'23:00').split(':');
-    let h = parseInt(hStr)||23, m = parseInt(mStr)||0;
-    const d = new Date(dateRef);
-    if(h < OPEN_HOUR) d.setDate(d.getDate() + 1);
-    d.setHours(h, m, 0, 0);
-    return d;
-  }
-
-  const dayOpen  = new Date(startTs); dayOpen.setHours(OPEN_HOUR, 0, 0, 0);
-  const dayClose = parseClose(startTs, closeTimeStr);
-
-  let effStart = startTs < dayOpen ? new Date(dayOpen) : new Date(startTs);
-  let effEnd;
-  if(endTs) {
-    effEnd = endTs > dayClose ? new Date(dayClose) : new Date(endTs);
-  } else {
-    const now = new Date();
-    effEnd = now > dayClose ? new Date(dayClose) : new Date(now);
-  }
-
-  return Math.max(0, Math.round((effEnd - effStart) / 60000)); // minutes
 }
 
 window.clLoadAndRender = async function() {
@@ -4938,8 +4893,6 @@ window.clRenderAll = function() {
   if(!clLoaded) return;
   const {from,to} = clGetRange();
   const typeF = document.getElementById('cl-type-filter')?.value||'all';
-  const ctMap = clCloseTimeMap(); // closeTime per branch
-  console.log('[Closures] ctMap:', ctMap, 'branches loaded:', clBranches.length);
 
   const logs = clLogs.filter(l=>{
     const ts=l.startedAt?.toDate?.()||new Date(0);
@@ -4957,19 +4910,19 @@ window.clRenderAll = function() {
   }
 
   const total=logs.length;
-  const totalMin=logs.reduce((a,l)=>a+clCalcCapped(l,ctMap),0);
+  const totalMin=logs.reduce((a,l)=>a+(l.durationMinutes||0),0);
   const uniqBr=new Set(logs.map(l=>l.branchName)).size;
   const avgMin=total?totalMin/total:0;
   const permCount=logs.filter(l=>l.isPermanent).length;
-  const longest=logs.reduce((mx,l)=>clCalcCapped(l,ctMap)>clCalcCapped(mx,ctMap)?l:mx,logs[0]);
+  const longest=logs.reduce((mx,l)=>(l.durationMinutes||0)>(mx.durationMinutes||0)?l:mx,logs[0]);
 
   const byBr={};
   logs.forEach(l=>{
     if(!byBr[l.branchName]) byBr[l.branchName]={count:0,min:0,bySt:{}};
-    byBr[l.branchName].count++; byBr[l.branchName].min+=clCalcCapped(l,ctMap);
+    byBr[l.branchName].count++; byBr[l.branchName].min+=l.durationMinutes||0;
     if(!byBr[l.branchName].bySt[l.statusId]) byBr[l.branchName].bySt[l.statusId]={count:0,min:0,events:[]};
     byBr[l.branchName].bySt[l.statusId].count++;
-    byBr[l.branchName].bySt[l.statusId].min+=clCalcCapped(l,ctMap);
+    byBr[l.branchName].bySt[l.statusId].min+=l.durationMinutes||0;
     byBr[l.branchName].bySt[l.statusId].events.push(l);
   });
   const top10=Object.entries(byBr).sort((a,b)=>b[1].count-a[1].count).slice(0,10);
@@ -4977,10 +4930,10 @@ window.clRenderAll = function() {
   const bySt={};
   logs.forEach(l=>{
     if(!bySt[l.statusId]) bySt[l.statusId]={count:0,min:0,branches:{}};
-    bySt[l.statusId].count++; bySt[l.statusId].min+=clCalcCapped(l,ctMap);
+    bySt[l.statusId].count++; bySt[l.statusId].min+=l.durationMinutes||0;
     if(!bySt[l.statusId].branches[l.branchName]) bySt[l.statusId].branches[l.branchName]={count:0,min:0,events:[]};
     bySt[l.statusId].branches[l.branchName].count++;
-    bySt[l.statusId].branches[l.branchName].min+=clCalcCapped(l,ctMap);
+    bySt[l.statusId].branches[l.branchName].min+=l.durationMinutes||0;
     bySt[l.statusId].branches[l.branchName].events.push(l);
   });
   const topSt=Object.entries(bySt).sort((a,b)=>b[1].count-a[1].count);
@@ -4993,7 +4946,7 @@ window.clRenderAll = function() {
   logs.forEach(l=>{
     const d=l.startedAt?.toDate?.()?.toLocaleDateString('he-IL')||'?';
     if(!byDay[d]) byDay[d]={count:0,min:0,branches:{}};
-    byDay[d].count++; byDay[d].min+=clCalcCapped(l,ctMap);
+    byDay[d].count++; byDay[d].min+=l.durationMinutes||0;
     if(!byDay[d].branches[l.branchName]) byDay[d].branches[l.branchName]={events:[]};
     byDay[d].branches[l.branchName].events.push(l);
   });
@@ -5005,7 +4958,7 @@ window.clRenderAll = function() {
   ins.push({t:'שעת שיא',b:`${peakH}:00–${peakH+1}:00 — ${hourly[peakH]} אירועים`});
   if(avgMin>60) ins.push({t:'⚠️ זמן ממוצע גבוה',b:`${clFmt(avgMin)} בממוצע לאירוע`});
   if(permCount>total*0.3) ins.push({t:'📌 שיעור קבועים גבוה',b:`${Math.round(permCount/total*100)}% מסומנים קבועים`});
-  if(clCalcCapped(longest||{},ctMap)>120) ins.push({t:'🕐 האירוע הארוך ביותר',b:`${longest.branchName} — ${clFmt(clCalcCapped(longest,ctMap))}`});
+  if(longest?.durationMinutes>120) ins.push({t:'🕐 האירוע הארוך ביותר',b:`${longest.branchName} — ${clFmt(longest.durationMinutes)}`});
 
   const colors=['#DA3633','#E3B341','#8957E5','#2EA043','#009DE0','#6A1B9A','#00838F','#37474F','#5D4037','#AD1457'];
 
@@ -5024,7 +4977,7 @@ window.clRenderAll = function() {
           <span style="color:var(--text2)">${t1}</span>
           <span style="color:var(--text3)">→</span>
           <span style="color:var(--text2)">${t2}</span>
-          <span style="font-weight:600;min-width:45px;text-align:left">${clFmt(clCalcCapped(ev,ctMap))}</span>
+          <span style="font-weight:600;min-width:45px;text-align:left">${clFmt(ev.durationMinutes||0)}</span>
         </div>`;
       }).join('');
       const bMin=bd.events.reduce((a,e)=>a+(e.durationMinutes||0),0);
@@ -5062,7 +5015,7 @@ window.clRenderAll = function() {
     const stDetail = Object.entries(d.bySt).sort((a,b)=>b[1].count-a[1].count).map(([sid,sd])=>{
       const st=clStById(sid);
       const evRows=sd.events.map(ev=>`<div style="display:flex;gap:10px;font-size:11px;padding:3px 8px;border-bottom:1px solid rgba(48,54,61,.3);color:var(--text2)">
-        <span>${clFmtTs(ev.startedAt)}</span><span style="font-weight:600">${clFmt(clCalcCapped(ev,ctMap))}</span><span style="color:var(--text3)">${ev.note||''}</span>
+        <span>${clFmtTs(ev.startedAt)}</span><span style="font-weight:600">${clFmt(ev.durationMinutes||0)}</span><span style="color:var(--text3)">${ev.note||''}</span>
       </div>`).join('');
       return `<div style="margin:3px 0;border:1px solid rgba(255,255,255,.06);border-radius:5px;overflow:hidden">
         <div style="background:rgba(255,255,255,.04);padding:5px 10px;font-size:12px;font-weight:600">
@@ -5086,7 +5039,7 @@ window.clRenderAll = function() {
     const st=clStById(sid); const pct=Math.round(data.count/total*100);
     const brDetail=Object.entries(data.branches).sort((a,b)=>b[1].count-a[1].count).map(([bname,bd])=>{
       const evRows=bd.events.map(ev=>`<div style="display:flex;gap:10px;font-size:11px;padding:3px 8px;border-bottom:1px solid rgba(48,54,61,.3);color:var(--text2)">
-        <span>${clFmtTs(ev.startedAt)}</span><span style="font-weight:600">${clFmt(clCalcCapped(ev,ctMap))}</span><span>${ev.isPermanent?'📌':'⏱'}</span>
+        <span>${clFmtTs(ev.startedAt)}</span><span style="font-weight:600">${clFmt(ev.durationMinutes||0)}</span><span>${ev.isPermanent?'📌':'⏱'}</span>
       </div>`).join('');
       return `<div style="margin:3px 0;border:1px solid rgba(255,255,255,.06);border-radius:5px;overflow:hidden">
         <div style="background:rgba(255,255,255,.04);padding:5px 10px;font-size:12px;font-weight:600">📍 ${bname} · ${bd.count} · ${clFmt(bd.min)}</div>${evRows}</div>`;
@@ -5491,7 +5444,7 @@ async function stLoadFromSheets() {
     const raw = XLSX.utils.sheet_to_json(ws, {defval:''});
     stAllData = stParseRows(raw);
     stShowToast(`✅ נטענו ${stAllData.length} שורות מגיליון 5`);
-    stApplyPreset('all');
+    stApplyPreset('yesterday');
     stRefreshAll();
   } catch(e) {
     console.error('[Sandy] Load error:', e);
@@ -5513,7 +5466,7 @@ function stLoadFile(input) {
       const raw = XLSX.utils.sheet_to_json(ws, {defval:''});
       stAllData = stParseRows(raw);
       stShowToast(`✅ נטענו ${stAllData.length} שורות מגיליון ${sheetIdx+1}`);
-      stApplyPreset('all');
+      stApplyPreset('yesterday');
       stRefreshAll();
     } catch(err) { alert('שגיאה: ' + err.message); }
     stShowLoading(false);
@@ -5559,12 +5512,22 @@ function stApplyPreset(preset) {
   else if(preset==='all')      { stViewFrom=''; stViewTo=''; }
   stUpdateRangeBadge(); stRefreshAll();
 }
-function stOnCustomRange() {
-  stViewFrom=document.getElementById('stDpFrom')?.value||'';
-  stViewTo=document.getElementById('stDpTo')?.value||'';
-  if(stViewFrom&&stViewTo) { stUpdateRangeBadge(); stRefreshAll(); }
+function stIsoToDmy(iso) {
+  if (!iso) return '';
+  const p = iso.split('-');
+  return p.length === 3 ? p[2]+'/'+p[1]+'/'+p[0] : iso;
 }
-function stApplyCompare(preset) {
+function stOnCustomRange() {
+  stViewFrom = stIsoToDmy(document.getElementById('stDpFrom')?.value||'');
+  stViewTo   = stIsoToDmy(document.getElementById('stDpTo')?.value||'');
+  if (stViewFrom && stViewTo) { stUpdateRangeBadge(); stRefreshAll(); }
+}
+function stOnCompareDate() {
+  const v = document.getElementById('stDpCompare')?.value||'';
+  stCmpFrom = stIsoToDmy(v);
+  stCmpTo   = stIsoToDmy(v);
+  if (v) stRefreshAll();
+}
   stCmpPreset=preset;
   ['stCmpNone','stCmpYest','stCmpPrevWeek','stCmpCustom'].forEach(id=>
     document.getElementById(id)?.classList.remove('active'));
@@ -5576,10 +5539,6 @@ function stApplyCompare(preset) {
   else if(preset==='yesterday'){ const y=stGetYesterday(); stCmpFrom=y; stCmpTo=y; }
   else if(preset==='prevweek') { const r=stGetPrevWeekRange(); stCmpFrom=r.from; stCmpTo=r.to; }
   stRefreshAll();
-}
-function stOnCompareDate() {
-  const v=document.getElementById('stDpCompare')?.value||'';
-  stCmpFrom=v; stCmpTo=v; if(v) stRefreshAll();
 }
 function stApplyFilters() {
   stFbBranch=document.getElementById('stFbBranch')?.value||''; stRefreshAll();
@@ -6042,18 +6001,28 @@ function stRenderOrdersChart(data) {
 
 // ── Monthly ──
 function stRenderMonthly() {
+  // ── Monthly always uses ALL data — not affected by date/branch filters ──
   const months=stGetMonths(stAllData);
   const mb=document.getElementById('stMonthButtons');
+
+  // Default to current calendar month
+  if (!stSelectedMonth || !months.includes(stSelectedMonth)) {
+    const now=new Date();
+    const curMon=String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
+    stSelectedMonth = months.includes(curMon) ? curMon : (months[months.length-1]||'');
+  }
+
   if(mb) {
-    if(!stSelectedMonth||!months.includes(stSelectedMonth)) stSelectedMonth=months[months.length-1]||'';
     mb.innerHTML=months.map(m=>`<button class="st-month-btn ${m===stSelectedMonth?'active':''}" onclick="stSelectMonth('${m}')">${m}</button>`).join('');
   }
   if(!stSelectedMonth) return;
   const range=stGetMonthRange(stSelectedMonth);
-  const currMonData=stFilterData(stAllData.filter(r=>r.dateStr>=range.from&&r.dateStr<=range.to));
+
+  // Use stAllData directly — filter by date range only, ignore branch/date UI filters
+  const currMonData=stAllData.filter(r=>inRange(r.dateStr,range.from,range.to));
   const prevM=stGetPrevMonth(stSelectedMonth);
   const prevRange=stGetMonthRange(prevM);
-  const prevMonData=stFilterData(stAllData.filter(r=>r.dateStr>=prevRange.from&&r.dateStr<=prevRange.to));
+  const prevMonData=stAllData.filter(r=>inRange(r.dateStr,prevRange.from,prevRange.to));
   const prevMap={};
   stAggByBranch(prevMonData).forEach(r=>{prevMap[r.branch]=r;});
 
