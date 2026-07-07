@@ -827,7 +827,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
       border:1px solid rgba(249,115,22,0.3);border-radius:20px;
       padding:4px 14px;font-size:11px;color:rgba(249,115,22,0.85);font-family:monospace;
       letter-spacing:0.5px">
-      🕐 v2025.07.07 · 14:45
+      🕐 v2025.07.07 · 15:00
     </span>
   </div>
 
@@ -3328,6 +3328,12 @@ function tmUpdateKpis(c, p) {
   const s = (id, v) => { const e = document.getElementById(id); if (e) e.innerHTML = v; };
   s('tmKpiOrders', c.totalOrders.toLocaleString('he-IL'));
   s('tmKpiOrdersChg', p ? cmpOrdersChg(c.totalOrders, p.totalOrders) : '<span class="kpi-change flat">—</span>');
+  const ordersSub = document.getElementById('tmKpiOrdersSub');
+  if (ordersSub) {
+    ordersSub.innerHTML = p
+      ? `השוואה: <strong>${p.totalOrders.toLocaleString('he-IL')}</strong> הזמנות`
+      : 'הזמנות בטווח';
+  }
 
   const fEl = document.getElementById('tmKpiF');
   if (fEl) { fEl.textContent = fmtDuration(c.avgF); fEl.className = 'tm-time-val ' + timeClass(c.avgF); }
@@ -4239,7 +4245,7 @@ tmInit();
       <div class="tm-kpi-card blue">
         <div class="kpi-top"><span class="kpi-label">סה"כ הזמנות</span><span class="kpi-icon">📦</span></div>
         <div class="kpi-value" id="tmKpiOrders">—</div>
-        <div class="kpi-sub">הזמנות בטווח</div>
+        <div class="kpi-sub" id="tmKpiOrdersSub">הזמנות בטווח</div>
         <span class="kpi-change flat" id="tmKpiOrdersChg">—</span>
       </div>
       <div class="tm-kpi-card green">
