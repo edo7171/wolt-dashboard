@@ -827,7 +827,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
       border:1px solid rgba(249,115,22,0.3);border-radius:20px;
       padding:4px 14px;font-size:11px;color:rgba(249,115,22,0.85);font-family:monospace;
       letter-spacing:0.5px">
-      🕐 v2025.07.07 · 14:30
+      🕐 v2025.07.07 · 14:45
     </span>
   </div>
 
@@ -3340,18 +3340,15 @@ function tmUpdateKpis(c, p) {
   s('tmKpiGChg', p ? cmpTimeChg(c.avgG, p.avgG) : '<span class="kpi-change flat">—</span>');
   s('tmKpiHChg', p ? cmpTimeChg(c.avgH, p.avgH) : '<span class="kpi-change flat">—</span>');
 
-  // Show order counts in each time-card sub-line
-  ['F','G','H'].forEach(m => {
+  // Sub-line: show comparison period time value for each metric
+  const metrics = { F: 'avgF', G: 'avgG', H: 'avgH' };
+  Object.entries(metrics).forEach(([m, key]) => {
     const el = document.getElementById(`tmKpi${m}Sub`);
     if (!el) return;
-    if (p) {
-      const diff = c.totalOrders - p.totalOrders;
-      const pct  = p.totalOrders > 0 ? (diff/p.totalOrders*100).toFixed(1) : '—';
-      const col  = diff > 0 ? 'var(--green)' : diff < 0 ? 'var(--red)' : 'var(--text3)';
-      const sign = diff > 0 ? '+' : '';
-      el.innerHTML = `${c.totalOrders.toLocaleString('he-IL')} הזמנות <span style="color:${col};font-size:10px">(${sign}${diff.toLocaleString('he-IL')} | ${sign}${pct}%)</span>`;
+    if (p && p[key] > 0) {
+      el.innerHTML = `השוואה: <strong>${fmtDuration(p[key])}</strong>`;
     } else {
-      el.textContent = `${c.totalOrders.toLocaleString('he-IL')} הזמנות`;
+      el.textContent = 'ממוצע כלל הסניפים';
     }
   });
 }
@@ -5356,7 +5353,7 @@ function stParseRows(raw) {
 
   const se = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
   se('stLblF',stColF); se('stLblG',stColG); se('stLblH',stColH); se('stLblI','');
-  se('stThF',stColF+' ↕'); se('stThG',stColG+' ↕'); se('stThH',stColH+' ↕'); se('stThI','');
+  se('stThF',stColF+' ↕'); se('stThG',stColG+' ↕'); se('stThH',stColH+' ↕'); se('stThI','הזמנות סנדי ↕');
   se('stMonthThF',stColF); se('stMonthThG',stColG); se('stMonthThH',stColH); se('stMonthThI','');
   se('stColNames',[stColF,stColG,stColH].filter(Boolean).join(' | '));
 
