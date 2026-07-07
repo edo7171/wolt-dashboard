@@ -827,7 +827,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
       border:1px solid rgba(249,115,22,0.3);border-radius:20px;
       padding:4px 14px;font-size:11px;color:rgba(249,115,22,0.85);font-family:monospace;
       letter-spacing:0.5px">
-      🕐 v2025.07.07 · 14:00
+      🕐 v2025.07.07 · 14:30
     </span>
   </div>
 
@@ -843,7 +843,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
     <!-- Card: Times -->
     <div class="landing-card times" onclick="showApp('times')">
       <div class="landing-card-icon">⏱️</div>
-      <div class="landing-card-title">זמנים</div>
+      <div class="landing-card-title">זמנים וולט</div>
       <div class="landing-card-desc">דשבורד זמני שילוח לפי סניף —<br>ממוצעים, טרנדים ומצטבר חודשי</div>
       <div class="landing-card-badge">Delivery Times</div>
     </div>
@@ -3341,12 +3341,18 @@ function tmUpdateKpis(c, p) {
   s('tmKpiHChg', p ? cmpTimeChg(c.avgH, p.avgH) : '<span class="kpi-change flat">—</span>');
 
   // Show order counts in each time-card sub-line
-  const ordersLine = p
-    ? `${c.totalOrders.toLocaleString('he-IL')} הזמנות (${c.totalOrders > p.totalOrders ? '+' : ''}${(c.totalOrders - p.totalOrders).toLocaleString('he-IL')} לעומת השוואה)`
-    : `${c.totalOrders.toLocaleString('he-IL')} הזמנות`;
   ['F','G','H'].forEach(m => {
     const el = document.getElementById(`tmKpi${m}Sub`);
-    if (el) el.textContent = ordersLine;
+    if (!el) return;
+    if (p) {
+      const diff = c.totalOrders - p.totalOrders;
+      const pct  = p.totalOrders > 0 ? (diff/p.totalOrders*100).toFixed(1) : '—';
+      const col  = diff > 0 ? 'var(--green)' : diff < 0 ? 'var(--red)' : 'var(--text3)';
+      const sign = diff > 0 ? '+' : '';
+      el.innerHTML = `${c.totalOrders.toLocaleString('he-IL')} הזמנות <span style="color:${col};font-size:10px">(${sign}${diff.toLocaleString('he-IL')} | ${sign}${pct}%)</span>`;
+    } else {
+      el.textContent = `${c.totalOrders.toLocaleString('he-IL')} הזמנות`;
+    }
   });
 }
 
@@ -4159,7 +4165,7 @@ tmInit();
       &nbsp;
       <span class="logo">⏱️</span>
       <div>
-        <h1>דשבורד זמני שילוח</h1>
+        <h1>זמני שילוח וולט</h1>
         <small id="tmHdrSub">Domino's Pizza — Delivery Times</small>
       </div>
     </div>
@@ -4555,7 +4561,7 @@ if (missingConfig) {
       &nbsp;
       <span class="logo">🥪</span>
       <div>
-        <h1>דשבורד זמני שילוח — Sandy</h1>
+        <h1>זמני שילוח Sandy</h1>
         <small id="stHdrSub">Sandy — Delivery Times</small>
       </div>
     </div>
@@ -4646,9 +4652,9 @@ if (missingConfig) {
         <span class="kpi-change flat" id="stKpiHChg">—</span>
       </div>
       <div class="st-kpi-card green">
-        <div class="kpi-top"><span class="kpi-label" id="stLblI">זמן ממוצע I</span><span class="kpi-icon">📍</span></div>
-        <div class="st-time-val" id="stKpiI">—</div>
-        <div class="kpi-sub">ממוצע כלל הסניפים</div>
+        <div class="kpi-top"><span class="kpi-label" id="stLblI">הזמנות סנדי</span><span class="kpi-icon">🥪</span></div>
+        <div class="st-time-val" id="stKpiI" style="font-size:24px;font-weight:900">—</div>
+        <div class="kpi-sub">ממוצע לסניף</div>
         <span class="kpi-change flat" id="stKpiIChg">—</span>
       </div>
     </div>
@@ -5721,16 +5727,28 @@ function stRefreshAll() {
 
   const tv=(id,v)=>{const e=document.getElementById(id);if(e){e.textContent=fmtDuration(v);e.className='st-time-val '+stPillClass(v);}};
   tv('stKpiF',curr.avgF); tv('stKpiG',curr.avgG); tv('stKpiH',curr.avgH);
-  // Show Sandy orders in the I card
+  // Sandy orders KPI — show average per branch
   const kpiICard = document.querySelector('#stKpiGrid .st-kpi-card.green');
   if (kpiICard) {
     kpiICard.style.display = '';
     const lbl = document.getElementById('stLblI');
     if (lbl) lbl.textContent = 'הזמנות סנדי';
+    const branchRows = stAggByBranch(data).filter(r => r.sandyOrders > 0);
+    const avgSandy = branchRows.length > 0
+      ? branchRows.reduce((s,r) => s + r.sandyOrders, 0) / branchRows.length
+      : 0;
+    const prevBranchRows = cmpData.length ? stAggByBranch(cmpData).filter(r => r.sandyOrders > 0) : [];
+    const prevAvgSandy = prevBranchRows.length > 0
+      ? prevBranchRows.reduce((s,r) => s + r.sandyOrders, 0) / prevBranchRows.length
+      : 0;
     const val = document.getElementById('stKpiI');
-    if (val) { val.textContent = (curr.sandyOrders||0).toLocaleString('he-IL'); val.className = 'st-time-val'; val.style.color = 'var(--green)'; }
+    if (val) {
+      val.textContent = avgSandy.toFixed(1);
+      val.className = 'st-time-val';
+      val.style.color = avgSandy <= 6 ? 'var(--green)' : 'var(--red)';
+    }
+    setKpiChg('stKpiIChg', mkChg(avgSandy, prevAvgSandy, false, false));
   }
-  setKpiChg('stKpiIChg', mkChg(curr.sandyOrders, prev.sandyOrders, false, false));
 
   // Branch table
   stRenderBranchTable(data,cmpData);
@@ -5789,13 +5807,15 @@ function stRenderBranchTable(data,cmpData) {
       <td><span class="st-pill ${stPillClass(r.avgF)}">${fmtDuration(r.avgF)}</span></td>
       <td><span class="st-pill ${stPillClass(r.avgG)}">${fmtDuration(r.avgG)}</span></td>
       <td><span class="st-pill ${stPillClass(r.avgH)}">${fmtDuration(r.avgH)}</span></td>
-      <td>${(r.sandyOrders||0).toLocaleString('he-IL')}</td>
+      <td style="color:${(r.sandyOrders||0)<=6?'var(--green)':'var(--red)'};font-weight:700">${(r.sandyOrders||0).toFixed(1)}</td>
       <td>${cmpBadge}</td>
     </tr>`;
   }).join('');
 
   const tfoot=document.getElementById('stBranchTfoot');
-  const totSandyOrders=rows.reduce((s,r)=>s+(r.sandyOrders||0),0);
+  const sandyWithData=rows.filter(r=>(r.sandyOrders||0)>0);
+  const avgSandyFooter=sandyWithData.length>0?sandyWithData.reduce((s,r)=>s+(r.sandyOrders||0),0)/sandyWithData.length:0;
+  const sandyColor=avgSandyFooter<=6?'var(--green)':'var(--red)';
   if(tfoot) tfoot.innerHTML=`<tr class="st-total-row">
     <td>סה"כ / ממוצע</td>
     <td>${totOrders.toLocaleString('he-IL')}</td>
@@ -5804,7 +5824,7 @@ function stRenderBranchTable(data,cmpData) {
     <td><span class="st-pill ${stPillClass(totF)}">${fmtDuration(totF)}</span></td>
     <td><span class="st-pill ${stPillClass(totG)}">${fmtDuration(totG)}</span></td>
     <td><span class="st-pill ${stPillClass(totH)}">${fmtDuration(totH)}</span></td>
-    <td>${totSandyOrders.toLocaleString('he-IL')}</td>
+    <td style="color:${sandyColor};font-weight:700">${avgSandyFooter.toFixed(1)}</td>
     <td>—</td>
   </tr>`;
 }
