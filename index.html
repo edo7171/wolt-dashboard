@@ -820,14 +820,14 @@ body.auth-locked #closuresApp{visibility:hidden;}
 ════════════════════════════════════════════════════ -->
 <div id="landingScreen">
   <div class="landing-logo">🍕</div>
-  <div class="landing-title">דשבורד דומינו'ס</div>
+  <div class="landing-title">דשבורד דומינו'ס Wolt</div>
   <div class="landing-subtitle">בחר את הדשבורד לצפייה</div>
   <div style="text-align:center;margin-top:-20px;margin-bottom:8px">
     <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(249,115,22,0.1);
       border:1px solid rgba(249,115,22,0.3);border-radius:20px;
       padding:4px 14px;font-size:11px;color:rgba(249,115,22,0.85);font-family:monospace;
       letter-spacing:0.5px">
-      🕐 v2025.06.30 · 01:00
+      🕐 v2025.07.07 · 14:00
     </span>
   </div>
 
@@ -835,7 +835,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
     <!-- Card: Orders -->
     <div class="landing-card orders" onclick="showApp('orders')">
       <div class="landing-card-icon">📦</div>
-      <div class="landing-card-title">הזמנות Wolt </div>
+      <div class="landing-card-title">הזמנות</div>
       <div class="landing-card-desc">דשבורד הזמנות מלא — מכירות,<br>דחיות, ניתוח לקוחות וסניפים</div>
       <div class="landing-card-badge">Orders Dashboard</div>
     </div>
@@ -843,7 +843,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
     <!-- Card: Times -->
     <div class="landing-card times" onclick="showApp('times')">
       <div class="landing-card-icon">⏱️</div>
-      <div class="landing-card-title">זמנים Wolt </div>
+      <div class="landing-card-title">זמנים</div>
       <div class="landing-card-desc">דשבורד זמני שילוח לפי סניף —<br>ממוצעים, טרנדים ומצטבר חודשי</div>
       <div class="landing-card-badge">Delivery Times</div>
     </div>
@@ -3339,6 +3339,15 @@ function tmUpdateKpis(c, p) {
   s('tmKpiFChg', p ? cmpTimeChg(c.avgF, p.avgF) : '<span class="kpi-change flat">—</span>');
   s('tmKpiGChg', p ? cmpTimeChg(c.avgG, p.avgG) : '<span class="kpi-change flat">—</span>');
   s('tmKpiHChg', p ? cmpTimeChg(c.avgH, p.avgH) : '<span class="kpi-change flat">—</span>');
+
+  // Show order counts in each time-card sub-line
+  const ordersLine = p
+    ? `${c.totalOrders.toLocaleString('he-IL')} הזמנות (${c.totalOrders > p.totalOrders ? '+' : ''}${(c.totalOrders - p.totalOrders).toLocaleString('he-IL')} לעומת השוואה)`
+    : `${c.totalOrders.toLocaleString('he-IL')} הזמנות`;
+  ['F','G','H'].forEach(m => {
+    const el = document.getElementById(`tmKpi${m}Sub`);
+    if (el) el.textContent = ordersLine;
+  });
 }
 
 // ── Branch Table ──────────────────────────────────────────
@@ -4233,19 +4242,19 @@ tmInit();
       <div class="tm-kpi-card green">
         <div class="kpi-top"><span class="kpi-label" id="tmLblF">זמן ממוצע F</span><span class="kpi-icon">⏱️</span></div>
         <div class="tm-time-val" id="tmKpiF">—</div>
-        <div class="kpi-sub">ממוצע כלל הסניפים</div>
+        <div class="kpi-sub" id="tmKpiFSub">ממוצע כלל הסניפים</div>
         <span class="kpi-change flat" id="tmKpiFChg">—</span>
       </div>
       <div class="tm-kpi-card orange">
         <div class="kpi-top"><span class="kpi-label" id="tmLblG">זמן ממוצע G</span><span class="kpi-icon">🕐</span></div>
         <div class="tm-time-val" id="tmKpiG">—</div>
-        <div class="kpi-sub">ממוצע כלל הסניפים</div>
+        <div class="kpi-sub" id="tmKpiGSub">ממוצע כלל הסניפים</div>
         <span class="kpi-change flat" id="tmKpiGChg">—</span>
       </div>
       <div class="tm-kpi-card purple">
         <div class="kpi-top"><span class="kpi-label" id="tmLblH">זמן ממוצע H</span><span class="kpi-icon">🚴</span></div>
         <div class="tm-time-val" id="tmKpiH">—</div>
-        <div class="kpi-sub">ממוצע כלל הסניפים</div>
+        <div class="kpi-sub" id="tmKpiHSub">ממוצע כלל הסניפים</div>
         <span class="kpi-change flat" id="tmKpiHChg">—</span>
       </div>
     </div>
@@ -4667,7 +4676,7 @@ if (missingConfig) {
               <th id="stThF" onclick="stSortBranch('avgF')">מקריאה עד מסירה ↕</th>
               <th id="stThG" onclick="stSortBranch('avgG')">מקריאה עד איסוף ↕</th>
               <th id="stThH" onclick="stSortBranch('avgH')">איסוף עד לקוח ↕</th>
-              <th id="stThI" onclick="stSortBranch('avgI')" style="display:none"></th>
+              <th id="stThI" onclick="stSortBranch('sandyOrders')">הזמנות סנדי ↕</th>
               <th>השוואה F</th>
             </tr>
           </thead>
@@ -5191,28 +5200,19 @@ let stCharts = {};
 //   Avg Pickup to Client Arrival [min] |
 //   Total Orders [Delivered + Canceled] | Cancel %
 const ST_COL_MAP = {
-  // K = תאריך
   date:       ['תאריך','Date','date','K','store_date','report_date','יום'],
-  // A = Store ID
   storeId:    ['Store ID','store_id','StoreID','A','מזהה'],
-  // B = Store Name
   branch:     ['Store Name','שם','B','Venue Name','סניף','Branch','venue_name','מסעדה','Restaurant'],
-  // C = סה"כ ביטולים
   cancelled:  ['סה"כ ביטולים','Cancel Count','Cancelled','Canceled','ביטולים','C'],
-  // D = סה"כ משלוחים (= Delivered)
   orders:     ['סה"כ משלוחים','Delivered Count','Delivered','D','delivered_count'],
-  // I = סה"כ (הזמנות+ביטולים)
   totalOrders:['סה"כ (הזמנות+ביטולים)','Total Orders','סה"כ הזמנות','I'],
-  // J = % ביטולים
-  cancelPct:  ['% ביטולים','Cancel %','Cancel Pct','אחוז ביטול','J'],
-  // E = Avg Delivery Time (Create to Drop) — EXCLUDED / ignored
-  // colF = F = מקריאה עד מסירה
+  cancelPct:  ['% ביטולים','Cancel %','Cancel Pct','אחוז ביטול','J_OLD'],
+  // J = הזמנות סנדי (Sandy orders)
+  sandyOrders:['הזמנות סנדי','Sandy Orders','J','sandy_orders'],
+  // K = תאריך
   colF:       ['מקריאה עד מסירה','Avg Customer Arrival [Create to Client] [min]','Create to Client','F'],
-  // colG = G = מקריאה עד איסוף
   colG:       ['מקריאה עד איסוף','Avg Restaurant Arrival [Create to Rest] [min]','Create to Rest','G'],
-  // colH = H = איסוף עד לקוח
   colH:       ['איסוף עד לקוח','Avg Pickup to Client Arrival [min]','Pickup to Client','H'],
-  // No colI in this sheet
   colI:       []
 };
 
@@ -5333,7 +5333,8 @@ function stParseRows(raw) {
   const colGH          = stFindCol(headers, ST_COL_MAP.colG)         || h(6);
   const colHH          = stFindCol(headers, ST_COL_MAP.colH)         || h(7);
   const totalOrdersCol = stFindCol(headers, ST_COL_MAP.totalOrders)  || h(8);
-  const cancelPctCol   = stFindCol(headers, ST_COL_MAP.cancelPct)    || h(9);
+  const cancelPctCol   = stFindCol(headers, ST_COL_MAP.cancelPct)    || null;
+  const sandyOrdersCol = stFindCol(headers, ST_COL_MAP.sandyOrders)  || h(9);
   const dateCol        = stFindCol(headers, ST_COL_MAP.date)         || h(10) || h(0);
 
   console.log('[Sandy] Mapped — date:', dateCol, '| branch:', storeNameCol,
@@ -5397,6 +5398,7 @@ function stParseRows(raw) {
     const total        = parseMin(r[totalOrdersCol]) ?? delivered;
     const cancelled    = parseMin(r[cancelledCol])   ?? 0;
     const cancelPct    = parseMin(r[cancelPctCol])   ?? 0;
+    const sandyOrders  = parseMin(r[sandyOrdersCol]) ?? 0;
     const orders       = total > 0 ? total : (delivered > 0 ? delivered : 1);
 
     // E column is skipped — F,G,H are the 3 time metrics
@@ -5405,7 +5407,7 @@ function stParseRows(raw) {
     const avgH = parseMin(r[colHH]) ?? 0;
     const avgI = 0; // not present
 
-    return { dateStr, branch, orders, delivered, cancelled, cancelPct, avgF, avgG, avgH, avgI };
+    return { dateStr, branch, orders, delivered, cancelled, cancelPct, sandyOrders, avgF, avgG, avgH, avgI };
   }).filter(r => r && r.branch && r.dateStr && r.branch !== 'לא ידוע');
 }
 
@@ -5416,7 +5418,7 @@ function stAggByBranch(data) {
   data.forEach(r => {
     if (!map[r.branch]) map[r.branch] = {
       branch: r.branch,
-      orders: 0, delivered: 0, cancelled: 0,
+      orders: 0, delivered: 0, cancelled: 0, sandyOrders: 0,
       sumF: 0, sumG: 0, sumH: 0, sumI: 0,
       cntF: 0, cntG: 0, cntH: 0, cntI: 0
     };
@@ -5424,6 +5426,7 @@ function stAggByBranch(data) {
     b.orders    += r.orders;
     b.delivered += r.delivered || 0;
     b.cancelled += r.cancelled || 0;
+    b.sandyOrders += r.sandyOrders || 0;
     // Weight each day's average by its order count
     if (r.avgF > 0) { b.sumF += r.avgF * r.orders; b.cntF += r.orders; }
     if (r.avgG > 0) { b.sumG += r.avgG * r.orders; b.cntG += r.orders; }
@@ -5441,20 +5444,21 @@ function stAggByBranch(data) {
 }
 
 function stAggOverall(data) {
-  let orders=0, delivered=0, cancelled=0;
+  let orders=0, delivered=0, cancelled=0, sandyOrders=0;
   let sumF=0, sumG=0, sumH=0, sumI=0;
   let cntF=0, cntG=0, cntH=0, cntI=0;
   data.forEach(r => {
     orders    += r.orders;
     delivered += r.delivered || 0;
     cancelled += r.cancelled || 0;
+    sandyOrders += r.sandyOrders || 0;
     if (r.avgF > 0) { sumF += r.avgF * r.orders; cntF += r.orders; }
     if (r.avgG > 0) { sumG += r.avgG * r.orders; cntG += r.orders; }
     if (r.avgH > 0) { sumH += r.avgH * r.orders; cntH += r.orders; }
     if (r.avgI > 0) { sumI += r.avgI * r.orders; cntI += r.orders; }
   });
   return {
-    orders, delivered, cancelled,
+    orders, delivered, cancelled, sandyOrders,
     cancelPct: orders > 0 ? cancelled/orders*100 : 0,
     avgF: cntF > 0 ? sumF/cntF : 0,
     avgG: cntG > 0 ? sumG/cntG : 0,
@@ -5717,11 +5721,16 @@ function stRefreshAll() {
 
   const tv=(id,v)=>{const e=document.getElementById(id);if(e){e.textContent=fmtDuration(v);e.className='st-time-val '+stPillClass(v);}};
   tv('stKpiF',curr.avgF); tv('stKpiG',curr.avgG); tv('stKpiH',curr.avgH);
-  // Hide I card — not present in Sandy sheet
+  // Show Sandy orders in the I card
   const kpiICard = document.querySelector('#stKpiGrid .st-kpi-card.green');
-  if (kpiICard) kpiICard.style.display = 'none';
-  const thI = document.getElementById('stThI');
-  if (thI) thI.closest('th') && (thI.style.display='none');
+  if (kpiICard) {
+    kpiICard.style.display = '';
+    const lbl = document.getElementById('stLblI');
+    if (lbl) lbl.textContent = 'הזמנות סנדי';
+    const val = document.getElementById('stKpiI');
+    if (val) { val.textContent = (curr.sandyOrders||0).toLocaleString('he-IL'); val.className = 'st-time-val'; val.style.color = 'var(--green)'; }
+  }
+  setKpiChg('stKpiIChg', mkChg(curr.sandyOrders, prev.sandyOrders, false, false));
 
   // Branch table
   stRenderBranchTable(data,cmpData);
@@ -5780,13 +5789,13 @@ function stRenderBranchTable(data,cmpData) {
       <td><span class="st-pill ${stPillClass(r.avgF)}">${fmtDuration(r.avgF)}</span></td>
       <td><span class="st-pill ${stPillClass(r.avgG)}">${fmtDuration(r.avgG)}</span></td>
       <td><span class="st-pill ${stPillClass(r.avgH)}">${fmtDuration(r.avgH)}</span></td>
-      <td><span class="st-pill teal">${fmtDuration(r.avgI)}</span></td>
+      <td>${(r.sandyOrders||0).toLocaleString('he-IL')}</td>
       <td>${cmpBadge}</td>
     </tr>`;
   }).join('');
 
   const tfoot=document.getElementById('stBranchTfoot');
-  const totCancelPct=totOrders>0?(totCancelled/totOrders*100).toFixed(0)+'%':'—';
+  const totSandyOrders=rows.reduce((s,r)=>s+(r.sandyOrders||0),0);
   if(tfoot) tfoot.innerHTML=`<tr class="st-total-row">
     <td>סה"כ / ממוצע</td>
     <td>${totOrders.toLocaleString('he-IL')}</td>
@@ -5795,7 +5804,7 @@ function stRenderBranchTable(data,cmpData) {
     <td><span class="st-pill ${stPillClass(totF)}">${fmtDuration(totF)}</span></td>
     <td><span class="st-pill ${stPillClass(totG)}">${fmtDuration(totG)}</span></td>
     <td><span class="st-pill ${stPillClass(totH)}">${fmtDuration(totH)}</span></td>
-    <td><span class="st-pill teal">${fmtDuration(totI)}</span></td>
+    <td>${totSandyOrders.toLocaleString('he-IL')}</td>
     <td>—</td>
   </tr>`;
 }
