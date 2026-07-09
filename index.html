@@ -827,7 +827,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
       border:1px solid rgba(249,115,22,0.3);border-radius:20px;
       padding:4px 14px;font-size:11px;color:rgba(249,115,22,0.85);font-family:monospace;
       letter-spacing:0.5px">
-      🕐 v2026.07.07 · 16:10
+      🕐 v2026.07.07 · 16:30
     </span>
   </div>
 
@@ -2581,6 +2581,7 @@ function showApp(app) {
       console.error('Sandy script not loaded yet');
       return;
     }
+    stLoadCookingTime();
     if (!stAllData.length) { stLoadFromSheets(); } else { stRefreshAll(); }
   }
   if (app === 'orders') {
@@ -4630,10 +4631,10 @@ if (missingConfig) {
       </select>
       <div style="display:flex;align-items:center;gap:6px;margin-right:12px;padding-right:12px;border-right:1px solid var(--border)">
         <span class="fb-label" style="white-space:nowrap">🍕 זמן הכנה+תנור:</span>
-        <input type="number" id="stCookingTime" min="0" max="60" step="0.5" value="0"
+        <input type="number" id="stCookingTime" min="-60" max="60" step="0.5" value="0"
           style="width:70px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);
             background:var(--card2);color:var(--text);font-size:13px;text-align:center"
-          onchange="stRefreshAll()" oninput="stRefreshAll()">
+          onchange="stSaveCookingTime();stRefreshAll()" oninput="stSaveCookingTime();stRefreshAll()">
         <span style="font-size:12px;color:var(--text2)">דקות</span>
       </div>
       <button class="fb-reset" onclick="stResetFilters()">✕ אפס</button>
@@ -5818,7 +5819,7 @@ function stRenderBranchTable(data,cmpData) {
     const cookingTime = parseFloat(document.getElementById('stCookingTime')?.value || 0) || 0;
     const sandyVal = r.sandyOrders || 0;
     const sandyColor = sandyVal > 7 ? 'var(--green)' : 'var(--red)';
-    const waitTime = Math.max(0, sandyVal - cookingTime);
+    const waitTime = sandyVal - cookingTime;
     const waitColor = waitTime > 0 ? 'var(--orange)' : 'var(--text2)';
     return`<tr>
       <td style="font-weight:600">${r.branch}</td>
@@ -5839,7 +5840,7 @@ function stRenderBranchTable(data,cmpData) {
   const avgSandyFooter=sandyWithData.length>0?sandyWithData.reduce((s,r)=>s+(r.sandyOrders||0),0)/sandyWithData.length:0;
   const sandyFooterColor = avgSandyFooter > 7 ? 'var(--green)' : 'var(--red)';
   const cookingTimeFooter = parseFloat(document.getElementById('stCookingTime')?.value || 0) || 0;
-  const avgWaitFooter = Math.max(0, avgSandyFooter - cookingTimeFooter);
+  const avgWaitFooter = avgSandyFooter - cookingTimeFooter;
   if(tfoot) tfoot.innerHTML=`<tr class="st-total-row">
     <td>סה"כ / ממוצע</td>
     <td>${totOrders.toLocaleString('he-IL')}</td>
@@ -6225,6 +6226,19 @@ function stRenderInsights(data,curr) {
 }
 
 // ── UI helpers ──
+function stSaveCookingTime() {
+  const v = document.getElementById('stCookingTime')?.value || '0';
+  try { localStorage.setItem('st_cooking_time', v); } catch(e) {}
+}
+function stLoadCookingTime() {
+  try {
+    const v = localStorage.getItem('st_cooking_time');
+    if (v !== null) {
+      const el = document.getElementById('stCookingTime');
+      if (el) el.value = v;
+    }
+  } catch(e) {}
+}
 function stShowLoading(v){const e=document.getElementById('stLoadingOverlay');if(e)e.classList.toggle('show',v);}
 function stShowToast(msg){const e=document.getElementById('stToast');if(!e)return;e.textContent=msg;e.style.display='block';setTimeout(()=>{e.style.display='none';},3500);}
 </script>
