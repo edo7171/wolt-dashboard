@@ -827,7 +827,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
       border:1px solid rgba(249,115,22,0.3);border-radius:20px;
       padding:4px 14px;font-size:11px;color:rgba(249,115,22,0.85);font-family:monospace;
       letter-spacing:0.5px">
-      🕐 v2026.07.07 · 17:15
+      🕐 v2026.07.07 · 17:30
     </span>
   </div>
 
@@ -3367,6 +3367,12 @@ function tmUpdateKpis(c, p) {
 // ── Branch Table ──────────────────────────────────────────
 let tmBranchCache = [];
 function tmBuildBranchTable(c, p) {
+  // Always refresh column header text
+  const sh = (id, v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
+  sh('thF', (tmColF||'קריאה לוולט') + ' ↕');
+  sh('thG', (tmColG||'קריאה → איסוף') + ' ↕');
+  sh('thH', (tmColH||'קריאה → מסירה') + ' ↕');
+
   tmBranchCache = c.branches;
   const pBMap = {};
   if (p) p.branches.forEach(b => pBMap[b.branch] = b);
@@ -4299,9 +4305,9 @@ tmInit();
             <tr>
               <th onclick="tmSortBranch('branch')">סניף ↕</th>
               <th onclick="tmSortBranch('orders')">הזמנות ↕</th>
-              <th id="thF" onclick="tmSortBranch('avgF')">— ↕</th>
-              <th id="thG" onclick="tmSortBranch('avgG')">— ↕</th>
-              <th id="thH" onclick="tmSortBranch('avgH')">— ↕</th>
+              <th id="thF" onclick="tmSortBranch('avgF')">קריאה לוולט ↕</th>
+              <th id="thG" onclick="tmSortBranch('avgG')">קריאה → איסוף ↕</th>
+              <th id="thH" onclick="tmSortBranch('avgH')">קריאה → מסירה ↕</th>
               <th onclick="tmSortBranch('waitTime')">זמן המתנה ↕</th>
               <th>השוואה F</th>
             </tr>
