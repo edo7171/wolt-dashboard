@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>דשבורד הזמנות  | דומינו'ס</title>
+<title>דשבורד הזמנות Wolt | דומינו'ס</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -827,7 +827,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
       border:1px solid rgba(249,115,22,0.3);border-radius:20px;
       padding:4px 14px;font-size:11px;color:rgba(249,115,22,0.85);font-family:monospace;
       letter-spacing:0.5px">
-      🕐 v2026.07.07 · 15:45
+      🕐 v2026.07.07 · 16:10
     </span>
   </div>
 
@@ -5710,15 +5710,9 @@ function stRefreshAll() {
     fb.innerHTML='<option value="">כל הסניפים</option>'+branches.map(b=>`<option value="${b}"${b===cur?' selected':''}>${b}</option>`).join('');
   }
 
-  // KPI cards — time values are in minutes, display with fmtDuration
-  const se=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  // KPI — סה"כ הזמנות from col D (delivered)
-  se('stKpiOrders', curr.delivered.toLocaleString('he-IL'));
-  setKpiChg('stKpiOrdersChg', mkChg(curr.delivered, prev.delivered, false, false));
-
   const hasCmp = cmpData.length > 0;
 
-  // Build comparison badge: for times, lower is better; for orders, higher is better
+  // Helper: build comparison badge
   const mkChg=(c,p,lowerBetter=false,isTime=false)=>{
     if(!hasCmp||!p||p===0) return '<span class="kpi-change flat">—</span>';
     const d=c-p; const pct=(d/p*100).toFixed(1);
@@ -5730,11 +5724,17 @@ function stRefreshAll() {
     return `<span class="kpi-change ${cls}">${arrow} ${sign}${val} (${sign}${pct}%)</span>`;
   };
 
-  // Update all KPI change badges by replacing innerHTML of sub element
-  const setKpiChg = (cardSub, chgHtml) => {
-    const e = document.getElementById(cardSub);
+  // Helper: update KPI change badge element
+  const setKpiChg = (id, chgHtml) => {
+    const e = document.getElementById(id);
     if (e) e.innerHTML = chgHtml;
   };
+
+  // KPI cards
+  const se=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  // סה"כ הזמנות from col D (delivered)
+  se('stKpiOrders', curr.delivered.toLocaleString('he-IL'));
+  setKpiChg('stKpiOrdersChg', mkChg(curr.delivered, prev.delivered, false, false));
 
   setKpiChg('stKpiFChg',      mkChg(curr.avgF,     prev.avgF,     true,  true));
   setKpiChg('stKpiGChg',      mkChg(curr.avgG,     prev.avgG,     true,  true));
