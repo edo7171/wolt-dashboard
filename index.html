@@ -827,7 +827,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
       border:1px solid rgba(249,115,22,0.3);border-radius:20px;
       padding:4px 14px;font-size:11px;color:rgba(249,115,22,0.85);font-family:monospace;
       letter-spacing:0.5px">
-      🕐 v2026.07.07 · 16:30
+      🕐 v2026.07.07 · 16:45
     </span>
   </div>
 
@@ -5819,8 +5819,8 @@ function stRenderBranchTable(data,cmpData) {
     const cookingTime = parseFloat(document.getElementById('stCookingTime')?.value || 0) || 0;
     const sandyVal = r.sandyOrders || 0;
     const sandyColor = sandyVal > 7 ? 'var(--green)' : 'var(--red)';
-    const waitTime = sandyVal - cookingTime;
-    const waitColor = waitTime > 0 ? 'var(--orange)' : 'var(--text2)';
+    const waitTime = r.avgG - (sandyVal - cookingTime);
+    const waitColor = waitTime > 0 ? 'var(--orange)' : waitTime < 0 ? 'var(--green)' : 'var(--text2)';
     return`<tr>
       <td style="font-weight:600">${r.branch}</td>
       <td>${r.orders.toLocaleString('he-IL')}</td>
@@ -5840,7 +5840,7 @@ function stRenderBranchTable(data,cmpData) {
   const avgSandyFooter=sandyWithData.length>0?sandyWithData.reduce((s,r)=>s+(r.sandyOrders||0),0)/sandyWithData.length:0;
   const sandyFooterColor = avgSandyFooter > 7 ? 'var(--green)' : 'var(--red)';
   const cookingTimeFooter = parseFloat(document.getElementById('stCookingTime')?.value || 0) || 0;
-  const avgWaitFooter = avgSandyFooter - cookingTimeFooter;
+  const avgWaitFooter = totG - (avgSandyFooter - cookingTimeFooter);
   if(tfoot) tfoot.innerHTML=`<tr class="st-total-row">
     <td>סה"כ / ממוצע</td>
     <td>${totOrders.toLocaleString('he-IL')}</td>
