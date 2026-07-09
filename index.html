@@ -827,7 +827,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
       border:1px solid rgba(249,115,22,0.3);border-radius:20px;
       padding:4px 14px;font-size:11px;color:rgba(249,115,22,0.85);font-family:monospace;
       letter-spacing:0.5px">
-      🕐 v2026.07.07 · 17:00
+      🕐 v2026.07.07 · 17:15
     </span>
   </div>
 
@@ -3385,12 +3385,15 @@ function tmBuildBranchTable(c, p) {
       const cls = pct <= 0 ? 'cmp-badge-pos' : 'cmp-badge-neg';
       return `<span class="${cls}">${pct >= 0 ? '▲' : '▼'} ${Math.abs(pct).toFixed(1)}%</span>`;
     })() : '';
+    const waitTime = b.avgG - b.avgF;
+    const waitColor = waitTime < 0 ? 'var(--green)' : waitTime > 5 ? 'var(--red)' : 'var(--orange)';
     html += `<tr>
       <td><strong>${b.branch}</strong></td>
       <td>${b.orders.toLocaleString('he-IL')}</td>
       <td>${timePill(b.avgF)}</td>
       <td>${timePill(b.avgG)}</td>
       <td>${timePill(b.avgH)}</td>
+      <td style="color:${waitColor};font-weight:700">${waitTime.toFixed(1)}</td>
       <td>${fChg || '<span style="color:var(--text3)">—</span>'}</td>
     </tr>`;
   });
@@ -3403,14 +3406,17 @@ function tmBuildBranchTable(c, p) {
   const totF = vF.length ? vF.reduce((a, b) => a + b) / vF.length : 0;
   const totG = vG.length ? vG.reduce((a, b) => a + b) / vG.length : 0;
   const totH = vH.length ? vH.reduce((a, b) => a + b) / vH.length : 0;
+  const totWait = totG - totF;
+  const totWaitColor = totWait < 0 ? 'var(--green)' : totWait > 5 ? 'var(--red)' : 'var(--orange)';
 
-  document.getElementById('tmBranchTbody').innerHTML = html || '<tr><td colspan="6" class="nodata-msg">אין נתונים לטווח הנבחר</td></tr>';
+  document.getElementById('tmBranchTbody').innerHTML = html || '<tr><td colspan="7" class="nodata-msg">אין נתונים לטווח הנבחר</td></tr>';
   document.getElementById('tmBranchTfoot').innerHTML = `<tr class="total-row">
     <td>🔢 סה"כ / ממוצע</td>
     <td>${totalOrders.toLocaleString('he-IL')}</td>
     <td>${timePill(totF)}</td>
     <td>${timePill(totG)}</td>
     <td>${timePill(totH)}</td>
+    <td style="color:${totWaitColor};font-weight:700">${totWait.toFixed(1)}</td>
     <td></td>
   </tr>`;
   document.getElementById('tmTableSub').textContent = `${sorted.length} סניפים | ${totalOrders.toLocaleString('he-IL')} הזמנות`;
@@ -4296,6 +4302,7 @@ tmInit();
               <th id="thF" onclick="tmSortBranch('avgF')">— ↕</th>
               <th id="thG" onclick="tmSortBranch('avgG')">— ↕</th>
               <th id="thH" onclick="tmSortBranch('avgH')">— ↕</th>
+              <th onclick="tmSortBranch('waitTime')">זמן המתנה ↕</th>
               <th>השוואה F</th>
             </tr>
           </thead>
