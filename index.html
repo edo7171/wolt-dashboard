@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>דשבורד   | דמינו'ס</title>
+<title>דשבורד הזמנות Wolt | דומינו'ס</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -2577,6 +2577,10 @@ function showApp(app) {
     if (!tmAllData.length) { tmLoadFromSheets(); } else { tmRefreshAll(); }
   }
   if (app === 'sandyTimes') {
+    if (typeof stAllData === 'undefined') {
+      console.error('Sandy script not loaded yet');
+      return;
+    }
     if (!stAllData.length) { stLoadFromSheets(); } else { stRefreshAll(); }
   }
   if (app === 'orders') {
