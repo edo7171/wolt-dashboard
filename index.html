@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>דשבורד הזמנות Wolt | דומינו'ס</title>
+<title>דשבורד   | דמינו'ס</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -820,14 +820,14 @@ body.auth-locked #closuresApp{visibility:hidden;}
 ════════════════════════════════════════════════════ -->
 <div id="landingScreen">
   <div class="landing-logo">🍕</div>
-  <div class="landing-title">דשבורד דומינו'ס </div>
+  <div class="landing-title">דשבורד דומינו'ס Wolt</div>
   <div class="landing-subtitle">בחר את הדשבורד לצפייה</div>
   <div style="text-align:center;margin-top:-20px;margin-bottom:8px">
     <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(249,115,22,0.1);
       border:1px solid rgba(249,115,22,0.3);border-radius:20px;
       padding:4px 14px;font-size:11px;color:rgba(249,115,22,0.85);font-family:monospace;
       letter-spacing:0.5px">
-      🕐 v2025.07.07 · 15:00
+      🕐 v2025.07.07 · 15:20
     </span>
   </div>
 
@@ -4624,6 +4624,14 @@ if (missingConfig) {
       <select class="fb-select" id="stFbBranch" onchange="stApplyFilters()" style="min-width:180px">
         <option value="">כל הסניפים</option>
       </select>
+      <div style="display:flex;align-items:center;gap:6px;margin-right:12px;padding-right:12px;border-right:1px solid var(--border)">
+        <span class="fb-label" style="white-space:nowrap">🍕 זמן הכנה+תנור:</span>
+        <input type="number" id="stCookingTime" min="0" max="60" step="0.5" value="0"
+          style="width:70px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);
+            background:var(--card2);color:var(--text);font-size:13px;text-align:center"
+          onchange="stRefreshAll()" oninput="stRefreshAll()">
+        <span style="font-size:12px;color:var(--text2)">דקות</span>
+      </div>
       <button class="fb-reset" onclick="stResetFilters()">✕ אפס</button>
       <span class="fb-count" id="stFbCount"></span>
     </div>
@@ -4686,6 +4694,7 @@ if (missingConfig) {
               <th id="stThG" onclick="stSortBranch('avgG')">מקריאה עד איסוף ↕</th>
               <th id="stThH" onclick="stSortBranch('avgH')">איסוף עד לקוח ↕</th>
               <th id="stThI" onclick="stSortBranch('sandyOrders')">הזמנות סנדי ↕</th>
+              <th onclick="stSortBranch('waitTime')">זמן המתנה ↕</th>
               <th>השוואה F</th>
             </tr>
           </thead>
@@ -5432,10 +5441,24 @@ function stAggByBranch(data) {
       cntF: 0, cntG: 0, cntH: 0, cntI: 0
     };
     const b = map[r.branch];
-    b.orders    += r.orders;
-    b.delivered += r.delivered || 0;
-    b.cancelled += r.cancelled || 0;
+    b.orders      += r.orders;
+    b.delivered   += r.delivered || 0;   // col D = סה"כ משלוחים
+    b.cancelled   += r.cancelled || 0;
     b.sandyOrders += r.sandyOrders || 0;
+    if (r.avgF > 0) { b.sumF += r.avgF * r.orders; b.cntF += r.orders; }
+    if (r.avgG > 0) { b.sumG += r.avgG * r.orders; b.cntG += r.orders; }
+    if (r.avgH > 0) { b.sumH += r.avgH * r.orders; b.cntH += r.orders; }
+    if (r.avgI > 0) { b.sumI += r.avgI * r.orders; b.cntI += r.orders; }
+  });
+  return Object.values(map).map(b => ({
+    ...b,
+    avgF: b.cntF > 0 ? b.sumF / b.cntF : 0,
+    avgG: b.cntG > 0 ? b.sumG / b.cntG : 0,
+    avgH: b.cntH > 0 ? b.sumH / b.cntH : 0,
+    avgI: b.cntI > 0 ? b.sumI / b.cntI : 0,
+    cancelPct: b.orders > 0 ? (b.cancelled / b.orders * 100) : 0
+  }));
+}
     // Weight each day's average by its order count
     if (r.avgF > 0) { b.sumF += r.avgF * r.orders; b.cntF += r.orders; }
     if (r.avgG > 0) { b.sumG += r.avgG * r.orders; b.cntG += r.orders; }
@@ -5700,7 +5723,9 @@ function stRefreshAll() {
 
   // KPI cards — time values are in minutes, display with fmtDuration
   const se=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  se('stKpiOrders', curr.orders.toLocaleString('he-IL'));
+  // KPI — סה"כ הזמנות from col D (delivered)
+  se('stKpiOrders', curr.delivered.toLocaleString('he-IL'));
+  setKpiChg('stKpiOrdersChg', mkChg(curr.delivered, prev.delivered, false, false));
 
   const hasCmp = cmpData.length > 0;
 
@@ -5722,7 +5747,6 @@ function stRefreshAll() {
     if (e) e.innerHTML = chgHtml;
   };
 
-  setKpiChg('stKpiOrdersChg', mkChg(curr.orders,   prev.orders,   false, false));
   setKpiChg('stKpiFChg',      mkChg(curr.avgF,     prev.avgF,     true,  true));
   setKpiChg('stKpiGChg',      mkChg(curr.avgG,     prev.avgG,     true,  true));
   setKpiChg('stKpiHChg',      mkChg(curr.avgH,     prev.avgH,     true,  true));
@@ -5748,7 +5772,7 @@ function stRefreshAll() {
     if (val) {
       val.textContent = avgSandy.toFixed(1);
       val.className = 'st-time-val';
-      val.style.color = avgSandy <= 6 ? 'var(--green)' : 'var(--red)';
+      val.style.color = avgSandy > 7 ? 'var(--green)' : 'var(--red)';
     }
     setKpiChg('stKpiIChg', mkChg(avgSandy, prevAvgSandy, false, false));
   }
@@ -5802,6 +5826,11 @@ function stRenderBranchTable(data,cmpData) {
       ?`<span class="${diffCls}">${diffDir} ${fmtDuration(Math.abs(diff))}</span>`
       :'<span class="st-badge-flat">אין השוואה</span>';
     const cancelPct=r.orders>0?(r.cancelled/r.orders*100).toFixed(0)+'%':'—';
+    const cookingTime = parseFloat(document.getElementById('stCookingTime')?.value || 0) || 0;
+    const sandyVal = r.sandyOrders || 0;
+    const sandyColor = sandyVal > 7 ? 'var(--green)' : 'var(--red)';
+    const waitTime = Math.max(0, sandyVal - cookingTime);
+    const waitColor = waitTime > 0 ? 'var(--orange)' : 'var(--text2)';
     return`<tr>
       <td style="font-weight:600">${r.branch}</td>
       <td>${r.orders.toLocaleString('he-IL')}</td>
@@ -5810,7 +5839,8 @@ function stRenderBranchTable(data,cmpData) {
       <td><span class="st-pill ${stPillClass(r.avgF)}">${fmtDuration(r.avgF)}</span></td>
       <td><span class="st-pill ${stPillClass(r.avgG)}">${fmtDuration(r.avgG)}</span></td>
       <td><span class="st-pill ${stPillClass(r.avgH)}">${fmtDuration(r.avgH)}</span></td>
-      <td style="color:${(r.sandyOrders||0)<=6?'var(--green)':'var(--red)'};font-weight:700">${(r.sandyOrders||0).toFixed(1)}</td>
+      <td style="color:${sandyColor};font-weight:700">${sandyVal.toFixed(1)}</td>
+      <td style="color:${waitColor};font-weight:600">${waitTime.toFixed(1)}</td>
       <td>${cmpBadge}</td>
     </tr>`;
   }).join('');
@@ -5818,7 +5848,9 @@ function stRenderBranchTable(data,cmpData) {
   const tfoot=document.getElementById('stBranchTfoot');
   const sandyWithData=rows.filter(r=>(r.sandyOrders||0)>0);
   const avgSandyFooter=sandyWithData.length>0?sandyWithData.reduce((s,r)=>s+(r.sandyOrders||0),0)/sandyWithData.length:0;
-  const sandyColor=avgSandyFooter<=6?'var(--green)':'var(--red)';
+  const sandyFooterColor = avgSandyFooter > 7 ? 'var(--green)' : 'var(--red)';
+  const cookingTimeFooter = parseFloat(document.getElementById('stCookingTime')?.value || 0) || 0;
+  const avgWaitFooter = Math.max(0, avgSandyFooter - cookingTimeFooter);
   if(tfoot) tfoot.innerHTML=`<tr class="st-total-row">
     <td>סה"כ / ממוצע</td>
     <td>${totOrders.toLocaleString('he-IL')}</td>
@@ -5827,7 +5859,8 @@ function stRenderBranchTable(data,cmpData) {
     <td><span class="st-pill ${stPillClass(totF)}">${fmtDuration(totF)}</span></td>
     <td><span class="st-pill ${stPillClass(totG)}">${fmtDuration(totG)}</span></td>
     <td><span class="st-pill ${stPillClass(totH)}">${fmtDuration(totH)}</span></td>
-    <td style="color:${sandyColor};font-weight:700">${avgSandyFooter.toFixed(1)}</td>
+    <td style="color:${sandyFooterColor};font-weight:700">${avgSandyFooter.toFixed(1)}</td>
+    <td style="color:var(--orange);font-weight:600">${avgWaitFooter.toFixed(1)}</td>
     <td>—</td>
   </tr>`;
 }
