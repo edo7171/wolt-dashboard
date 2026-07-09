@@ -827,7 +827,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
       border:1px solid rgba(249,115,22,0.3);border-radius:20px;
       padding:4px 14px;font-size:11px;color:rgba(249,115,22,0.85);font-family:monospace;
       letter-spacing:0.5px">
-      🕐 v2025.07.07 · 15:20
+      🕐 v2026.07.07 · 15:45
     </span>
   </div>
 
@@ -835,7 +835,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
     <!-- Card: Orders -->
     <div class="landing-card orders" onclick="showApp('orders')">
       <div class="landing-card-icon">📦</div>
-      <div class="landing-card-title">הזמנות Wolt</div>
+      <div class="landing-card-title">הזמנות WOLT</div>
       <div class="landing-card-desc">דשבורד הזמנות מלא — מכירות,<br>דחיות, ניתוח לקוחות וסניפים</div>
       <div class="landing-card-badge">Orders Dashboard</div>
     </div>
@@ -843,7 +843,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
     <!-- Card: Times -->
     <div class="landing-card times" onclick="showApp('times')">
       <div class="landing-card-icon">⏱️</div>
-      <div class="landing-card-title">זמנים Wolt</div>
+      <div class="landing-card-title">זמנים WOLT</div>
       <div class="landing-card-desc">דשבורד זמני שילוח לפי סניף —<br>ממוצעים, טרנדים ומצטבר חודשי</div>
       <div class="landing-card-badge">Delivery Times</div>
     </div>
@@ -5449,21 +5449,6 @@ function stAggByBranch(data) {
     b.delivered   += r.delivered || 0;   // col D = סה"כ משלוחים
     b.cancelled   += r.cancelled || 0;
     b.sandyOrders += r.sandyOrders || 0;
-    if (r.avgF > 0) { b.sumF += r.avgF * r.orders; b.cntF += r.orders; }
-    if (r.avgG > 0) { b.sumG += r.avgG * r.orders; b.cntG += r.orders; }
-    if (r.avgH > 0) { b.sumH += r.avgH * r.orders; b.cntH += r.orders; }
-    if (r.avgI > 0) { b.sumI += r.avgI * r.orders; b.cntI += r.orders; }
-  });
-  return Object.values(map).map(b => ({
-    ...b,
-    avgF: b.cntF > 0 ? b.sumF / b.cntF : 0,
-    avgG: b.cntG > 0 ? b.sumG / b.cntG : 0,
-    avgH: b.cntH > 0 ? b.sumH / b.cntH : 0,
-    avgI: b.cntI > 0 ? b.sumI / b.cntI : 0,
-    cancelPct: b.orders > 0 ? (b.cancelled / b.orders * 100) : 0
-  }));
-}
-    // Weight each day's average by its order count
     if (r.avgF > 0) { b.sumF += r.avgF * r.orders; b.cntF += r.orders; }
     if (r.avgG > 0) { b.sumG += r.avgG * r.orders; b.cntG += r.orders; }
     if (r.avgH > 0) { b.sumH += r.avgH * r.orders; b.cntH += r.orders; }
