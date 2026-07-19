@@ -515,7 +515,8 @@ body.auth-locked{overflow:hidden;}
 body.auth-locked #landingScreen,
 body.auth-locked #ordersApp,
 body.auth-locked #timesApp,
-body.auth-locked #sandyTimesApp{
+body.auth-locked #sandyTimesApp,
+body.auth-locked #costsApp{
   visibility:hidden;
 }
 
@@ -588,6 +589,73 @@ body.auth-locked #sandyTimesApp{
 
 /* ── Hide global header when closures active ── */
 body.cl-active > header:first-of-type { display: none !important; }
+
+/* ══════════════════════════════════
+   COSTS DASHBOARD
+═══════════════════════════════════ */
+#costsApp{display:none;background:var(--bg);min-height:100vh;}
+#costsApp.active{display:block;}
+body.auth-locked #costsApp{visibility:hidden;}
+
+:root{--gold:#F59E0B;--gold-dim:rgba(245,158,11,0.15);--emerald:#10B981;--emerald-dim:rgba(16,185,129,0.15);}
+
+.landing-card.costs::before{background:radial-gradient(circle at 50% 0%,rgba(245,158,11,.18),transparent 60%);}
+.landing-card.costs:hover{border-color:var(--gold);}
+.landing-card.costs .landing-card-badge{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(245,158,11,.3);}
+
+#costsApp header{position:sticky;top:0;z-index:200;background:rgba(13,17,23,0.97);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--border);
+  padding:0 20px;height:60px;display:flex;align-items:center;justify-content:space-between;}
+@media(max-width:700px){#costsApp header{height:auto;padding:10px 14px;flex-wrap:wrap;gap:8px;}}
+
+.cs-kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px;}
+@media(max-width:1200px){.cs-kpi-grid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:700px){.cs-kpi-grid{grid-template-columns:repeat(2,1fr);}}
+
+.cs-kpi-card{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:14px;transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden;}
+.cs-kpi-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.3);}
+.cs-kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0;}
+.cs-kpi-card.gold::before{background:var(--gold);}
+.cs-kpi-card.emerald::before{background:var(--emerald);}
+.cs-kpi-card.blue::before{background:var(--blue);}
+.cs-kpi-card.purple::before{background:var(--purple);}
+.cs-kpi-card.orange::before{background:var(--orange);}
+
+.cs-val{font-size:22px;font-weight:900;line-height:1.1;color:var(--text);}
+.cs-val.gold{color:var(--gold);}
+.cs-val.emerald{color:var(--emerald);}
+.cs-val.red{color:var(--red);}
+
+.cs-branch-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px;border:1px solid var(--border);}
+.cs-table{width:100%;border-collapse:collapse;font-size:12px;min-width:700px;}
+.cs-table thead{background:var(--card2);}
+.cs-table th{padding:9px 11px;text-align:right;font-weight:600;color:var(--text2);
+  border-bottom:1px solid var(--border);cursor:pointer;white-space:nowrap;user-select:none;}
+.cs-table th:hover{color:var(--text);}
+.cs-table td{padding:8px 11px;text-align:right;border-bottom:1px solid rgba(48,54,61,.5);vertical-align:middle;}
+.cs-table tr:last-child td{border-bottom:none;}
+.cs-table tr:hover td{background:rgba(255,255,255,.02);}
+.cs-table tr.cs-total-row td{background:rgba(245,158,11,.06);font-weight:700;border-top:2px solid rgba(245,158,11,.25);}
+
+.cs-chart-section{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:18px;margin-bottom:14px;}
+.cs-chart-title{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.cs-charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+@media(max-width:900px){.cs-charts-grid{grid-template-columns:1fr;}}
+.cs-chart-wrap{position:relative;height:280px;}
+.cs-chart-wrap.tall{height:340px;}
+
+.cs-area-badge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:12px;
+  font-size:11px;font-weight:600;background:var(--gold-dim);color:var(--gold);border:1px solid rgba(245,158,11,.3);}
+
+@media(max-width:700px){
+  #costsApp .main{padding:12px;}
+  .cs-kpi-grid{gap:8px;}
+  .cs-kpi-card{padding:10px;}
+  .cs-val{font-size:18px;}
+  .cs-chart-wrap{height:220px;}
+}
 
 /* ══════════════════════════════════
    SANDY TIMES DASHBOARD
@@ -827,7 +895,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
       border:1px solid rgba(249,115,22,0.3);border-radius:20px;
       padding:4px 14px;font-size:11px;color:rgba(249,115,22,0.85);font-family:monospace;
       letter-spacing:0.5px">
-      🕐 v2026.07.07 · 17:30
+      🕐 v2026.07.18 · 12:00
     </span>
   </div>
 
@@ -862,6 +930,14 @@ body.auth-locked #closuresApp{visibility:hidden;}
       <div class="landing-card-title">סגירות</div>
       <div class="landing-card-desc">אנליטיקת סגירות סניפים —<br>טופ 10, פילוח סטטוסים, מפת חום</div>
       <div class="landing-card-badge">Branch Closures</div>
+    </div>
+
+    <!-- Card: Delivery Costs -->
+    <div class="landing-card costs" onclick="showApp('costs')">
+      <div class="landing-card-icon">💰</div>
+      <div class="landing-card-title">עלויות משלוח</div>
+      <div class="landing-card-desc">עלויות שילוח WOLT לפי סניף —<br>כולל ובלי מע"מ, טרנדים ומרחקים</div>
+      <div class="landing-card-badge">Delivery Costs</div>
     </div>
   </div>
 </div>
@@ -2572,9 +2648,15 @@ function showApp(app) {
   document.getElementById('timesApp').classList.toggle('active', app === 'times');
   document.getElementById('closuresApp').classList.toggle('active', app === 'closures');
   document.getElementById('sandyTimesApp').classList.toggle('active', app === 'sandyTimes');
+  document.getElementById('costsApp').classList.toggle('active', app === 'costs');
 
   if (app === 'times') {
     if (!tmAllData.length) { tmLoadFromSheets(); } else { tmRefreshAll(); }
+  }
+  if (app === 'costs') {
+    if (typeof csAllData === 'undefined') { console.error('Costs script not loaded'); return; }
+    csLoadCookingTime();
+    if (!csAllData.length) { csLoadFromSheets(); } else { csRefreshAll(); }
   }
   if (app === 'sandyTimes') {
     if (typeof stAllData === 'undefined') {
@@ -4847,6 +4929,178 @@ if (missingConfig) {
 
 
 <!-- ══════════════════════════════════
+     DELIVERY COSTS APP
+══════════════════════════════════ -->
+<div id="costsApp">
+
+  <div class="loading-overlay" id="csLoadingOverlay">
+    <div class="spinner"></div>
+    <div style="color:var(--text2);font-size:13px">טוען נתוני עלויות...</div>
+  </div>
+
+  <header>
+    <div class="hdr-brand">
+      <button class="back-btn" onclick="showApp('landing')">← חזור</button>
+      &nbsp;
+      <span class="logo">💰</span>
+      <div>
+        <h1>עלויות משלוח WOLT</h1>
+        <small id="csHdrSub">Delivery Costs</small>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <button class="btn btn-primary" onclick="csLoadFromSheets()"
+        style="background:var(--gold-dim);border-color:var(--gold);color:var(--gold)">
+        🔄 סנכרן גיליון 6
+      </button>
+      <button class="btn btn-secondary" onclick="document.getElementById('csFileInput').click()">
+        📂 טען קובץ
+      </button>
+      <input type="file" id="csFileInput" accept=".xlsx,.xls,.csv" hidden onchange="csLoadFile(this)">
+    </div>
+  </header>
+
+  <div id="csToast" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:#1a2a3a;border:1px solid var(--gold);color:var(--gold);
+    padding:10px 20px;border-radius:8px;font-size:13px;z-index:9999;text-align:center"></div>
+
+  <div class="main">
+
+    <!-- DATE NAV -->
+    <div class="date-nav" id="csDateNav">
+      <span class="date-nav-title">📅 הצג:</span>
+      <div class="preset-btns">
+        <button class="preset-btn" id="csPreYesterday" onclick="csApplyPreset('yesterday')">📆 אתמול</button>
+        <button class="preset-btn" id="csPreCurWeek"   onclick="csApplyPreset('curweek')">📅 שבוע נוכחי</button>
+        <button class="preset-btn" id="csPrePrevWeek"  onclick="csApplyPreset('prevweek')">⏪ שבוע קודם</button>
+        <button class="preset-btn active" id="csPreAll" onclick="csApplyPreset('all')">🗂️ כל הנתונים</button>
+        <button class="preset-btn" id="csPreCustom"    onclick="csApplyPreset('custom')">🗓️ בחירה ידנית</button>
+      </div>
+      <div class="date-picker-wrap" id="csCustomPickers" style="display:none">
+        <span style="font-size:11px;color:var(--text2)">מ-</span>
+        <input type="date" class="dp-input" id="csDpFrom" onchange="csOnCustomRange()">
+        <span class="date-picker-sep">—</span>
+        <input type="date" class="dp-input" id="csDpTo" onchange="csOnCustomRange()">
+      </div>
+      <span class="range-badge" id="csRangeBadge" style="display:none"></span>
+      <div style="flex:1"></div>
+      <div class="date-nav-sep"></div>
+      <div class="compare-section">
+        <span class="compare-label">📊 השווה:</span>
+        <button class="compare-preset active" id="csCmpNone"     onclick="csApplyCompare('')">ללא</button>
+        <button class="compare-preset" id="csCmpPrevWeek" onclick="csApplyCompare('prevweek')">שבוע קודם</button>
+        <button class="compare-preset" id="csCmpCustom"   onclick="csApplyCompare('custom')">בחירה…</button>
+        <input type="date" class="dp-input" id="csDpCompare" style="display:none" onchange="csOnCompareDate()">
+      </div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filter-bar">
+      <span class="fb-label">🔍 סניף:</span>
+      <select class="fb-select" id="csFbBranch" onchange="csApplyFilters()" style="min-width:180px">
+        <option value="">כל הסניפים</option>
+      </select>
+      <span class="fb-label" style="margin-right:12px;padding-right:12px;border-right:1px solid var(--border)">🗺️ אזור:</span>
+      <select class="fb-select" id="csFbArea" onchange="csApplyFilters()" style="min-width:160px">
+        <option value="">כל האזורים</option>
+      </select>
+      <button class="fb-reset" onclick="csResetFilters()">✕ אפס</button>
+      <span class="fb-count" id="csFbCount"></span>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div class="cs-kpi-grid mb16">
+      <div class="cs-kpi-card blue">
+        <div class="kpi-top"><span class="kpi-label">משלוחים</span><span class="kpi-icon">🚴</span></div>
+        <div class="cs-val" id="csKpiOrders">—</div>
+        <div class="kpi-sub">סה"כ בטווח</div>
+        <span class="kpi-change flat" id="csKpiOrdersChg">—</span>
+      </div>
+      <div class="cs-kpi-card gold">
+        <div class="kpi-top"><span class="kpi-label">עלות כוללת (כולל מע"מ)</span><span class="kpi-icon">💰</span></div>
+        <div class="cs-val gold" id="csKpiTotal">—</div>
+        <div class="kpi-sub">סה"כ עלות שילוח</div>
+        <span class="kpi-change flat" id="csKpiTotalChg">—</span>
+      </div>
+      <div class="cs-kpi-card emerald">
+        <div class="kpi-top"><span class="kpi-label">עלות ללא מע"מ</span><span class="kpi-icon">🧾</span></div>
+        <div class="cs-val emerald" id="csKpiNoVat">—</div>
+        <div class="kpi-sub">−18% מע"מ</div>
+        <span class="kpi-change flat" id="csKpiNoVatChg">—</span>
+      </div>
+      <div class="cs-kpi-card purple">
+        <div class="kpi-top"><span class="kpi-label">עלות למשלוח (כולל מע"מ)</span><span class="kpi-icon">📦</span></div>
+        <div class="cs-val" id="csKpiPerDel">—</div>
+        <div class="kpi-sub">ממוצע F/D</div>
+        <span class="kpi-change flat" id="csKpiPerDelChg">—</span>
+      </div>
+      <div class="cs-kpi-card orange">
+        <div class="kpi-top"><span class="kpi-label">מרחק ממוצע</span><span class="kpi-icon">📍</span></div>
+        <div class="cs-val" id="csKpiDist">—</div>
+        <div class="kpi-sub">מטר לנסיעה</div>
+        <span class="kpi-change flat" id="csKpiDistChg">—</span>
+      </div>
+    </div>
+
+    <!-- BRANCH TABLE -->
+    <div class="cs-chart-section mb16">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+        <div>
+          <div class="cs-chart-title" style="margin-bottom:0">📋 עלויות לפי סניף</div>
+          <div style="font-size:11px;color:var(--text2)" id="csTableSub"></div>
+        </div>
+        <button class="export-btn" onclick="csExportCSV()">⬇️ ייצא CSV</button>
+      </div>
+      <div class="cs-branch-wrap">
+        <table class="cs-table">
+          <thead>
+            <tr>
+              <th onclick="csSortBy('branch')">סניף ↕</th>
+              <th onclick="csSortBy('area')">אזור ↕</th>
+              <th onclick="csSortBy('orders')">משלוחים ↕</th>
+              <th onclick="csSortBy('totalCost')">עלות כוללת ₪ ↕</th>
+              <th onclick="csSortBy('costPerDel')">עלות למשלוח (כולל מע"מ) ↕</th>
+              <th onclick="csSortBy('costNoVat')">עלות למשלוח (ללא מע"מ) ↕</th>
+              <th onclick="csSortBy('avgDist')">מרחק ממוצע ↕</th>
+              <th>השוואה</th>
+            </tr>
+          </thead>
+          <tbody id="csBranchTbody">
+            <tr><td colspan="8" class="nodata-msg">⏳ לחץ "סנכרן גיליון 6"</td></tr>
+          </tbody>
+          <tfoot id="csBranchTfoot"></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="cs-charts-grid">
+      <div class="cs-chart-section">
+        <div class="cs-chart-title">💰 עלות למשלוח לפי סניף (Top 15)</div>
+        <div class="cs-chart-wrap tall"><canvas id="csChartCostPerDel"></canvas></div>
+      </div>
+      <div class="cs-chart-section">
+        <div class="cs-chart-title">🚴 מספר משלוחים לפי סניף (Top 15)</div>
+        <div class="cs-chart-wrap tall"><canvas id="csChartOrders"></canvas></div>
+      </div>
+    </div>
+
+    <div class="cs-charts-grid">
+      <div class="cs-chart-section">
+        <div class="cs-chart-title">🗺️ עלות כוללת לפי אזור</div>
+        <div class="cs-chart-wrap"><canvas id="csChartArea"></canvas></div>
+      </div>
+      <div class="cs-chart-section">
+        <div class="cs-chart-title">📈 טרנד עלות יומית</div>
+        <div class="cs-chart-wrap"><canvas id="csChartTrend"></canvas></div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /costsApp -->
+
+
+<!-- ══════════════════════════════════
      CLOSURES ANALYTICS APP
 ══════════════════════════════════ -->
 <div id="closuresApp">
@@ -5206,6 +5460,436 @@ function clToggleEl(elId, chId) {
 function clToggleDay(di) {
   clToggleEl('cld' + di, 'clchd' + di);
 }
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  DELIVERY COSTS DASHBOARD — DATA & LOGIC  (גיליון 6)
+// Sheet columns: A=row# | B=Venue Name | C=Operations Area |
+//   D=מספר משלוחים | E=מרחק נסיעה ממוצע | F=סה"כ עלויות שילוח כולל מע"מ | G=תאריך
+// ═══════════════════════════════════════════════════════════
+const GOOGLE_SHEET6_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTAtc0vyPuariz_HuCrOWuZmjDc2CbUpvZxWemBbNfjvYNMLFXG1nBRWZQSQwu1Cl5Yi2ZY8nuL2s52/pub?gid=SET_SHEET6_GID_HERE&single=true&output=csv';
+const VAT_RATE = 0.18;
+
+let csAllData = [];
+let csViewFrom = '', csViewTo = '', csViewPreset = 'all';
+let csCmpFrom  = '', csCmpTo  = '', csCmpPreset  = '';
+let csFbBranch = '', csFbArea = '';
+let csSortCol  = 'totalCost', csSortDir = -1;
+let csCharts   = {};
+
+// ── Parse rows ──────────────────────────────────────────
+function csParseRows(raw) {
+  if (!raw.length) return [];
+  const headers = Object.keys(raw[0]);
+  console.log('[Costs] Headers:', headers, 'Sample:', raw[0]);
+
+  // Positional: A=0, B=1, C=2, D=3, E=4, F=5, G=6
+  const branchCol  = headers.find(h => /venue.name/i.test(h) || /סניף/i.test(h)) || headers[1];
+  const areaCol    = headers.find(h => /operation/i.test(h) || /אזור/i.test(h))  || headers[2];
+  const ordersCol  = headers.find(h => /משלוחים/i.test(h) || /count/i.test(h))   || headers[3];
+  const distCol    = headers.find(h => /מרחק/i.test(h) || /distance/i.test(h))   || headers[4];
+  const costCol    = headers.find(h => /עלויות/i.test(h) || /cost/i.test(h))     || headers[5];
+  const dateCol    = headers.find(h => /תאריך/i.test(h) || /date/i.test(h))      || headers[6];
+
+  const pn = v => { const n = parseFloat(String(v).replace(/,/g,'')); return isNaN(n) ? 0 : n; };
+
+  const knownHeaders = new Set(['venue name','operations area','סניף','אזור','תאריך','date']);
+  return raw.filter(r => {
+    const bv = String(r[branchCol]||'').trim().toLowerCase();
+    return bv && !knownHeaders.has(bv) && isNaN(Number(bv));
+  }).map(r => {
+    const rawDate = r[dateCol];
+    const dt = stParseDate(rawDate); // reuse Sandy's date parser
+    const dateStr = dt ? fmtDate(dt) : '';
+    if (!dateStr) return null;
+
+    let branch = String(r[branchCol]||'').trim();
+    // Clean "Domino's Pizza | Name |" → "Name"
+    if (branch.includes('|')) {
+      const parts = branch.split('|').map(s=>s.trim()).filter(Boolean);
+      branch = parts[parts.length-1] || parts[0];
+    }
+    if (!branch) return null;
+
+    const area      = String(r[areaCol]||'').trim();
+    const orders    = pn(r[ordersCol]);
+    const avgDist   = pn(r[distCol]);
+    const totalCost = pn(r[costCol]);
+    const costPerDel = orders > 0 ? totalCost / orders : 0;
+    const costNoVat  = costPerDel * (1 - VAT_RATE);
+
+    return { dateStr, branch, area, orders, avgDist, totalCost, costPerDel, costNoVat };
+  }).filter(r => r && r.branch && r.dateStr && r.orders > 0);
+}
+
+// ── Aggregate ──────────────────────────────────────────
+function csAggByBranch(data) {
+  const map = {};
+  data.forEach(r => {
+    if (!map[r.branch]) map[r.branch] = { branch:r.branch, area:r.area,
+      orders:0, totalCost:0, sumDist:0, cntDist:0 };
+    const b = map[r.branch];
+    b.orders    += r.orders;
+    b.totalCost += r.totalCost;
+    if (r.avgDist > 0) { b.sumDist += r.avgDist; b.cntDist++; }
+  });
+  return Object.values(map).map(b => ({
+    ...b,
+    avgDist:    b.cntDist > 0 ? b.sumDist / b.cntDist : 0,
+    costPerDel: b.orders  > 0 ? b.totalCost / b.orders : 0,
+    costNoVat:  b.orders  > 0 ? (b.totalCost / b.orders) * (1 - VAT_RATE) : 0
+  }));
+}
+
+function csAggOverall(data) {
+  let orders=0, totalCost=0, sumDist=0, cntDist=0;
+  data.forEach(r => {
+    orders    += r.orders;
+    totalCost += r.totalCost;
+    if (r.avgDist > 0) { sumDist += r.avgDist; cntDist++; }
+  });
+  const costPerDel = orders > 0 ? totalCost / orders : 0;
+  return { orders, totalCost, costPerDel,
+    costNoVat: costPerDel * (1 - VAT_RATE),
+    avgDist: cntDist > 0 ? sumDist / cntDist : 0 };
+}
+
+// ── Load ────────────────────────────────────────────────
+async function csLoadFromSheets() {
+  if (GOOGLE_SHEET6_CSV_URL.includes('SET_SHEET6_GID_HERE')) {
+    alert('⚠️ יש להגדיר GID של גיליון 6 ב-GOOGLE_SHEET6_CSV_URL');
+    return;
+  }
+  csShowLoading(true);
+  try {
+    const res = await fetch(GOOGLE_SHEET6_CSV_URL);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const wb = XLSX.read(await res.text(), {type:'string'});
+    const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:''});
+    csAllData = csParseRows(raw);
+    csShowToast(`✅ נטענו ${csAllData.length} שורות מגיליון 6`);
+    csRefreshAll();
+  } catch(e) { console.error('[Costs]', e); alert('שגיאה: ' + e.message); }
+  csShowLoading(false);
+}
+
+function csLoadFile(input) {
+  const file = input.files[0]; if (!file) return;
+  csShowLoading(true);
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      const sheetIdx = wb.SheetNames.length > 5 ? 5 : wb.SheetNames.length - 1;
+      const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[sheetIdx]], {defval:''});
+      csAllData = csParseRows(raw);
+      csShowToast(`✅ נטענו ${csAllData.length} שורות מגיליון ${sheetIdx+1}`);
+      csRefreshAll();
+    } catch(err) { alert('שגיאה: ' + err.message); }
+    csShowLoading(false); input.value = '';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── Date helpers ────────────────────────────────────────
+function csIsoToDmy(iso) { if(!iso) return ''; const p=iso.split('-'); return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:iso; }
+function csGetYesterday() { const d=new Date(); d.setDate(d.getDate()-1); return fmtDate(d); }
+function csGetCurrentWeekRange() {
+  const now=new Date(),day=now.getDay();
+  const sun=new Date(now); sun.setDate(now.getDate()-day); sun.setHours(0,0,0,0);
+  const sat=new Date(sun); sat.setDate(sun.getDate()+6);
+  return {from:fmtDate(sun),to:fmtDate(sat)};
+}
+function csGetPrevWeekRange() {
+  const now=new Date(),day=now.getDay();
+  const sun=new Date(now); sun.setDate(now.getDate()-day-7); sun.setHours(0,0,0,0);
+  const sat=new Date(sun); sat.setDate(sun.getDate()+6);
+  return {from:fmtDate(sun),to:fmtDate(sat)};
+}
+
+function csUpdateRangeBadge() {
+  const b=document.getElementById('csRangeBadge'); if(!b) return;
+  if (csViewFrom||csViewTo) {
+    b.style.display='inline';
+    b.textContent=(csViewFrom===csViewTo&&csViewFrom)?csViewFrom:`${csViewFrom||'…'} — ${csViewTo||'…'}`;
+  } else b.style.display='none';
+}
+
+function csApplyPreset(preset) {
+  csViewPreset=preset;
+  ['Yesterday','CurWeek','PrevWeek','All','Custom'].forEach(p=>
+    document.getElementById('csPre'+p)?.classList.remove('active'));
+  const idMap={yesterday:'csPreYesterday',curweek:'csPreCurWeek',prevweek:'csPrePrevWeek',all:'csPreAll',custom:'csPreCustom'};
+  document.getElementById(idMap[preset])?.classList.add('active');
+  const cp=document.getElementById('csCustomPickers');
+  if(cp) cp.style.display=preset==='custom'?'flex':'none';
+  if(preset==='yesterday')     { const y=csGetYesterday(); csViewFrom=y; csViewTo=y; }
+  else if(preset==='curweek')  { const r=csGetCurrentWeekRange(); csViewFrom=r.from; csViewTo=r.to; }
+  else if(preset==='prevweek') { const r=csGetPrevWeekRange(); csViewFrom=r.from; csViewTo=r.to; }
+  else if(preset==='all')      { csViewFrom=''; csViewTo=''; }
+  csUpdateRangeBadge(); csRefreshAll();
+}
+
+function csOnCustomRange() {
+  csViewFrom=csIsoToDmy(document.getElementById('csDpFrom')?.value||'');
+  csViewTo  =csIsoToDmy(document.getElementById('csDpTo')?.value||'');
+  if(csViewFrom&&csViewTo){ csUpdateRangeBadge(); csRefreshAll(); }
+}
+
+function csApplyCompare(preset) {
+  csCmpPreset=preset;
+  ['csCmpNone','csCmpPrevWeek','csCmpCustom'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  const idMap={'':'csCmpNone',prevweek:'csCmpPrevWeek',custom:'csCmpCustom'};
+  document.getElementById(idMap[preset]||'csCmpNone')?.classList.add('active');
+  const dc=document.getElementById('csDpCompare');
+  if(dc) dc.style.display=preset==='custom'?'inline-block':'none';
+  if(preset==='')              { csCmpFrom=''; csCmpTo=''; }
+  else if(preset==='prevweek') { const r=csGetPrevWeekRange(); csCmpFrom=r.from; csCmpTo=r.to; }
+  csRefreshAll();
+}
+
+function csOnCompareDate() {
+  const v=document.getElementById('csDpCompare')?.value||'';
+  csCmpFrom=csIsoToDmy(v); csCmpTo=csIsoToDmy(v); if(v) csRefreshAll();
+}
+
+function csApplyFilters() {
+  csFbBranch=document.getElementById('csFbBranch')?.value||'';
+  csFbArea  =document.getElementById('csFbArea')?.value||'';
+  csRefreshAll();
+}
+function csResetFilters() {
+  csFbBranch=''; csFbArea='';
+  const fb=document.getElementById('csFbBranch'); if(fb) fb.value='';
+  const fa=document.getElementById('csFbArea');   if(fa) fa.value='';
+  csRefreshAll();
+}
+
+function csFilterData(data) {
+  let d=data;
+  if(csViewFrom||csViewTo) d=d.filter(r=>inRange(r.dateStr,csViewFrom,csViewTo));
+  if(csFbBranch) d=d.filter(r=>r.branch===csFbBranch);
+  if(csFbArea)   d=d.filter(r=>r.area===csFbArea);
+  return d;
+}
+function csFilterCmp(data) {
+  if(!csCmpFrom&&!csCmpTo) return [];
+  return data.filter(r=>inRange(r.dateStr,csCmpFrom,csCmpTo)&&
+    (!csFbBranch||r.branch===csFbBranch)&&(!csFbArea||r.area===csFbArea));
+}
+
+function csSortBy(col) {
+  if(csSortCol===col) csSortDir*=-1; else{csSortCol=col;csSortDir=-1;}
+  csRefreshAll();
+}
+
+// ── Money formatter ─────────────────────────────────────
+function csFmt(v) { return '₪'+Number(v).toLocaleString('he-IL',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function csFmtInt(v) { return '₪'+Math.round(v).toLocaleString('he-IL'); }
+
+// ── Main refresh ────────────────────────────────────────
+function csRefreshAll() {
+  if(!csAllData.length) return;
+  const data    = csFilterData(csAllData);
+  const cmpData = csFilterCmp(csAllData);
+  const curr    = csAggOverall(data);
+  const prev    = cmpData.length ? csAggOverall(cmpData) : null;
+
+  // Update selects
+  const branches=[...new Set(csAllData.map(r=>r.branch))].sort();
+  const areas   =[...new Set(csAllData.map(r=>r.area).filter(Boolean))].sort();
+  const fb=document.getElementById('csFbBranch');
+  if(fb){const c=fb.value;fb.innerHTML='<option value="">כל הסניפים</option>'+branches.map(b=>`<option value="${b}"${b===c?' selected':''}>${b}</option>`).join('');}
+  const fa=document.getElementById('csFbArea');
+  if(fa){const c=fa.value;fa.innerHTML='<option value="">כל האזורים</option>'+areas.map(a=>`<option value="${a}"${a===c?' selected':''}>${a}</option>`).join('');}
+
+  const fce=document.getElementById('csFbCount');
+  if(fce) fce.textContent=`מציג ${data.length.toLocaleString('he-IL')} שורות`;
+
+  // KPI helpers
+  const se=(id,v)=>{const e=document.getElementById(id);if(e)e.innerHTML=v;};
+  const hasCmp=!!prev;
+  const mkChg=(c,p,lowerBetter=false)=>{
+    if(!hasCmp||!p||p===0)return'<span class="kpi-change flat">—</span>';
+    const d=c-p,pct=(d/p*100).toFixed(1);
+    const good=lowerBetter?d<0:d>0;
+    const cls=Math.abs(parseFloat(pct))<0.5?'flat':good?'up':'down';
+    const arrow=d<0?'▼':d>0?'▲':'=';
+    return`<span class="kpi-change ${cls}">${arrow} ${Math.abs(d).toFixed(1)} (${d>0?'+':''}${pct}%)</span>`;
+  };
+  const mkChgMoney=(c,p,lowerBetter=false)=>{
+    if(!hasCmp||!p||p===0)return'<span class="kpi-change flat">—</span>';
+    const d=c-p,pct=(d/p*100).toFixed(1);
+    const good=lowerBetter?d<0:d>0;
+    const cls=Math.abs(parseFloat(pct))<0.5?'flat':good?'up':'down';
+    const arrow=d<0?'▼':d>0?'▲':'=';
+    return`<span class="kpi-change ${cls}">${arrow} ${csFmtInt(Math.abs(d))} (${d>0?'+':''}${pct}%)</span>`;
+  };
+
+  se('csKpiOrders',   curr.orders.toLocaleString('he-IL'));
+  se('csKpiTotal',    csFmtInt(curr.totalCost));
+  se('csKpiNoVat',    csFmtInt(curr.totalCost*(1-VAT_RATE)));
+  se('csKpiPerDel',   csFmt(curr.costPerDel));
+  se('csKpiDist',     Math.round(curr.avgDist).toLocaleString('he-IL')+' מ\'');
+  se('csKpiOrdersChg', mkChg(curr.orders,    prev?.orders,    false));
+  se('csKpiTotalChg',  mkChgMoney(curr.totalCost,  prev?.totalCost,  true));
+  se('csKpiNoVatChg',  mkChgMoney(curr.totalCost*(1-VAT_RATE), prev?(prev.totalCost*(1-VAT_RATE)):0, true));
+  se('csKpiPerDelChg', mkChgMoney(curr.costPerDel, prev?.costPerDel, true));
+  se('csKpiDistChg',   mkChg(curr.avgDist,   prev?.avgDist,   false));
+
+  csRenderTable(data, cmpData);
+  csRenderCharts(data);
+}
+
+// ── Branch table ────────────────────────────────────────
+function csRenderTable(data, cmpData) {
+  let rows = csAggByBranch(data);
+  const cmpMap={};
+  if(cmpData.length) csAggByBranch(cmpData).forEach(r=>{cmpMap[r.branch]=r;});
+
+  rows.sort((a,b)=>{
+    if(csSortCol==='branch') return a.branch.localeCompare(b.branch,'he')*csSortDir;
+    if(csSortCol==='area')   return (a.area||'').localeCompare(b.area||'','he')*csSortDir;
+    return ((a[csSortCol]||0)-(b[csSortCol]||0))*csSortDir;
+  });
+
+  const tbody=document.getElementById('csBranchTbody');
+  if(!tbody) return;
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="8" class="nodata-msg">אין נתונים</td></tr>';return;}
+
+  tbody.innerHTML=rows.map(r=>{
+    const p=cmpMap[r.branch];
+    const diff=p?r.costPerDel-p.costPerDel:null;
+    const diffDir=diff===null?'':diff<0?'▼':diff>0?'▲':'=';
+    const diffCls=diff===null?'st-badge-flat':diff<0?'st-badge-pos':diff>0?'st-badge-neg':'st-badge-flat';
+    const cmpBadge=diff!==null
+      ?`<span class="${diffCls}">${diffDir} ${csFmt(Math.abs(diff))}</span>`
+      :'<span class="st-badge-flat">—</span>';
+    return`<tr>
+      <td style="font-weight:600">${r.branch}</td>
+      <td><span class="cs-area-badge">${r.area||'—'}</span></td>
+      <td>${r.orders.toLocaleString('he-IL')}</td>
+      <td style="color:var(--gold);font-weight:600">${csFmtInt(r.totalCost)}</td>
+      <td style="font-weight:700">${csFmt(r.costPerDel)}</td>
+      <td style="color:var(--emerald);font-weight:700">${csFmt(r.costNoVat)}</td>
+      <td>${Math.round(r.avgDist).toLocaleString('he-IL')} מ'</td>
+      <td>${cmpBadge}</td>
+    </tr>`;
+  }).join('');
+
+  const totOrders =rows.reduce((s,r)=>s+r.orders,0);
+  const totCost   =rows.reduce((s,r)=>s+r.totalCost,0);
+  const avgPerDel =totOrders>0?totCost/totOrders:0;
+  const avgDist   =rows.filter(r=>r.avgDist>0).reduce((s,r,_,a)=>s+r.avgDist/a.length,0);
+  document.getElementById('csBranchTfoot').innerHTML=`<tr class="cs-total-row">
+    <td colspan="2">סה"כ / ממוצע</td>
+    <td>${totOrders.toLocaleString('he-IL')}</td>
+    <td style="color:var(--gold);font-weight:700">${csFmtInt(totCost)}</td>
+    <td style="font-weight:700">${csFmt(avgPerDel)}</td>
+    <td style="color:var(--emerald);font-weight:700">${csFmt(avgPerDel*(1-VAT_RATE))}</td>
+    <td>${Math.round(avgDist).toLocaleString('he-IL')} מ'</td>
+    <td>—</td>
+  </tr>`;
+  const sub=document.getElementById('csTableSub');
+  if(sub) sub.textContent=`${rows.length} סניפים | ${totOrders.toLocaleString('he-IL')} משלוחים`;
+}
+
+// ── Charts ───────────────────────────────────────────────
+function csMakeChart(id,cfg){
+  const ctx=document.getElementById(id); if(!ctx) return;
+  if(csCharts[id]) csCharts[id].destroy();
+  csCharts[id]=new Chart(ctx,cfg);
+}
+
+function csRenderCharts(data) {
+  const byBranch=csAggByBranch(data).filter(r=>r.orders>0);
+
+  // Cost per delivery by branch (top 15, sorted high→low)
+  const top15cost=[...byBranch].sort((a,b)=>b.costPerDel-a.costPerDel).slice(0,15);
+  csMakeChart('csChartCostPerDel',{
+    type:'bar',
+    data:{labels:top15cost.map(r=>r.branch),
+      datasets:[
+        {label:'כולל מע"מ',data:top15cost.map(r=>+r.costPerDel.toFixed(2)),backgroundColor:'rgba(245,158,11,.8)',borderColor:'#F59E0B',borderWidth:1},
+        {label:'ללא מע"מ', data:top15cost.map(r=>+r.costNoVat.toFixed(2)), backgroundColor:'rgba(16,185,129,.7)', borderColor:'#10B981',borderWidth:1}
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{position:'top',labels:{color:'#8B949E',font:{size:11}}},
+        tooltip:{callbacks:{label:c=>`${c.dataset.label}: ₪${c.raw}` }}},
+      scales:{
+        x:{grid:{color:'rgba(48,54,61,.5)'},ticks:{color:'#8B949E',callback:v=>'₪'+v}},
+        y:{grid:{display:false},ticks:{color:'#E6EDF3',font:{size:11}}}
+      }}
+  });
+
+  // Orders by branch top 15
+  const top15ord=[...byBranch].sort((a,b)=>b.orders-a.orders).slice(0,15);
+  csMakeChart('csChartOrders',{
+    type:'bar',
+    data:{labels:top15ord.map(r=>r.branch),
+      datasets:[{label:'משלוחים',data:top15ord.map(r=>r.orders),
+        backgroundColor:'rgba(59,130,246,.75)',borderColor:'#3B82F6',borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:'rgba(48,54,61,.5)'},ticks:{color:'#8B949E'}},
+        y:{grid:{display:false},ticks:{color:'#E6EDF3',font:{size:11}}}
+      }}
+  });
+
+  // Cost by area (donut-style bar)
+  const byArea={};
+  byBranch.forEach(r=>{const a=r.area||'אחר';byArea[a]=(byArea[a]||0)+r.totalCost;});
+  const areaLabels=Object.keys(byArea).sort((a,b)=>byArea[b]-byArea[a]);
+  csMakeChart('csChartArea',{
+    type:'bar',
+    data:{labels:areaLabels,
+      datasets:[{label:'עלות כוללת',data:areaLabels.map(a=>+byArea[a].toFixed(0)),
+        backgroundColor:'rgba(139,92,246,.75)',borderColor:'#8B5CF6',borderWidth:1,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c=>`₪${c.raw.toLocaleString('he-IL')}`}}},
+      scales:{
+        x:{grid:{color:'rgba(48,54,61,.3)'},ticks:{color:'#8B949E',maxRotation:30}},
+        y:{grid:{color:'rgba(48,54,61,.5)'},ticks:{color:'#8B949E',callback:v=>'₪'+v.toLocaleString()}}
+      }}
+  });
+
+  // Daily cost trend
+  const byDay={};
+  data.forEach(r=>{byDay[r.dateStr]=(byDay[r.dateStr]||0)+r.totalCost;});
+  const days=Object.keys(byDay).sort((a,b)=>dateToSortKey(a)-dateToSortKey(b));
+  csMakeChart('csChartTrend',{
+    type:'line',
+    data:{labels:days,
+      datasets:[{label:'עלות יומית',data:days.map(d=>+byDay[d].toFixed(0)),
+        borderColor:'#F59E0B',backgroundColor:'rgba(245,158,11,.1)',
+        borderWidth:2,pointRadius:2,tension:.3,fill:true}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c=>`₪${c.raw.toLocaleString('he-IL')}`}}},
+      scales:{
+        x:{grid:{color:'rgba(48,54,61,.3)'},ticks:{color:'#8B949E',maxTicksLimit:12}},
+        y:{grid:{color:'rgba(48,54,61,.5)'},ticks:{color:'#8B949E',callback:v=>'₪'+v.toLocaleString()}}
+      }}
+  });
+}
+
+function csExportCSV() {
+  const data=csFilterData(csAllData);
+  const rows=csAggByBranch(data);
+  const header=['סניף','אזור','משלוחים','עלות כוללת','עלות למשלוח כולל מע"מ','עלות למשלוח ללא מע"מ','מרחק ממוצע'];
+  const lines=[header.join(','),...rows.map(r=>
+    [r.branch,r.area,r.orders,r.totalCost.toFixed(2),r.costPerDel.toFixed(2),r.costNoVat.toFixed(2),r.avgDist.toFixed(0)].join(','))];
+  const blob=new Blob(['\uFEFF'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='delivery_costs.csv';a.click();URL.revokeObjectURL(url);
+}
+
+function csLoadCookingTime() {} // placeholder for showApp compat
+function csShowLoading(v){const e=document.getElementById('csLoadingOverlay');if(e)e.classList.toggle('show',v);}
+function csShowToast(msg){const e=document.getElementById('csToast');if(!e)return;e.textContent=msg;e.style.display='block';setTimeout(()=>e.style.display='none',3500);}
 </script>
 
 <script>
