@@ -354,8 +354,11 @@ tr.refunded-row td{background:rgba(137,87,229,.04)}
   position:fixed;inset:0;z-index:9999;
   background:var(--bg);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:40px;
+  gap:32px;
   transition:opacity .5s, visibility .5s;
+  padding:20px;
+  overflow-y:auto;
+  box-sizing:border-box;
 }
 #landingScreen.hidden{opacity:0;visibility:hidden;pointer-events:none;}
 
@@ -366,20 +369,34 @@ tr.refunded-row td{background:rgba(137,87,229,.04)}
 .landing-title{font-size:30px;font-weight:900;text-align:center;color:var(--text);}
 .landing-subtitle{font-size:14px;color:var(--text2);text-align:center;margin-top:-30px;}
 
-.landing-cards{display:flex;gap:28px;flex-wrap:wrap;justify-content:center;}
+.landing-cards{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
+  width:100%;
+  max-width:1100px;
+}
+@media(max-width:900px){.landing-cards{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:520px){.landing-cards{grid-template-columns:1fr;gap:12px;}}
 
 .landing-card{
   background:var(--card);
   border:1px solid var(--border);
-  border-radius:20px;
-  padding:40px 48px;
-  display:flex;flex-direction:column;align-items:center;gap:16px;
+  border-radius:16px;
+  padding:28px 20px;
+  display:flex;flex-direction:column;align-items:center;gap:12px;
   cursor:pointer;
   transition:all .3s;
-  min-width:240px;
   text-decoration:none;
   position:relative;
   overflow:hidden;
+  min-width:0;
+}
+@media(max-width:520px){
+  .landing-card{padding:20px 16px;gap:8px;}
+  .landing-card-icon{font-size:36px !important;}
+  .landing-card-title{font-size:18px !important;}
+  .landing-card-desc{font-size:12px !important;}
 }
 .landing-card::before{
   content:'';position:absolute;inset:0;opacity:0;
@@ -387,20 +404,26 @@ tr.refunded-row td{background:rgba(137,87,229,.04)}
 }
 .landing-card.orders::before{background:radial-gradient(circle at 50% 0%,rgba(0,157,224,.15),transparent 60%);}
 .landing-card.times::before{background:radial-gradient(circle at 50% 0%,rgba(46,160,67,.15),transparent 60%);}
-.landing-card:hover{transform:translateY(-6px);box-shadow:0 20px 50px rgba(0,0,0,.4);}
+.landing-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,.4);}
 .landing-card.orders:hover{border-color:var(--blue);}
 .landing-card.times:hover{border-color:var(--green);}
 .landing-card:hover::before{opacity:1;}
 
-.landing-card-icon{font-size:52px;}
-.landing-card-title{font-size:22px;font-weight:800;color:var(--text);}
-.landing-card-desc{font-size:13px;color:var(--text2);text-align:center;line-height:1.5;}
+.landing-card-icon{font-size:44px;}
+.landing-card-title{font-size:20px;font-weight:800;color:var(--text);}
+.landing-card-desc{font-size:12px;color:var(--text2);text-align:center;line-height:1.5;}
 .landing-card-badge{
-  padding:5px 16px;border-radius:20px;font-size:12px;font-weight:700;
-  margin-top:4px;
+  padding:4px 14px;border-radius:20px;font-size:11px;font-weight:700;
+  margin-top:2px;
 }
 .landing-card.orders .landing-card-badge{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(0,157,224,.3);}
 .landing-card.times  .landing-card-badge{background:var(--green-dim);color:var(--green);border:1px solid rgba(46,160,67,.3);}
+
+@media(max-width:700px){
+  #landingScreen{gap:20px;padding:16px;}
+  .landing-title{font-size:22px;}
+  .landing-logo{font-size:40px;}
+}
 
 /* Back button (shown on sub-dashboards) */
 .back-btn{
@@ -895,7 +918,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
       border:1px solid rgba(249,115,22,0.3);border-radius:20px;
       padding:4px 14px;font-size:11px;color:rgba(249,115,22,0.85);font-family:monospace;
       letter-spacing:0.5px">
-      🕐 v2026.07.18 · 12:10
+      🕐 v2026.07.18 · 14:00
     </span>
   </div>
 
@@ -2643,6 +2666,11 @@ window.dashboardInit = init;
 //  LANDING / APP NAVIGATION
 // ═══════════════════════════════════════════════════════════
 function showApp(app) {
+  // Check permissions (skip check for 'landing')
+  if (app !== 'landing' && window._allowedApps && !window._allowedApps.includes(app)) {
+    console.warn('[Auth] Access denied to:', app);
+    return;
+  }
   document.getElementById('landingScreen').classList.toggle('hidden', app !== 'landing');
   document.getElementById('ordersApp').classList.toggle('active', app === 'orders');
   document.getElementById('timesApp').classList.toggle('active', app === 'times');
@@ -2651,12 +2679,16 @@ function showApp(app) {
   document.getElementById('costsApp').classList.toggle('active', app === 'costs');
 
   if (app === 'times') {
-    if (!tmAllData.length) { tmLoadFromSheets(); } else { tmRefreshAll(); }
+    if (!tmAllData.length) {
+      tmLoadFromSheets();
+    } else {
+      tmApplyPreset('yesterday');
+    }
   }
   if (app === 'costs') {
     if (typeof csAllData === 'undefined') { console.error('Costs script not loaded'); return; }
     csLoadCookingTime();
-    if (!csAllData.length) { csLoadFromSheets(); } else { csRefreshAll(); }
+    if (!csAllData.length) { csLoadFromSheets(); } else { csApplyPreset('yesterday'); }
   }
   if (app === 'sandyTimes') {
     if (typeof stAllData === 'undefined') {
@@ -2664,7 +2696,7 @@ function showApp(app) {
       return;
     }
     stLoadCookingTime();
-    if (!stAllData.length) { stLoadFromSheets(); } else { stRefreshAll(); }
+    if (!stAllData.length) { stLoadFromSheets(); } else { stApplyPreset('yesterday'); }
   }
   if (app === 'orders') {
     if (allData.length) refreshAll();
@@ -3082,7 +3114,7 @@ async function tmLoadFromSheets() {
       tmAllData = rows;
       tmSaveLs();
       tmAutoSetView();
-      tmRefreshAll();
+      tmApplyPreset('yesterday');
       // Brief toast notification
       const toastEl = document.getElementById('tmToast');
       if (toastEl) {
@@ -4570,6 +4602,57 @@ function setMessage(text, type = '') {
   messageBox.className = 'auth-message' + (type ? ' ' + type : '');
 }
 
+// ══════════════════════════════════════════════════════
+//  הרשאות משתמשים — ערוך כאן
+//  מפתחות: כתובת אימייל (lowercase)
+//  ערכים: מערך של דשבורדים מותרים:
+//    'orders'      = הזמנות WOLT
+//    'times'       = זמנים WOLT
+//    'sandyTimes'  = זמנים סנדי
+//    'costs'       = עלויות משלוח
+//    'closures'    = סגירות
+//  '*' במקום מערך = גישה לכל הדשבורדים
+// ══════════════════════════════════════════════════════
+const USER_PERMISSIONS = {
+  // דוגמה — החלף בכתובות האימייל האמיתיות:
+
+  'manager@dominos.co.il':     ['orders','times','sandyTimes','costs','closures'],
+  'ops@dominos.co.il':         ['times','sandyTimes'],
+  'operation@dominos.co.il':     ['costs'],
+  'branch@dominos.co.il':      ['orders'],
+};
+
+// לכל משתמש שאינו ברשימה — ברירת מחדל:
+const DEFAULT_PERMISSIONS = ['orders','times','sandyTimes','costs','closures'];
+
+function getUserPermissions(email) {
+  if (!email) return DEFAULT_PERMISSIONS;
+  const key = email.toLowerCase().trim();
+  const perms = USER_PERMISSIONS[key];
+  if (!perms) return DEFAULT_PERMISSIONS;
+  if (perms === '*') return ['orders','times','sandyTimes','costs','closures'];
+  return perms;
+}
+
+function applyPermissions(email) {
+  const allowed = getUserPermissions(email);
+  const allApps = ['orders','times','sandyTimes','costs','closures'];
+  // Map from app-key to landing card class
+  const cardClassMap = {
+    orders:      '.landing-card.orders',
+    times:       '.landing-card.times',
+    sandyTimes:  '.landing-card.sandy-times',
+    costs:       '.landing-card.costs',
+    closures:    '.landing-card.closures',
+  };
+  allApps.forEach(app => {
+    const card = document.querySelector(cardClassMap[app]);
+    if (card) card.style.display = allowed.includes(app) ? '' : 'none';
+  });
+  // Store for runtime checks
+  window._allowedApps = allowed;
+}
+
 function unlockApp(user) {
   document.body.classList.remove('auth-locked');
   overlay.classList.add('hidden');
@@ -4582,6 +4665,8 @@ function unlockApp(user) {
   } else {
     avatar.textContent = fallbackName.trim().charAt(0).toUpperCase();
   }
+  // Apply dashboard permissions based on email
+  applyPermissions(user?.email || '');
   if (!appBooted && typeof window.dashboardInit === 'function') {
     appBooted = true;
     window.dashboardInit();
