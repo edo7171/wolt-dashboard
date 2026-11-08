@@ -622,6 +622,9 @@ body.auth-locked #costsApp{visibility:hidden;}
 
 :root{--gold:#F59E0B;--gold-dim:rgba(245,158,11,0.15);--emerald:#10B981;--emerald-dim:rgba(16,185,129,0.15);}
 
+.landing-card.sms::before{background:radial-gradient(circle at 50% 0%,rgba(139,92,246,.18),transparent 60%);}
+.landing-card.sms:hover{border-color:#8B5CF6;}
+.landing-card.sms .landing-card-badge{background:rgba(139,92,246,.15);color:#A78BFA;border:1px solid rgba(139,92,246,.3);}
 .landing-card.costs::before{background:radial-gradient(circle at 50% 0%,rgba(245,158,11,.18),transparent 60%);}
 .landing-card.costs:hover{border-color:var(--gold);}
 .landing-card.costs .landing-card-badge{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(245,158,11,.3);}
@@ -918,7 +921,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
       border:1px solid rgba(249,115,22,0.3);border-radius:20px;
       padding:4px 14px;font-size:11px;color:rgba(249,115,22,0.85);font-family:monospace;
       letter-spacing:0.5px">
-      🕐 v2026.07.18 · 14:00
+      🕐 v2026.07.18 · 14:30
     </span>
   </div>
 
@@ -961,6 +964,14 @@ body.auth-locked #closuresApp{visibility:hidden;}
       <div class="landing-card-title">עלויות משלוח</div>
       <div class="landing-card-desc">עלויות שילוח WOLT לפי סניף —<br>כולל ובלי מע"מ, טרנדים ומרחקים</div>
       <div class="landing-card-badge">Delivery Costs</div>
+    </div>
+
+    <!-- Card: SMS (opens external page in a new tab) -->
+    <div class="landing-card sms" onclick="openSmsPage()">
+      <div class="landing-card-icon">💬</div>
+      <div class="landing-card-title">SMS</div>
+      <div class="landing-card-desc">מערכת SMS —<br>נפתח בלשונית חדשה</div>
+      <div class="landing-card-badge">External Link ↗</div>
     </div>
   </div>
 </div>
@@ -4611,32 +4622,43 @@ function setMessage(text, type = '') {
 //    'sandyTimes'  = זמנים סנדי
 //    'costs'       = עלויות משלוח
 //    'closures'    = סגירות
+//    'sms'         = SMS (קישור חיצוני)
 //  '*' במקום מערך = גישה לכל הדשבורדים
 // ══════════════════════════════════════════════════════
 const USER_PERMISSIONS = {
   // דוגמה — החלף בכתובות האימייל האמיתיות:
-
-  'manager@dominos.co.il':     ['orders','times','sandyTimes','costs','closures'],
+  'admin@dominos.co.il':       '*',
+  'manager@dominos.co.il':     ['orders','times','sandyTimes','costs','closures','sms'],
   'ops@dominos.co.il':         ['times','sandyTimes'],
-  'operation@dominos.co.il':     ['costs'],
+  'finance@dominos.co.il':     ['costs','orders'],
   'branch@dominos.co.il':      ['orders'],
 };
 
 // לכל משתמש שאינו ברשימה — ברירת מחדל:
-const DEFAULT_PERMISSIONS = ['orders','times','sandyTimes','costs','closures'];
+const DEFAULT_PERMISSIONS = ['orders'];
+
+// פתיחת עמוד SMS בלשונית חדשה (מוגן בהרשאה 'sms')
+function openSmsPage() {
+  if (window._allowedApps && !window._allowedApps.includes('sms')) {
+    console.warn('[Auth] Access denied to: sms');
+    return;
+  }
+  window.open('https://edo7171.github.io/SMS/', '_blank', 'noopener');
+}
+window.openSmsPage = openSmsPage;
 
 function getUserPermissions(email) {
   if (!email) return DEFAULT_PERMISSIONS;
   const key = email.toLowerCase().trim();
   const perms = USER_PERMISSIONS[key];
   if (!perms) return DEFAULT_PERMISSIONS;
-  if (perms === '*') return ['orders','times','sandyTimes','costs','closures'];
+  if (perms === '*') return ['orders','times','sandyTimes','costs','closures','sms'];
   return perms;
 }
 
 function applyPermissions(email) {
   const allowed = getUserPermissions(email);
-  const allApps = ['orders','times','sandyTimes','costs','closures'];
+  const allApps = ['orders','times','sandyTimes','costs','closures','sms'];
   // Map from app-key to landing card class
   const cardClassMap = {
     orders:      '.landing-card.orders',
@@ -4644,6 +4666,7 @@ function applyPermissions(email) {
     sandyTimes:  '.landing-card.sandy-times',
     costs:       '.landing-card.costs',
     closures:    '.landing-card.closures',
+    sms:         '.landing-card.sms',
   };
   allApps.forEach(app => {
     const card = document.querySelector(cardClassMap[app]);
