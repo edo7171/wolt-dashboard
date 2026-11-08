@@ -921,7 +921,7 @@ body.auth-locked #closuresApp{visibility:hidden;}
       border:1px solid rgba(249,115,22,0.3);border-radius:20px;
       padding:4px 14px;font-size:11px;color:rgba(249,115,22,0.85);font-family:monospace;
       letter-spacing:0.5px">
-      🕐 v2026.07.18 · 14:30
+      🕐 v2026.07.18 · 14:50
     </span>
   </div>
 
@@ -4635,7 +4635,7 @@ const USER_PERMISSIONS = {
 };
 
 // לכל משתמש שאינו ברשימה — ברירת מחדל:
-const DEFAULT_PERMISSIONS = ['orders'];
+const DEFAULT_PERMISSIONS = ['orders','times','sandyTimes','costs','closures','sms']; // כרגע: כולם רואים הכל. כשתסיים להגדיר משתמשים — שנה ל-['orders'] או []
 
 // פתיחת עמוד SMS בלשונית חדשה (מוגן בהרשאה 'sms')
 function openSmsPage() {
